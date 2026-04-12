@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mentoria de Redação — Redação com Mari</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Meta Pixel -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init','625493782867605');
+fbq('track','PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=625493782867605&ev=PageView&noscript=1"/></noscript>
+
+<style>
+:root {
+  --verde: #0d2818;
+  --verde-mid: #1B4332;
+  --verde-claro: #2d6a4f;
+  --dourado: #C9A84C;
+  --dourado-claro: #E8D5A3;
+  --preto: #060e1a;
+  --branco: #FFFFFF;
+  --cinza: rgba(255,255,255,.6);
+  --cinza-leve: rgba(255,255,255,.08);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--verde);color:var(--branco);overflow-x:hidden}
+
+/* HEADER */
+header{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:.9rem 5%;background:rgba(6,14,10,.95);backdrop-filter:blur(12px);border-bottom:1.5px solid var(--dourado)}
+.logo{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:900;color:var(--dourado);letter-spacing:-1px;text-decoration:none}
+.logo span{color:var(--branco)}
+.header-cta{display:flex;gap:.75rem;align-items:center}
+.btn-outline{padding:.5rem 1.2rem;background:transparent;color:var(--dourado);border:1.5px solid var(--dourado);border-radius:2rem;font-size:.82rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .2s}
+.btn-outline:hover{background:var(--dourado);color:var(--preto)}
+.btn-header{padding:.5rem 1.2rem;background:var(--dourado);color:var(--preto);border:none;border-radius:2rem;font-size:.82rem;font-weight:700;cursor:pointer;text-decoration:none;transition:all .2s}
+.btn-header:hover{background:var(--dourado-claro);transform:translateY(-1px)}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;padding:8rem 5% 5rem;position:relative;overflow:hidden;gap:4rem;justify-content:center;background:var(--preto)}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 70% 50%,rgba(201,168,76,.1) 0%,transparent 60%),radial-gradient(ellipse at 10% 80%,rgba(29,107,82,.15) 0%,transparent 50%);pointer-events:none}
+.hero-bg-text{position:absolute;right:-2%;top:50%;transform:translateY(-50%);font-family:'Fraunces',serif;font-size:clamp(8rem,18vw,18rem);font-weight:900;color:rgba(255,255,255,.025);line-height:1;pointer-events:none;user-select:none;white-space:nowrap}
+.hero-img-wrap{flex-shrink:0;width:clamp(220px,28vw,360px);position:relative;z-index:1}
+.hero-img-wrap::after{content:'✦';position:absolute;bottom:-14px;right:-14px;width:48px;height:48px;background:var(--preto);border:2px solid var(--dourado);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--dourado);font-size:1.1rem;line-height:48px;text-align:center;box-shadow:0 4px 16px rgba(201,168,76,.25);z-index:2}
+.hero-img-wrap img{width:100%;border-radius:2rem;border:3px solid var(--dourado);box-shadow:0 20px 60px rgba(0,0,0,.5);display:block;object-fit:cover}
+.hero-content{max-width:640px;position:relative;z-index:1}
+.hero-badge{display:inline-flex;align-items:center;gap:.5rem;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);color:var(--dourado);font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;padding:.45rem 1rem;border-radius:2rem;margin-bottom:1.5rem}
+.hero-content h1{font-family:'Fraunces',serif;font-size:clamp(2.2rem,5vw,3.8rem);font-weight:900;line-height:1.1;letter-spacing:-1px;margin-bottom:1.2rem}
+.hero-content h1 em{font-style:italic;color:var(--dourado)}
+.hero-content p{color:var(--cinza);font-size:1rem;line-height:1.7;margin-bottom:2rem;max-width:520px}
+.hero-btns{display:flex;flex-direction:column;gap:.75rem;max-width:380px}
+.btn-primary{display:flex;align-items:center;justify-content:center;gap:.6rem;padding:1rem 2rem;background:var(--dourado);color:var(--preto);font-family:'Plus Jakarta Sans',sans-serif;font-size:.95rem;font-weight:700;border:none;border-radius:2rem;text-decoration:none;cursor:pointer;transition:all .2s;box-shadow:0 8px 32px rgba(201,168,76,.3)}
+.btn-primary:hover{background:var(--dourado-claro);transform:translateY(-2px);box-shadow:0 12px 40px rgba(201,168,76,.4)}
+.btn-wa{display:flex;align-items:center;justify-content:center;gap:.6rem;padding:1rem 2rem;background:#25d366;color:#fff;font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;font-weight:600;border:none;border-radius:2rem;text-decoration:none;cursor:pointer;transition:all .2s;box-shadow:0 8px 28px rgba(37,211,102,.2)}
+.btn-wa:hover{background:#1da851;transform:translateY(-2px)}
+.btn-wa svg,.btn-primary svg{width:18px;height:18px;flex-shrink:0}
+.trust-line{font-size:.75rem;color:rgba(255,255,255,.4);display:flex;align-items:center;gap:.4rem;padding:.5rem 0}
+.hero-stats{display:flex;gap:2rem;margin-top:2rem;flex-wrap:wrap}
+.stat strong{display:block;font-family:'Fraunces',serif;font-size:1.8rem;font-weight:900;color:var(--dourado);line-height:1}
+.stat span{font-size:.75rem;color:var(--cinza)}
+
+/* SECTIONS */
+.section{padding:80px 5%;max-width:1100px;margin:0 auto}
+.section-label{font-size:.7rem;font-weight:700;letter-spacing:.15em;color:var(--verde-claro);text-transform:uppercase;margin-bottom:.75rem}
+.section h2{font-family:'Fraunces',serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;line-height:1.15;letter-spacing:-1px;margin-bottom:1.2rem}
+.section h2 em{font-style:italic;color:var(--dourado)}
+.section p{color:var(--cinza);font-size:.95rem;line-height:1.75;margin-bottom:1rem}
+.sep{width:100%;height:1px;background:rgba(255,255,255,.06)}
+
+/* FASES */
+.fases{display:flex;flex-direction:column;gap:0;margin-top:2rem}
+.fase{display:flex;gap:1.5rem;align-items:flex-start;padding:1.8rem 0;border-bottom:.5px solid rgba(255,255,255,.07)}
+.fase:last-child{border-bottom:none}
+.fase-num{min-width:52px;height:52px;background:rgba(201,168,76,.08);border:1.5px solid rgba(201,168,76,.2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-size:1.1rem;font-weight:900;color:var(--dourado);flex-shrink:0}
+.fase-body strong{display:block;font-size:1rem;font-weight:700;margin-bottom:.4rem;color:var(--branco)}
+.fase-body span{font-size:.88rem;color:var(--cinza);line-height:1.7}
+.fase-quote{font-style:italic;color:rgba(201,168,76,.6);font-size:.8rem;margin-top:.6rem;border-left:2px solid rgba(201,168,76,.25);padding-left:.75rem}
+
+/* PERFIS */
+.perfis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-top:2rem}
+.perfil{background:var(--cinza-leve);border:.5px solid rgba(255,255,255,.1);border-radius:1.5rem;padding:1.5rem;transition:border-color .2s,transform .2s}
+.perfil:hover{border-color:rgba(201,168,76,.4);transform:translateY(-3px)}
+.perfil-icon{font-size:1.8rem;margin-bottom:.75rem}
+.perfil strong{display:block;font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;color:var(--dourado);margin-bottom:.4rem}
+.perfil p{font-size:.83rem;color:var(--cinza);margin:0;line-height:1.6}
+.perfil-sol{font-size:.78rem;color:var(--dourado-claro);margin-top:.75rem;border-top:.5px solid rgba(255,255,255,.07);padding-top:.75rem}
+
+/* ENTREGÁVEIS */
+.entregaveis{display:flex;flex-direction:column;gap:.85rem;margin-top:1.8rem}
+.entregavel{display:flex;align-items:flex-start;gap:1rem;background:var(--cinza-leve);border:.5px solid rgba(255,255,255,.08);border-radius:1rem;padding:1.2rem 1.5rem}
+.ent-icon{width:40px;height:40px;min-width:40px;background:rgba(201,168,76,.1);border-radius:.75rem;display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.entregavel strong{display:block;font-size:.95rem;font-weight:700;color:var(--branco);margin-bottom:.2rem}
+.entregavel span{font-size:.82rem;color:var(--cinza)}
+
+/* OFERTA */
+.oferta-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.2rem;margin-top:2rem}
+.oferta-card{background:var(--cinza-leve);border:.5px solid rgba(255,255,255,.1);border-radius:1.5rem;padding:2rem;display:flex;flex-direction:column;gap:1rem;position:relative;transition:transform .2s}
+.oferta-card:hover{transform:translateY(-4px)}
+.oferta-card.destaque{background:rgba(201,168,76,.07);border:2px solid var(--dourado)}
+.oferta-badge{position:absolute;top:-14px;left:50%;transform:translateX(-50%);background:var(--dourado);color:var(--preto);font-size:.68rem;font-weight:800;padding:.3rem 1rem;border-radius:2rem;white-space:nowrap;letter-spacing:.05em}
+.oferta-titulo{font-family:'Fraunces',serif;font-size:1.4rem;font-weight:900;color:var(--branco)}
+.oferta-preco-old{font-size:.82rem;color:rgba(255,255,255,.35);text-decoration:line-through}
+.oferta-preco{font-family:'Fraunces',serif;font-size:2.8rem;font-weight:900;color:var(--dourado);line-height:1}
+.oferta-preco sup{font-size:.4em;vertical-align:super}
+.oferta-preco span{font-size:.8rem;font-weight:400;color:var(--cinza)}
+.oferta-items{display:flex;flex-direction:column;gap:.5rem;flex:1}
+.oferta-item{display:flex;align-items:flex-start;gap:.5rem;font-size:.83rem;color:rgba(255,255,255,.8)}
+.oferta-item::before{content:'✅';flex-shrink:0}
+.vagas{display:inline-flex;align-items:center;gap:.4rem;background:rgba(224,85,85,.18);border:1px solid rgba(224,85,85,.5);color:#ff8080;font-size:.75rem;font-weight:700;padding:.4rem 1rem;border-radius:2rem;box-shadow:0 0 12px rgba(224,85,85,.25);animation:vagapulse 2s ease-in-out infinite}
+@keyframes vagapulse{0%,100%{box-shadow:0 0 8px rgba(224,85,85,.2)}50%{box-shadow:0 0 20px rgba(224,85,85,.5)}}
+
+/* MATERIAIS AVULSOS */
+.materiais-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.85rem;margin-top:1.8rem}
+.material-card{background:var(--cinza-leve);border:.5px solid rgba(255,255,255,.08);border-radius:1rem;padding:1.2rem;display:flex;flex-direction:column;gap:.6rem;transition:border-color .2s}
+.material-card:hover{border-color:rgba(201,168,76,.3)}
+.material-icon{font-size:1.5rem}
+.material-nome{font-size:.85rem;font-weight:600;color:var(--branco);line-height:1.3}
+.material-preco{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:900;color:var(--dourado)}
+.btn-material{display:block;text-align:center;padding:.6rem 1rem;background:rgba(201,168,76,.1);color:var(--dourado);border:1px solid rgba(201,168,76,.25);border-radius:1rem;font-size:.78rem;font-weight:700;text-decoration:none;transition:all .2s;margin-top:auto}
+.btn-material:hover{background:rgba(201,168,76,.2)}
+
+/* OBJEÇÕES */
+.objecoes{display:flex;flex-direction:column;gap:.85rem;margin-top:1.8rem}
+.objecao{background:var(--cinza-leve);border:.5px solid rgba(255,255,255,.07);border-radius:1rem;padding:1.4rem 1.5rem}
+.objecao-q{font-size:.9rem;font-weight:700;color:var(--branco);margin-bottom:.6rem}
+.objecao-q::before{content:'"';color:var(--dourado)}
+.objecao-q::after{content:'"';color:var(--dourado)}
+.objecao-a{font-size:.84rem;color:var(--cinza);line-height:1.65}
+
+/* SOBRE */
+.sobre{display:flex;gap:2rem;align-items:flex-start;margin-top:2rem}
+.sobre-img{width:110px;height:110px;min-width:110px;border-radius:50%;object-fit:cover;border:2px solid rgba(201,168,76,.4)}
+.sobre-text strong{display:block;font-size:1rem;font-weight:700;margin-bottom:.4rem}
+.sobre-text span{font-size:.85rem;color:var(--cinza);line-height:1.7}
+.garantia{display:flex;gap:1.2rem;align-items:flex-start;background:var(--cinza-leve);border:.5px solid rgba(255,255,255,.07);border-radius:1.25rem;padding:1.75rem;margin-top:2rem}
+.garantia-icon{font-size:2.2rem;flex-shrink:0}
+.garantia h3{font-size:.95rem;font-weight:700;margin-bottom:.4rem}
+.garantia p{font-size:.84rem;color:var(--cinza);margin:0}
+
+/* FAQ */
+.faq{display:flex;flex-direction:column;gap:.75rem;margin-top:1.8rem}
+.faq-item{background:var(--cinza-leve);border:.5px solid rgba(255,255,255,.07);border-radius:1rem;padding:1.4rem 1.5rem;cursor:pointer}
+.faq-q{font-size:.9rem;font-weight:600;color:var(--branco);display:flex;justify-content:space-between;align-items:center;gap:1rem}
+.faq-q span{color:var(--dourado);font-size:1.1rem;flex-shrink:0;transition:transform .2s}
+.faq-a{font-size:.84rem;color:var(--cinza);line-height:1.65;margin-top:.75rem;display:none}
+.faq-item.open .faq-a{display:block}
+.faq-item.open .faq-q span{transform:rotate(45deg)}
+
+/* FINAL CTA */
+.final-cta{padding:80px 5%;text-align:center;background:radial-gradient(ellipse 70% 50% at 50% 100%,rgba(201,168,76,.08) 0%,transparent 70%)}
+.final-cta h2{font-family:'Fraunces',serif;font-size:clamp(2rem,5vw,3.2rem);font-weight:900;line-height:1.15;letter-spacing:-1px;max-width:640px;margin:0 auto 1rem}
+.final-cta h2 em{font-style:italic;color:var(--dourado)}
+.final-cta p{color:var(--cinza);font-size:.95rem;margin-bottom:2.5rem}
+.final-btns{display:flex;flex-direction:column;gap:.75rem;max-width:380px;margin:0 auto}
+
+/* WHATSAPP FLUTUANTE */
+.wa-float{position:fixed;bottom:1.5rem;right:1.5rem;z-index:998;display:flex;flex-direction:column;gap:.5rem;align-items:flex-end}
+.wa-tooltip{background:var(--preto);border:1px solid rgba(37,211,102,.3);color:rgba(255,255,255,.85);font-size:.75rem;font-weight:500;padding:.4rem .9rem;border-radius:1rem;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.3);animation:fadetooltip 1s ease .8s both}
+@keyframes fadetooltip{from{opacity:0;transform:translateX(8px)}to{opacity:1;transform:translateX(0)}}
+.wa-btn{display:flex;align-items:center;gap:.6rem;background:#25d366;color:#fff;padding:.65rem 1.1rem;border-radius:2rem;text-decoration:none;font-weight:700;font-size:.85rem;box-shadow:0 4px 20px rgba(37,211,102,.45);transition:all .2s}
+.wa-btn:hover{transform:scale(1.05)}
+.wa-btn svg{width:20px;height:20px}
+
+footer{padding:2rem 5%;border-top:.5px solid rgba(255,255,255,.08);display:flex;flex-direction:column;align-items:center;gap:.75rem}
+.footer-logo{font-family:'Fraunces',serif;font-size:1.3rem;font-weight:900;color:var(--dourado)}
+.footer-links{display:flex;gap:1.5rem;flex-wrap:wrap;justify-content:center}
+.footer-links a{font-size:.82rem;color:var(--cinza);text-decoration:none;transition:color .2s}
+.footer-links a:hover{color:var(--dourado)}
+footer p{font-size:.75rem;color:rgba(255,255,255,.3)}
+
+/* REVEAL */
+.reveal{opacity:0;transform:translateY(20px);transition:opacity .5s ease,transform .5s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+
+@media(max-width:768px){
+  .hero{flex-direction:column;text-align:center;gap:2.5rem;padding-top:7rem}
+  .hero-img-wrap{width:min(280px,80vw)}
+  .hero-btns{margin:0 auto}
+  .hero-stats{justify-content:center}
+  .sobre{flex-direction:column;align-items:center;text-align:center}
+  .header-cta .btn-outline{display:none}
+  .perfis{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a href="#" class="logo">Redação <span>com Mari</span></a>
+  <div class="header-cta">
+    <a href="#oferta" class="btn-outline">Ver oferta</a>
+    <a href="#oferta" class="btn-header" onclick="fbq('track','ViewContent')">Garantir vaga</a>
+  </div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg-text">980</div>
+  <div class="hero-img-wrap">
+    <img src="https://sousacivil-hue.github.io/Redacaocommari/avatar-imponente.jpg" alt="Professora Mariana">
+  </div>
+  <div class="hero-content">
+    <div class="hero-badge">🎓 Mentoria Mensal · Redação com Mari</div>
+    <h1>Sua redação evoluindo<br><em>toda semana.</em></h1>
+    <p>Correção real via plataforma. Aulas ao vivo pelo Zoom. Método comprovado para ENEM, vestibulares e concursos. Sem teoria vazia — só resultado.</p>
+    <div class="hero-btns">
+      <a href="#oferta" class="btn-primary" onclick="fbq('track','ViewContent')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        Garantir minha vaga — R$ 137/mês
+      </a>
+      <a href="https://wa.me/557999926663?text=Oi%20Mari!%20Vi%20seu%20an%C3%BAncio%20e%20quero%20saber%20mais%20sobre%20a%20mentoria." class="btn-wa" onclick="fbq('track','Lead')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.999 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.978-1.304A9.96 9.96 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a7.96 7.96 0 01-4.064-1.113l-.29-.173-3.007.788.803-2.93-.19-.302A7.96 7.96 0 014 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z"/></svg>
+        Tirar dúvida no WhatsApp
+      </a>
+      <div class="trust-line">🔒 Pagamento seguro · Kiwify · Garantia de 7 dias · 10 vagas</div>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><strong>980</strong><span>nota máxima alcançada</span></div>
+      <div class="stat"><strong>98%</strong><span>dos alunos evoluem</span></div>
+      <div class="stat"><strong>10</strong><span>vagas por mês</span></div>
+    </div>
+    <p style="font-size:.78rem;color:rgba(201,168,76,.7);margin-top:1rem;margin-bottom:0">✦ Mais de 500 alunos que destravaram a nota com este método</p>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- FASES DA DOR -->
+<div style="background:var(--preto)">
+<section class="section reveal">
+  <div class="section-label">Por que você ainda não avançou</div>
+  <h2>Você reconhece<br><em>alguma dessas fases?</em></h2>
+  <div class="fases">
+    <div class="fase reveal">
+      <div class="fase-num">1</div>
+      <div class="fase-body">
+        <strong>A Ilusão do Esforço</strong>
+        <span>Você assiste vídeos, lê dicas, faz redações. Sente que está evoluindo. Mas estudar sem estrutura é como treinar natação em terra — muito movimento, nenhum avanço real.</span>
+        <div class="fase-quote">O problema não começou aqui. Começou quando você achou que estava avançando.</div>
+      </div>
+    </div>
+    <div class="fase reveal">
+      <div class="fase-num">2</div>
+      <div class="fase-body">
+        <strong>A Esteira Rolante</strong>
+        <span>Você escreve toda semana. A nota sobe um pouco, cai, volta para o mesmo lugar. Muito esforço, nenhum lugar novo. Você começa a pensar que redação é dom — e que você não tem.</span>
+        <div class="fase-quote">Aqui mora o maior perigo: você para de acreditar em você antes de encontrar o método certo.</div>
+      </div>
+    </div>
+    <div class="fase reveal">
+      <div class="fase-num">3</div>
+      <div class="fase-body">
+        <strong>O Colapso na Hora H</strong>
+        <span>Dia da prova. Você abre o caderno, lê o tema e a cabeça esvazia. Escreve qualquer coisa, sem estrutura, sem argumento. Sai da sala sabendo que perdeu pontos que não podia perder.</span>
+        <div class="fase-quote">Isso não precisa se repetir. Você não travou por falta de capacidade. Travou por falta de método.</div>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="sep"></div>
+
+<!-- PERFIS -->
+<section class="section reveal">
+  <div class="section-label">Esse método é para você?</div>
+  <h2>Qual desses perfis<br><em>é o seu?</em></h2>
+  <div class="perfis">
+    <div class="perfil reveal">
+      <div class="perfil-icon">📄</div>
+      <strong>A Perdida</strong>
+      <p>Nunca escreveu uma redação de verdade. Não sabe por onde começar. Sente que todo mundo sabe menos ela.</p>
+      <div class="perfil-sol">→ A mentoria te dá estrutura do zero, passo a passo.</div>
+    </div>
+    <div class="perfil reveal">
+      <div class="perfil-icon">📈</div>
+      <strong>A Estagnada</strong>
+      <p>Já treina mas a nota não passa de 700. Parece uma esteira — muito esforço, nenhum avanço visível.</p>
+      <div class="perfil-sol">→ A mentoria identifica exatamente o que está travando sua nota.</div>
+    </div>
+    <div class="perfil reveal">
+      <div class="perfil-icon">🎯</div>
+      <strong>A Determinada</strong>
+      <p>Quer Medicina ou Direito. Precisa de 900+. A redação não pode eliminar esse sonho.</p>
+      <div class="perfil-sol">→ A mentoria te leva ao nível que você precisa com consistência.</div>
+    </div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- ENTREGÁVEIS -->
+<div style="background:var(--preto)">
+<section class="section reveal">
+  <div class="section-label">O que você recebe</div>
+  <h2>Não é só aula.<br><em>É acompanhamento real.</em></h2>
+  <div class="entregaveis">
+    <div class="entregavel reveal">
+      <div class="ent-icon">📝</div>
+      <div><strong>1 tema por semana</strong><span>Você recebe o tema, escreve e envia pela plataforma. Sem acumular, sem procrastinar.</span></div>
+    </div>
+    <div class="entregavel reveal">
+      <div class="ent-icon">🎙️</div>
+      <div><strong>1 correção por semana via plataforma</strong><span>Mari corrige cada competência e devolve feedback em áudio personalizado — competência por competência.</span></div>
+    </div>
+    <div class="entregavel reveal">
+      <div class="ent-icon">🎥</div>
+      <div><strong>1 videoaula ao vivo por mês</strong><span>Aula ao vivo via Zoom ou Meet com conteúdo estratégico e espaço para tirar dúvidas em tempo real.</span></div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="sep"></div>
+
+<!-- OFERTA -->
+<section class="section" id="oferta">
+  <div class="section-label">Escolha seu plano</div>
+  <h2>Invista na nota<br><em>que você precisa.</em></h2>
+  <div class="oferta-grid" style="grid-template-columns:1fr;max-width:480px;margin:2rem auto 0">
+
+    <!-- CARD ÚNICO — MENTORIA -->
+    <div class="oferta-card destaque reveal">
+      <div class="oferta-badge">⭐ MELHOR ESCOLHA</div>
+      <div class="oferta-titulo">Mentoria de Redação</div>
+      <div class="oferta-preco-old">De R$ 187</div>
+      <div class="oferta-preco"><sup>R$</sup>137<span>/mês</span></div>
+      <div class="oferta-items">
+        <div class="oferta-item">1 tema por semana</div>
+        <div class="oferta-item">1 correção semanal via plataforma</div>
+        <div class="oferta-item">Correção em até 48h com feedback humanizado</div>
+        <div class="oferta-item">Feedback em áudio personalizado</div>
+        <div class="oferta-item">1 videoaula ao vivo por mês</div>
+      </div>
+      <div class="vagas">🔴 Apenas 10 vagas/mês</div>
+      <a href="https://pay.kiwify.com.br/7mo0E7Q" class="btn-primary" onclick="fbq('track','InitiateCheckout')">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+        Garantir minha vaga — R$ 137/mês
+      </a>
+    </div>
+
+  </div>
+
+
+</section>
+
+<div class="sep"></div>
+
+<!-- OBJEÇÕES -->
+<div style="background:var(--preto)">
+<section class="section reveal">
+  <div class="section-label">Antes de você perguntar</div>
+  <h2>As dúvidas mais comuns<br><em>respondidas.</em></h2>
+  <div class="objecoes">
+    <div class="objecao reveal"><div class="objecao-q">Não levo jeito para redação</div><div class="objecao-a">Jeito não existe. Método existe. Alunos que achavam exatamente isso saíram de 580 para 780+. A diferença foi ter correção real semana a semana.</div></div>
+    <div class="objecao reveal"><div class="objecao-q">Já tentei curso e não funcionou</div><div class="objecao-a">Curso dá teoria. A mentoria corrige a sua redação — toda semana, via plataforma, com áudio personalizado por competência. A diferença está no que você recebe de volta.</div></div>
+    <div class="objecao reveal"><div class="objecao-q">Não tenho tempo toda semana</div><div class="objecao-a">1 redação por semana. Se você tem 2 horas livres no fim de semana, você tem tempo para a mentoria.</div></div>
+    <div class="objecao reveal"><div class="objecao-q">R$ 137 é caro</div><div class="objecao-a">R$ 137 é menos que uma aula particular avulsa. E você recebe correção toda semana + videoaula ao vivo + tema semanal. A pergunta real é: quanto custa mais um ano sem passar?</div></div>
+    <div class="objecao reveal"><div class="objecao-q">Redação é sorte — depende do tema</div><div class="objecao-a">Com estrutura certa, qualquer tema vira ponto. A mentoria te dá um modelo que funciona para qualquer assunto que a banca sortear.</div></div>
+  </div>
+</section>
+</div>
+
+<div class="sep"></div>
+
+<!-- SOBRE MARI -->
+<section class="section reveal">
+  <div class="section-label">Quem é Mari</div>
+  <h2>Professora com método<br><em>comprovado.</em></h2>
+  <div class="sobre">
+    <img src="https://sousacivil-hue.github.io/Redacaocommari/avatar-imponente.jpg" alt="Professora Mari" class="sobre-img">
+    <div class="sobre-text">
+      <strong>Mariana Souza — Professora de Redação</strong>
+      <span>Especialista em redação dissertativa-argumentativa para ENEM, vestibulares e concursos públicos. Nota 980 comprovada. Método desenvolvido a partir de anos corrigindo redações reais e identificando o que o corretor realmente quer ver em cada competência. Se você quer fazer deste ENEM o último da sua vida, você está no lugar certo.</span>
+    </div>
+  </div>
+  <div class="garantia reveal">
+    <div class="garantia-icon">🛡️</div>
+    <div><h3>Garantia de 7 dias</h3><p>Se por qualquer motivo você não ficar satisfeita, devolvemos 100% do seu dinheiro. Sem burocracia, sem perguntas. O risco financeiro é meu — o aprendizado é seu.</p></div>
+  </div>
+</section>
+
+<div class="sep"></div>
+
+<!-- FAQ -->
+<div style="background:var(--preto)">
+<section class="section reveal">
+  <div class="section-label">Perguntas frequentes</div>
+  <h2>Ainda tem <em>dúvida?</em></h2>
+  <div class="faq">
+    <div class="faq-item"><div class="faq-q">Como funciona a correção? <span>+</span></div><div class="faq-a">Você envia a redação pela plataforma. Mari corrige cada competência e devolve feedback em áudio personalizado explicando o que melhorar — normalmente em até 48h.</div></div>
+    <div class="faq-item"><div class="faq-q">Como são as aulas ao vivo? <span>+</span></div><div class="faq-a">1 vez por mês via Zoom ou Google Meet. Mari apresenta um conteúdo estratégico e você pode tirar dúvidas em tempo real. As aulas ficam gravadas para quem não puder assistir ao vivo.</div></div>
+    <div class="faq-item"><div class="faq-q">Serve para concurso público também? <span>+</span></div><div class="faq-a">Sim. A mentoria cobre ENEM, vestibulares e concursos públicos. O método se adapta ao perfil da banca do seu concurso.</div></div>
+    <div class="faq-item"><div class="faq-q">E se eu não conseguir enviar toda semana? <span>+</span></div><div class="faq-a">Sem problema. Você acumula as correções do mês. O importante é manter o ritmo — Mari te orienta sobre isso no início.</div></div>
+    <div class="faq-item"><div class="faq-q">Posso cancelar quando quiser? <span>+</span></div><div class="faq-a">Sim. Pagamento mensal sem fidelidade. Cancela quando quiser, sem multa e sem burocracia.</div></div>
+    <div class="faq-item"><div class="faq-q">Qual a diferença entre a mentoria e os materiais avulsos? <span>+</span></div><div class="faq-a">A mentoria é o acompanhamento ativo — correção, feedback e aula ao vivo todo mês. Os materiais são conteúdos de apoio que podem ser comprados separadamente ou junto com a mentoria no combo.</div></div>
+  </div>
+</section>
+</div>
+
+<div class="sep"></div>
+
+<!-- FINAL CTA -->
+<section class="final-cta">
+  <h2>Pronta para a nota que<br><em>você merece?</em></h2>
+  <p>10 vagas por mês. Quando fechar, abre lista de espera.</p>
+  <div class="final-btns">
+    <a href="https://pay.kiwify.com.br/7mo0E7Q" class="btn-primary" onclick="fbq('track','InitiateCheckout')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+      Garantir minha vaga — R$ 137/mês
+    </a>
+    <a href="https://wa.me/557999926663?text=Oi%20Mari!%20Quero%20garantir%20minha%20vaga%20na%20mentoria." class="btn-wa" onclick="fbq('track','Lead')">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.999 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.978-1.304A9.96 9.96 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a7.96 7.96 0 01-4.064-1.113l-.29-.173-3.007.788.803-2.93-.19-.302A7.96 7.96 0 014 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z"/></svg>
+      Tirar dúvida no WhatsApp
+    </a>
+    <div class="trust-line" style="justify-content:center">🔒 Pagamento seguro · Kiwify · Garantia de 7 dias</div>
+  </div>
+</section>
+
+<!-- WHATSAPP FLUTUANTE -->
+<div class="wa-float">
+  <div class="wa-tooltip">💬 Dúvida sobre o 900+? Fale com a Mari</div>
+  <a href="https://wa.me/557999926663?text=Oi%20Mari!%20Vi%20seu%20an%C3%BAncio%20e%20quero%20saber%20mais%20sobre%20a%20mentoria." class="wa-btn" onclick="fbq('track','Lead')" target="_blank">
+    <svg viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.999 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.978-1.304A9.96 9.96 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a7.96 7.96 0 01-4.064-1.113l-.29-.173-3.007.788.803-2.93-.19-.302A7.96 7.96 0 014 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8z"/></svg>
+    Falar com a Mari
+  </a>
+</div>
+
+<footer>
+  <div class="footer-logo">Redação com Mari</div>
+  <div class="footer-links">
+    <a href="#oferta">Ver oferta</a>
+    <a href="#oferta">Garantir vaga</a>
+    <a href="https://wa.me/557999926663" onclick="fbq('track','Lead')">Contato</a>
+  </div>
+  <p>© 2026 Redação com Mari · Todos os direitos reservados</p>
+</footer>
+
+<script>
+document.querySelectorAll('.faq-item').forEach(item=>{
+  item.addEventListener('click',()=>{
+    document.querySelectorAll('.faq-item').forEach(i=>{if(i!==item)i.classList.remove('open')});
+    item.classList.toggle('open');
+  });
+});
+
+const observer=new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')});
+},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>observer.observe(el));
+</script>
+</body>
+</html>
