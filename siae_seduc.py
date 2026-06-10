@@ -101,7 +101,7 @@ async def main():
 
             # Tenta pegar a serie do titulo da pagina
             try:
-                turma_texto = await page.locator("text=Ano, text=Serie, text=série").first.inner_text()
+                turma_texto = await page.locator("text=Ano, text=Serie, text=serie").first.inner_text()
                 conteudo = get_conteudo(turma_texto)
             except Exception:
                 pass
