@@ -163,6 +163,55 @@
       margin-left: 8px;
     }
 
+    .dias-grid {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .dia-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #f0f4ff;
+      border: 1.5px solid #d0e0ff;
+      border-radius: 10px;
+      padding: 10px 14px;
+      gap: 8px;
+      min-width: 70px;
+    }
+
+    .dia-item:has(.dia-check:checked) {
+      background: #e8f0fe;
+      border-color: #1a73e8;
+    }
+
+    .dia-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .dia-qtd {
+      width: 52px;
+      text-align: center;
+      padding: 4px 6px;
+      font-size: 15px;
+      border-radius: 6px;
+    }
+
+    .dia-qtd:disabled {
+      background: #eee;
+      color: #aaa;
+      border-color: #ddd;
+    }
+
     footer {
       text-align: center;
       color: #999;
@@ -227,17 +276,31 @@
             <label>Disciplina</label>
             <input type="text" placeholder="Ex: Matemática">
           </div>
-          <div class="field" style="max-width:130px">
-            <label>Aulas/semana</label>
-            <input type="number" min="1" max="10" value="2">
+        </div>
+
+        <div class="field">
+          <label>Dias e quantidade de aulas por dia</label>
+          <div class="dias-grid">
+            <div class="dia-item"><label class="dia-label"><input type="checkbox" class="dia-check"> Seg</label><input type="number" class="dia-qtd" min="1" max="5" value="1" disabled></div>
+            <div class="dia-item"><label class="dia-label"><input type="checkbox" class="dia-check"> Ter</label><input type="number" class="dia-qtd" min="1" max="5" value="1" disabled></div>
+            <div class="dia-item"><label class="dia-label"><input type="checkbox" class="dia-check"> Qua</label><input type="number" class="dia-qtd" min="1" max="5" value="1" disabled></div>
+            <div class="dia-item"><label class="dia-label"><input type="checkbox" class="dia-check"> Qui</label><input type="number" class="dia-qtd" min="1" max="5" value="1" disabled></div>
+            <div class="dia-item"><label class="dia-label"><input type="checkbox" class="dia-check"> Sex</label><input type="number" class="dia-qtd" min="1" max="5" value="1" disabled></div>
           </div>
         </div>
+
         <div class="field">
-          <label>Objeto de Conhecimento (conteúdo)</label>
-          <textarea placeholder="Ex: Critérios de divisibilidade por 4 e por 5."></textarea>
+          <label>Assuntos do bimestre (um por linha, em ordem)</label>
+          <textarea class="assuntos" rows="6" placeholder="Critérios de divisibilidade por 2 e por 3.
+Critérios de divisibilidade por 4 e por 5.
+Problemas com divisibilidade.
+Números primos: conceito e identificação.
+Decomposição em fatores primos.
+MMC: conceito e cálculo."></textarea>
         </div>
+
         <div class="field">
-          <label>Metodologia</label>
+          <label>Metodologia (igual para todas as aulas)</label>
           <textarea placeholder="Ex: Aula expositiva dialogada com resolução de exercícios."></textarea>
         </div>
       </div>
@@ -316,14 +379,20 @@
           <label>Disciplina</label>
           <input type="text" placeholder="Ex: Matemática">
         </div>
-        <div class="field" style="max-width:130px">
-          <label>Aulas/semana</label>
-          <input type="number" min="1" max="10" value="2">
+      </div>
+      <div class="field">
+        <label>Dias e quantidade de aulas por dia</label>
+        <div class="dias-grid">
+          <div class="dia-item"><label class="dia-label"><input type="checkbox" class="dia-check"> Seg</label><input type="number" class="dia-qtd" min="1" max="5" value="1" disabled></div>
+          <div class="dia-item"><label class="dia-label"><input type="checkbox" class="dia-check"> Ter</label><input type="number" class="dia-qtd" min="1" max="5" value="1" disabled></div>
+          <div class="dia-item"><label class="dia-label"><input type="checkbox" class="dia-check"> Qua</label><input type="number" class="dia-qtd" min="1" max="5" value="1" disabled></div>
+          <div class="dia-item"><label class="dia-label"><input type="checkbox" class="dia-check"> Qui</label><input type="number" class="dia-qtd" min="1" max="5" value="1" disabled></div>
+          <div class="dia-item"><label class="dia-label"><input type="checkbox" class="dia-check"> Sex</label><input type="number" class="dia-qtd" min="1" max="5" value="1" disabled></div>
         </div>
       </div>
       <div class="field">
-        <label>Objeto de Conhecimento (conteúdo)</label>
-        <textarea placeholder="Ex: Problemas envolvendo porcentagem."></textarea>
+        <label>Assuntos do bimestre (um por linha, em ordem)</label>
+        <textarea class="assuntos" rows="5" placeholder="Assunto 1&#10;Assunto 2&#10;Assunto 3"></textarea>
       </div>
       <div class="field">
         <label>Metodologia</label>
@@ -393,6 +462,14 @@
   }
 
   function mostrarCampos() {}
+
+  // Habilita/desabilita campo de quantidade ao marcar dia
+  document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('dia-check')) {
+      const qtd = e.target.closest('.dia-item').querySelector('.dia-qtd');
+      qtd.disabled = !e.target.checked;
+    }
+  });
 </script>
 
 </body>
