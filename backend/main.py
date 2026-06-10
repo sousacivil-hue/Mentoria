@@ -516,33 +516,43 @@ LIMITE_GERACOES = 5
 
 @app.post("/gerar-topicos")
 async def gerar_topicos(req: GerarTopicosRequest):
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    api_key = os.environ.get("GEMINI_API_KEY", "")
     if not api_key:
         return {
             "erro": "IA não configurada ainda. Cole sua lista de tópicos manualmente, "
                     "ou peça ao administrador para configurar a chave da API."
         }
 
+    assunto_txt = f" sobre o assunto '{req.assunto}'" if req.assunto else ""
+    prompt = (
+        f"Crie exatamente {req.quantidade} tópicos de aula de {req.disciplina} "
+        f"para a turma '{req.serie}'{assunto_txt}, em sequência didática lógica "
+        f"(do mais básico ao mais avançado), adequados ao currículo brasileiro (BNCC). "
+        f"Inclua aulas de exercícios e revisão distribuídas naturalmente. "
+        f"Responda APENAS com a lista, um tópico por linha, sem numeração e sem texto extra."
+    )
+
     try:
-        import anthropic
-        client = anthropic.AsyncAnthropic(api_key=api_key)
+        import urllib.request
 
-        assunto_txt = f" sobre o assunto '{req.assunto}'" if req.assunto else ""
-        prompt = (
-            f"Crie exatamente {req.quantidade} tópicos de aula de {req.disciplina} "
-            f"para a turma '{req.serie}'{assunto_txt}, em sequência didática lógica "
-            f"(do mais básico ao mais avançado), adequados ao currículo brasileiro (BNCC). "
-            f"Inclua aulas de exercícios e revisão distribuídas naturalmente. "
-            f"Responda APENAS com a lista, um tópico por linha, sem numeração e sem texto extra."
+        url = (
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            f"gemini-2.0-flash:generateContent?key={api_key}"
         )
+        body = json.dumps({
+            "contents": [{"parts": [{"text": prompt}]}]
+        }).encode("utf-8")
 
-        msg = await client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=2000,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        texto = msg.content[0].text
-        topicos = [l.strip().lstrip("-•").strip() for l in texto.split("\n") if l.strip()]
+        def chamar():
+            reqobj = urllib.request.Request(
+                url, data=body, headers={"Content-Type": "application/json"}
+            )
+            with urllib.request.urlopen(reqobj, timeout=60) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+
+        resultado = await asyncio.to_thread(chamar)
+        texto = resultado["candidates"][0]["content"]["parts"][0]["text"]
+        topicos = [l.strip().lstrip("-•*").strip() for l in texto.split("\n") if l.strip()]
         return {"topicos": topicos}
 
     except Exception as e:
