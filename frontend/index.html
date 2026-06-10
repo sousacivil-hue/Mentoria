@@ -402,58 +402,86 @@ MMC: conceito e cálculo."></textarea>
     document.getElementById('turmas').appendChild(div);
   }
 
-  function executar() {
+  const BACKEND_URL = 'http://localhost:8000';
+
+  function coletarDados() {
+    const login = document.getElementById('login')?.value || '';
+    const senha = document.getElementById('senha')?.value || '';
+    const turmasDivs = document.querySelectorAll('.turma-bloco');
+    const turmas = [];
+    turmasDivs.forEach(div => {
+      const serie = div.querySelector('[id^="serie"]')?.value || '';
+      const disciplina = div.querySelector('[id^="disciplina"]')?.value || '';
+      const metodologia = div.querySelector('[id^="metodologia"]')?.value || '';
+      const conteudosRaw = div.querySelector('[id^="conteudos"]')?.value || '';
+      const conteudos = conteudosRaw.split('\n').map(s => s.trim()).filter(Boolean);
+      const dias = [];
+      div.querySelectorAll('.dia-check:checked').forEach(cb => dias.push(cb.value));
+      if (serie && disciplina) turmas.push({ serie, disciplina, dias, conteudos, metodologia });
+    });
+    return { login, senha, turmas };
+  }
+
+  async function executar() {
+    const dados = coletarDados();
+    if (!dados.login || !dados.senha) { alert('Preencha login e senha.'); return; }
+    if (dados.turmas.length === 0) { alert('Adicione ao menos uma turma.'); return; }
+
     document.getElementById('btn-exec').disabled = true;
     document.getElementById('btn-exec').textContent = '⏳ Executando...';
     document.getElementById('painel-progresso').style.display = 'block';
     document.getElementById('painel-ok').style.display = 'none';
     document.getElementById('log-aulas').innerHTML = '';
 
-    const aulas = [
-      { turma: '6º Ano - A', conteudo: 'Critérios de divisibilidade por 4 e por 5.' },
-      { turma: '6º Ano - A', conteudo: 'Critérios de divisibilidade por 4 e por 5.' },
-      { turma: '7º Ano - A', conteudo: 'Problemas envolvendo porcentagem.' },
-      { turma: '7º Ano - A', conteudo: 'Problemas envolvendo porcentagem.' },
-      { turma: '3ª Série - A', conteudo: 'Problemas envolvendo razão e proporção.' },
-      { turma: '3ª Série - A', conteudo: 'Problemas envolvendo razão e proporção.' },
-    ];
+    let res;
+    try {
+      res = await fetch(`${BACKEND_URL}/executar`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados)
+      });
+    } catch(e) {
+      adicionarLog('❌ Não foi possível conectar ao servidor. Verifique se o backend está rodando.');
+      document.getElementById('btn-exec').disabled = false;
+      document.getElementById('btn-exec').textContent = '▶ Executar Preenchimento Automático';
+      return;
+    }
 
-    const total = aulas.length;
-    let atual = 0;
+    const { job_id } = await res.json();
+    const source = new EventSource(`${BACKEND_URL}/progresso/${job_id}`);
+    let aulasOk = 0;
 
-    function proximaAula() {
-      if (atual >= total) {
+    source.onmessage = (e) => {
+      const { msg } = JSON.parse(e.data);
+      if (msg === '__DONE__') {
+        source.close();
         document.getElementById('painel-progresso').style.display = 'none';
         document.getElementById('painel-ok').style.display = 'block';
-        document.getElementById('resumo-final').textContent = `${total} aulas preenchidas automaticamente.`;
+        document.getElementById('resumo-final').textContent = `${aulasOk} aulas preenchidas automaticamente.`;
         document.getElementById('btn-exec').disabled = false;
         document.getElementById('btn-exec').textContent = '▶ Executar Preenchimento Automático';
         return;
       }
+      if (msg.startsWith('✅ Aula')) aulasOk++;
+      adicionarLog(msg);
+    };
 
-      const a = aulas[atual];
-      const pct = Math.round((atual / total) * 100);
-      document.getElementById('barra').style.width = pct + '%';
-      document.getElementById('prog-texto').textContent = `${atual} de ${total} aulas`;
+    source.onerror = () => {
+      source.close();
+      adicionarLog('❌ Conexão com o servidor perdida.');
+      document.getElementById('btn-exec').disabled = false;
+      document.getElementById('btn-exec').textContent = '▶ Executar Preenchimento Automático';
+    };
+  }
 
-      const log = document.getElementById('log-aulas');
-      const linha = document.createElement('div');
-      linha.style.color = '#555';
-      linha.style.padding = '3px 0';
-      linha.innerHTML = `<span style="color:#999">[${atual + 1}/${total}]</span> <b>${a.turma}</b> — ${a.conteudo.substring(0, 45)}... <span style="color:#f57c00">⏳</span>`;
-      log.appendChild(linha);
-      log.scrollTop = log.scrollHeight;
-
-      setTimeout(() => {
-        linha.innerHTML = `<span style="color:#999">[${atual + 1}/${total}]</span> <b>${a.turma}</b> — ${a.conteudo.substring(0, 45)}... <span style="color:#2e7d32">✅ OK</span>`;
-        atual++;
-        document.getElementById('barra').style.width = Math.round((atual / total) * 100) + '%';
-        document.getElementById('prog-texto').textContent = `${atual} de ${total} aulas`;
-        setTimeout(proximaAula, 800);
-      }, 1200);
-    }
-
-    setTimeout(proximaAula, 500);
+  function adicionarLog(msg) {
+    const log = document.getElementById('log-aulas');
+    const linha = document.createElement('div');
+    linha.style.padding = '3px 0';
+    linha.style.color = '#444';
+    linha.textContent = msg;
+    log.appendChild(linha);
+    log.scrollTop = log.scrollHeight;
   }
 
   function reiniciar() {
