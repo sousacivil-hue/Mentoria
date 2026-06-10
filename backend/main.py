@@ -393,6 +393,111 @@ async def run_automacao(job_id: str, data: FormData):
         await browser.close()
 
 
+class ActiveFormData(BaseModel):
+    sistema: str = "activesoft"
+    usuario: str
+    senha: str
+    inicio: str  # YYYY-MM-DD
+    fim: str
+    aulas_por_dia: dict  # {"1": 2, "2": 0, ...} 1=seg..5=sex
+    eventos: list[dict] = []  # [{"data": "2025-04-21", "tipo": "Feriado"}]
+    topicos: list[str] = []
+
+
+def montar_calendario(data: ActiveFormData) -> list[dict]:
+    """Gera a lista de aulas: data, quantidade e conteúdo de cada uma."""
+    from datetime import date, timedelta
+
+    eventos_map = {e["data"]: e["tipo"] for e in data.eventos if e.get("data")}
+    aulas = []
+    idx_topico = 0
+
+    d = date.fromisoformat(data.inicio)
+    fim = date.fromisoformat(data.fim)
+
+    while d <= fim:
+        dow = d.isoweekday()  # 1=seg .. 7=dom
+        iso = d.isoformat()
+        qtd = int(data.aulas_por_dia.get(str(dow), 0) or 0)
+
+        if 1 <= dow <= 5 and qtd > 0:
+            tipo_especial = eventos_map.get(iso)
+            if tipo_especial == "Feriado":
+                pass  # pula o dia
+            elif tipo_especial:
+                for _ in range(qtd):
+                    aulas.append({"data": iso, "conteudo": tipo_especial})
+            else:
+                for _ in range(qtd):
+                    if data.topicos:
+                        base = data.topicos[idx_topico % len(data.topicos)]
+                        volta = idx_topico // len(data.topicos)
+                        conteudo = base if volta == 0 else f"{base} — continuação e exercícios"
+                        idx_topico += 1
+                    else:
+                        conteudo = "Conteúdo programático da disciplina"
+                    aulas.append({"data": iso, "conteudo": conteudo})
+        d += timedelta(days=1)
+
+    return aulas
+
+
+async def run_active(job_id: str, data: ActiveFormData):
+    from playwright.async_api import async_playwright
+
+    log = jobs[job_id]
+
+    log.append("📅 Montando calendário de aulas...")
+    aulas = montar_calendario(data)
+    log.append(f"📊 Total de aulas a lançar: {len(aulas)}")
+
+    for a in aulas[:5]:
+        log.append(f"  {a['data']}: {a['conteudo'][:50]}")
+    if len(aulas) > 5:
+        log.append(f"  ... e mais {len(aulas) - 5} aulas")
+
+    URL_ACTIVE = "https://siga.activesoft.com.br/login/"
+
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(headless=True)
+        page = await browser.new_page(viewport={"width": 1400, "height": 900})
+
+        log.append("🔐 Fazendo login no ActiveSoft...")
+        try:
+            await page.goto(URL_ACTIVE)
+            await page.wait_for_timeout(3000)
+            usuario_input = page.locator(
+                "input[name='usuario'], input[name='login'], input[name='username'], input[type='text']"
+            ).first
+            await usuario_input.fill(data.usuario)
+            await page.locator("input[type='password']").first.fill(data.senha)
+            await page.locator(
+                "button[type='submit'], input[type='submit'], button:has-text('Entrar'), button:has-text('Acessar')"
+            ).first.click()
+            await page.wait_for_timeout(4000)
+            log.append(f"✅ Login realizado — {page.url}")
+        except Exception as e:
+            log.append(f"❌ ERRO no login: {e}")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        # TODO: navegação e lançamento de aulas no ActiveSoft
+        # Aguardando mapeamento das telas (fotos do professor)
+        log.append("⚠️ Lançamento no ActiveSoft em desenvolvimento.")
+        log.append("📋 O calendário foi montado e validado com sucesso.")
+        log.append("__CONCLUIDO__")
+        await browser.close()
+
+
+@app.post("/executar-active")
+async def executar_active(data: ActiveFormData):
+    job_id = str(uuid.uuid4())
+    jobs[job_id] = []
+    asyncio.create_task(run_active(job_id, data))
+    return {"job_id": job_id}
+
+
 @app.post("/executar")
 async def executar(data: FormData):
     job_id = str(uuid.uuid4())

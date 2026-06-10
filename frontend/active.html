@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiárioAuto — ActiveSoft / Vita</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; }
+
+  header {
+    background: linear-gradient(135deg, #7b1fa2, #4a148c);
+    color: white;
+    padding: 18px 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  header h1 { font-size: 1.4rem; font-weight: 700; }
+  header span { font-size: 0.85rem; opacity: 0.85; }
+
+  .container { max-width: 620px; margin: 32px auto; padding: 0 16px; }
+
+  .card {
+    background: white; border-radius: 16px; padding: 28px;
+    margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  .card h2 {
+    font-size: 1rem; color: #7b1fa2; margin-bottom: 18px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .step-badge {
+    background: #7b1fa2; color: white; border-radius: 50%;
+    width: 24px; height: 24px; display: inline-flex;
+    align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+  }
+
+  label {
+    display: block; font-size: 0.85rem; font-weight: 600;
+    color: #444; margin-bottom: 6px; margin-top: 14px;
+  }
+  label:first-of-type { margin-top: 0; }
+
+  input, select, textarea {
+    width: 100%; padding: 11px 14px; border: 1.5px solid #ddd;
+    border-radius: 10px; font-size: 0.95rem; outline: none;
+    transition: border 0.2s; background: #fafafa; font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { border-color: #7b1fa2; background: white; }
+  textarea { min-height: 140px; resize: vertical; line-height: 1.5; }
+
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+
+  /* dias da semana */
+  .dias-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+  .dia-bloco {
+    text-align: center;
+    border: 1.5px solid #ddd;
+    border-radius: 10px;
+    padding: 10px 4px;
+    background: #fafafa;
+  }
+  .dia-bloco .dia-nome { font-size: 0.78rem; font-weight: 700; color: #555; margin-bottom: 6px; }
+  .dia-bloco input {
+    text-align: center; padding: 8px 4px; font-size: 1rem; font-weight: 600;
+  }
+  .dia-bloco.tem-aula { border-color: #7b1fa2; background: #f3e5f5; }
+
+  /* eventos especiais */
+  .evento-block {
+    border: 1.5px solid #e0e0e0; border-radius: 12px;
+    padding: 14px; margin-bottom: 10px; position: relative; background: #fafafa;
+  }
+  .remove-evento {
+    position: absolute; top: 10px; right: 10px;
+    background: none; border: none; color: #e53935;
+    cursor: pointer; font-size: 1.1rem;
+  }
+
+  .btn-add {
+    background: none; border: 1.5px dashed #7b1fa2; color: #7b1fa2;
+    padding: 10px; border-radius: 10px; width: 100%; cursor: pointer;
+    font-size: 0.9rem; font-weight: 600; margin-top: 4px;
+  }
+  .btn-add:hover { background: #f3e5f5; }
+
+  .btn-executar {
+    width: 100%; padding: 16px;
+    background: linear-gradient(135deg, #7b1fa2, #4a148c);
+    color: white; border: none; border-radius: 12px;
+    font-size: 1.05rem; font-weight: 700; cursor: pointer;
+  }
+  .btn-executar:hover { opacity: 0.92; }
+
+  #tela-progresso { display: none; }
+  .progress-header { text-align: center; margin-bottom: 20px; }
+  .progress-header .titulo { font-size: 1.1rem; font-weight: 700; color: #333; }
+  .progress-header .subtitulo { font-size: 0.85rem; color: #888; margin-top: 4px; }
+
+  .spinner {
+    width: 48px; height: 48px; border: 4px solid #e0e0e0;
+    border-top-color: #7b1fa2; border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .log-box {
+    background: #1a1a2e; color: #a8ffb0;
+    font-family: 'Courier New', monospace; font-size: 0.8rem;
+    padding: 16px; border-radius: 12px; height: 300px;
+    overflow-y: auto; line-height: 1.7;
+  }
+  .log-box .log-erro { color: #ff6b6b; }
+  .log-box .log-ok { color: #69ff8a; }
+  .log-box .log-info { color: #b388ff; }
+
+  .status-bar {
+    background: #f3e5f5; border-radius: 10px;
+    padding: 12px 16px; margin-bottom: 16px;
+  }
+  .status-bar .status-texto { font-size: 0.9rem; color: #7b1fa2; font-weight: 600; }
+
+  #tela-sucesso { display: none; text-align: center; padding: 20px 0; }
+  .sucesso-icone { font-size: 4rem; margin-bottom: 12px; }
+  .sucesso-titulo { font-size: 1.3rem; font-weight: 700; color: #2e7d32; margin-bottom: 8px; }
+  .sucesso-sub { color: #666; font-size: 0.9rem; margin-bottom: 24px; }
+  .btn-novo {
+    background: #2e7d32; color: white; border: none;
+    padding: 13px 32px; border-radius: 10px;
+    font-size: 0.95rem; font-weight: 600; cursor: pointer;
+  }
+
+  .aviso {
+    background: #fff8e1; border-left: 4px solid #f9a825;
+    padding: 12px 14px; border-radius: 8px;
+    font-size: 0.82rem; color: #555; margin-top: 14px; line-height: 1.5;
+  }
+  .dica { font-size: 0.78rem; color: #888; margin-top: 6px; line-height: 1.4; }
+
+  .resumo-aulas {
+    background: #f3e5f5; border-radius: 10px; padding: 12px 16px;
+    margin-top: 14px; font-size: 0.88rem; color: #4a148c; font-weight: 600;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📓 DiárioAuto — ActiveSoft</h1>
+  <span>Vita, COESI e escolas que usam ActiveSoft/SIGA</span>
+</header>
+
+<div class="container">
+
+  <div id="tela-form">
+
+    <!-- 1: Login -->
+    <div class="card">
+      <h2><span class="step-badge">1</span> Acesso ao sistema</h2>
+      <label>Usuário (login do ActiveSoft)</label>
+      <input type="text" id="usuario" placeholder="Seu login">
+      <label>Senha</label>
+      <input type="password" id="senha" placeholder="Sua senha">
+      <div class="aviso">🔒 Sua senha é usada apenas durante esta automação e não fica armazenada.</div>
+    </div>
+
+    <!-- 2: Período -->
+    <div class="card">
+      <h2><span class="step-badge">2</span> Período do bimestre</h2>
+      <div class="row">
+        <div>
+          <label>Início</label>
+          <input type="date" id="data-inicio" onchange="calcularAulas()">
+        </div>
+        <div>
+          <label>Fim</label>
+          <input type="date" id="data-fim" onchange="calcularAulas()">
+        </div>
+      </div>
+    </div>
+
+    <!-- 3: Aulas por dia -->
+    <div class="card">
+      <h2><span class="step-badge">3</span> Quantas aulas em cada dia?</h2>
+      <div class="dias-grid">
+        <div class="dia-bloco" id="bloco-seg">
+          <div class="dia-nome">SEG</div>
+          <input type="number" id="dia-1" value="0" min="0" max="6" onchange="marcarDia(this); calcularAulas()">
+        </div>
+        <div class="dia-bloco" id="bloco-ter">
+          <div class="dia-nome">TER</div>
+          <input type="number" id="dia-2" value="0" min="0" max="6" onchange="marcarDia(this); calcularAulas()">
+        </div>
+        <div class="dia-bloco" id="bloco-qua">
+          <div class="dia-nome">QUA</div>
+          <input type="number" id="dia-3" value="0" min="0" max="6" onchange="marcarDia(this); calcularAulas()">
+        </div>
+        <div class="dia-bloco" id="bloco-qui">
+          <div class="dia-nome">QUI</div>
+          <input type="number" id="dia-4" value="0" min="0" max="6" onchange="marcarDia(this); calcularAulas()">
+        </div>
+        <div class="dia-bloco" id="bloco-sex">
+          <div class="dia-nome">SEX</div>
+          <input type="number" id="dia-5" value="0" min="0" max="6" onchange="marcarDia(this); calcularAulas()">
+        </div>
+      </div>
+      <div class="resumo-aulas" id="resumo-aulas">Defina o período e os dias para calcular o total de aulas</div>
+    </div>
+
+    <!-- 4: Eventos especiais -->
+    <div class="card">
+      <h2><span class="step-badge">4</span> Aulas especiais e feriados</h2>
+      <div class="dica" style="margin-bottom:12px;">Datas que não são aula normal: prova, simulado, feriado, conselho de classe... O robô vai usar o texto certo nessas datas (ou pular, no caso de feriado).</div>
+      <div id="lista-eventos"></div>
+      <button class="btn-add" onclick="addEvento()">+ Adicionar data especial</button>
+    </div>
+
+    <!-- 5: Conteúdos -->
+    <div class="card">
+      <h2><span class="step-badge">5</span> Tópicos do conteúdo</h2>
+      <label>Cole seus tópicos (um por linha, na ordem que serão dados)</label>
+      <textarea id="topicos" placeholder="Equações do 2º grau - introdução
+Equações do 2º grau - fórmula de Bhaskara
+Exercícios sobre equações
+..."></textarea>
+      <div class="dica">💡 O robô distribui os tópicos em sequência nas datas de aula normal. Se acabarem os tópicos, ele recomeça do início com "continuação/exercícios". Peça ao ChatGPT/Gemini para gerar a lista se preferir.</div>
+    </div>
+
+    <button class="btn-executar" onclick="executar()">🚀 Iniciar Automação</button>
+
+  </div>
+
+  <!-- PROGRESSO -->
+  <div id="tela-progresso">
+    <div class="card">
+      <div class="progress-header">
+        <div class="spinner"></div>
+        <div class="titulo">Preenchendo seu diário...</div>
+        <div class="subtitulo">Acompanhe abaixo. Não feche esta janela.</div>
+      </div>
+      <div class="status-bar"><span class="status-texto" id="status-atual">Iniciando...</span></div>
+      <div class="log-box" id="log-box"></div>
+    </div>
+  </div>
+
+  <!-- SUCESSO -->
+  <div id="tela-sucesso">
+    <div class="card">
+      <div class="sucesso-icone">🎉</div>
+      <div class="sucesso-titulo">Diário atualizado com sucesso!</div>
+      <div class="sucesso-sub">Todas as aulas foram lançadas.</div>
+      <button class="btn-novo" onclick="reiniciar()">Fazer outra automação</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const BACKEND_URL = 'http://localhost:8000';
+let eventoCount = 0;
+
+function marcarDia(input) {
+  const bloco = input.parentElement;
+  bloco.classList.toggle('tem-aula', parseInt(input.value) > 0);
+}
+
+function getAulasPorDia() {
+  // índice JS: 1=seg ... 5=sex
+  const dias = {};
+  for (let i = 1; i <= 5; i++) {
+    dias[i] = parseInt(document.getElementById(`dia-${i}`).value) || 0;
+  }
+  return dias;
+}
+
+function getEventos() {
+  const blocos = document.querySelectorAll('.evento-block');
+  return Array.from(blocos).map(b => ({
+    data: b.querySelector('input[type=date]').value,
+    tipo: b.querySelector('select').value
+  })).filter(e => e.data);
+}
+
+function calcularAulas() {
+  const ini = document.getElementById('data-inicio').value;
+  const fim = document.getElementById('data-fim').value;
+  if (!ini || !fim) return;
+
+  const dias = getAulasPorDia();
+  const eventos = getEventos();
+  const feriados = new Set(eventos.filter(e => e.tipo === 'Feriado').map(e => e.data));
+
+  let total = 0;
+  let d = new Date(ini + 'T12:00:00');
+  const end = new Date(fim + 'T12:00:00');
+  while (d <= end) {
+    const dow = d.getDay(); // 0=dom, 1=seg...
+    const iso = d.toISOString().slice(0, 10);
+    if (dow >= 1 && dow <= 5 && !feriados.has(iso)) {
+      total += dias[dow] || 0;
+    }
+    d.setDate(d.getDate() + 1);
+  }
+
+  document.getElementById('resumo-aulas').textContent =
+    total > 0 ? `📊 Total estimado: ${total} aulas no período` : 'Defina os dias da semana com aula';
+}
+
+function addEvento() {
+  const idx = eventoCount++;
+  const div = document.createElement('div');
+  div.className = 'evento-block';
+  div.innerHTML = `
+    <button class="remove-evento" onclick="this.parentElement.remove(); calcularAulas()">✕</button>
+    <div class="row">
+      <div>
+        <label>Data</label>
+        <input type="date" onchange="calcularAulas()">
+      </div>
+      <div>
+        <label>Tipo</label>
+        <select onchange="calcularAulas()">
+          <option>Aplicação de Prova</option>
+          <option>Simulado</option>
+          <option>Feriado</option>
+          <option>Revisão para prova</option>
+          <option>Correção da prova</option>
+          <option>Conselho de Classe</option>
+          <option>Atividade avaliativa</option>
+        </select>
+      </div>
+    </div>
+  `;
+  document.getElementById('lista-eventos').appendChild(div);
+}
+
+function addLog(msg, tipo = '') {
+  const box = document.getElementById('log-box');
+  const linha = document.createElement('div');
+  if (tipo) linha.className = `log-${tipo}`;
+  linha.textContent = msg;
+  box.appendChild(linha);
+  box.scrollTop = box.scrollHeight;
+  if (msg && !msg.startsWith('=')) {
+    document.getElementById('status-atual').textContent = msg.slice(0, 60);
+  }
+}
+
+async function executar() {
+  const usuario = document.getElementById('usuario').value.trim();
+  const senha = document.getElementById('senha').value.trim();
+  const ini = document.getElementById('data-inicio').value;
+  const fim = document.getElementById('data-fim').value;
+  const topicos = document.getElementById('topicos').value
+    .split('\n').map(s => s.trim()).filter(s => s);
+
+  if (!usuario || !senha) { alert('Preencha usuário e senha.'); return; }
+  if (!ini || !fim) { alert('Defina o início e fim do bimestre.'); return; }
+  const dias = getAulasPorDia();
+  if (!Object.values(dias).some(v => v > 0)) {
+    alert('Informe quantas aulas tem em pelo menos um dia da semana.'); return;
+  }
+  if (topicos.length === 0) { alert('Cole seus tópicos de conteúdo.'); return; }
+
+  const dados = {
+    sistema: 'activesoft',
+    usuario, senha,
+    inicio: ini,
+    fim: fim,
+    aulas_por_dia: dias,
+    eventos: getEventos(),
+    topicos: topicos
+  };
+
+  document.getElementById('tela-form').style.display = 'none';
+  document.getElementById('tela-progresso').style.display = 'block';
+
+  try {
+    const resp = await fetch(`${BACKEND_URL}/executar-active`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    });
+    const { job_id } = await resp.json();
+
+    const sse = new EventSource(`${BACKEND_URL}/progresso/${job_id}`);
+    sse.onmessage = (e) => {
+      const msg = e.data;
+      if (msg === '__CONCLUIDO__') { sse.close(); mostrarSucesso(); }
+      else if (msg === '__ERRO__') { sse.close(); addLog('ERRO: automação encerrada com falha.', 'erro'); }
+      else {
+        const tipo = msg.includes('ERRO') ? 'erro'
+          : (msg.includes('✅') || msg.includes('OK')) ? 'ok' : 'info';
+        addLog(msg, tipo);
+      }
+    };
+    sse.onerror = () => { addLog('Conexão perdida com o servidor.', 'erro'); sse.close(); };
+  } catch (err) {
+    addLog(`Erro ao conectar ao servidor: ${err.message}`, 'erro');
+  }
+}
+
+function mostrarSucesso() {
+  document.getElementById('tela-progresso').style.display = 'none';
+  document.getElementById('tela-sucesso').style.display = 'block';
+}
+
+function reiniciar() {
+  document.getElementById('tela-sucesso').style.display = 'none';
+  document.getElementById('tela-form').style.display = 'block';
+  document.getElementById('log-box').innerHTML = '';
+}
+</script>
+</body>
+</html>
