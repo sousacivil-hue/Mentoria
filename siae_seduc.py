@@ -80,11 +80,43 @@ async def main():
             conteudo = get_conteudo(serie_texto)
             log(f"Aula {aula_num + 1}: {serie_texto.strip()[:50]} -> {conteudo[:40]}...")
 
-            try:
-                btn_azul = linha.locator("a.btn-primary, a.btn-info, a.btn[class*='primary']").first
-                await btn_azul.wait_for(timeout=3000)
-            except Exception:
-                btn_azul = linha.locator("a, button").last
+            # Descobre todos os links/botoes na linha
+            todos_links = linha.locator("a, button")
+            qtd = await todos_links.count()
+            log(f"  Botoes na linha: {qtd}")
+            for idx in range(qtd):
+                el = todos_links.nth(idx)
+                try:
+                    href = await el.get_attribute("href") or ""
+                    txt = await el.inner_text() or ""
+                    cls = await el.get_attribute("class") or ""
+                    log(f"    [{idx}] txt='{txt.strip()}' href='{href[:60]}' class='{cls}'")
+                except Exception:
+                    pass
+
+            # Clica no primeiro link que vai para Registrar
+            btn_azul = None
+            for idx in range(qtd):
+                el = todos_links.nth(idx)
+                try:
+                    href = await el.get_attribute("href") or ""
+                    cls = await el.get_attribute("class") or ""
+                    if "Registrar" in href or "registrar" in href:
+                        btn_azul = el
+                        log(f"  Clicando botao Registrar [{idx}]")
+                        break
+                except Exception:
+                    pass
+
+            if not btn_azul:
+                try:
+                    btn_azul = linha.locator("a.btn-primary, a.btn-info").first
+                    await btn_azul.wait_for(timeout=2000)
+                    log("  Clicando btn-primary")
+                except Exception:
+                    btn_azul = todos_links.first
+                    log("  Clicando primeiro link da linha")
+
             await btn_azul.scroll_into_view_if_needed()
             await btn_azul.click()
             await page.wait_for_timeout(3000)
