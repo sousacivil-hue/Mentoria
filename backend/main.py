@@ -401,6 +401,7 @@ class ActiveFormData(BaseModel):
     fim: str
     aulas_por_dia: dict  # {"1": 2, "2": 0, ...} 1=seg..5=sex
     eventos: list[dict] = []  # [{"data": "2025-04-21", "tipo": "Feriado"}]
+    sabados_letivos: list[dict] = []  # [{"data": "2025-04-26", "segue_dia": 1}]
     topicos: list[str] = []
 
 
@@ -409,6 +410,8 @@ def montar_calendario(data: ActiveFormData) -> list[dict]:
     from datetime import date, timedelta
 
     eventos_map = {e["data"]: e["tipo"] for e in data.eventos if e.get("data")}
+    # Sábados letivos: data -> dia da semana cujo horário ele segue
+    sabados_map = {s["data"]: int(s["segue_dia"]) for s in data.sabados_letivos if s.get("data")}
     aulas = []
     idx_topico = 0
 
@@ -418,7 +421,14 @@ def montar_calendario(data: ActiveFormData) -> list[dict]:
     while d <= fim:
         dow = d.isoweekday()  # 1=seg .. 7=dom
         iso = d.isoformat()
-        qtd = int(data.aulas_por_dia.get(str(dow), 0) or 0)
+
+        if dow == 6 and iso in sabados_map:
+            # Sábado letivo segue o horário de outro dia
+            qtd = int(data.aulas_por_dia.get(str(sabados_map[iso]), 0) or 0)
+        else:
+            qtd = int(data.aulas_por_dia.get(str(dow), 0) or 0)
+            if dow == 6:
+                qtd = 0  # sábado comum não tem aula
 
         if 1 <= dow <= 6 and qtd > 0:
             tipo_especial = eventos_map.get(iso)

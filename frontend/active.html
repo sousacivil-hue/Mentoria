@@ -57,7 +57,7 @@
   /* dias da semana */
   .dias-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 8px;
   }
   .dia-bloco {
@@ -211,12 +211,22 @@
           <div class="dia-nome">SEX</div>
           <input type="number" id="dia-5" value="0" min="0" max="6" onchange="marcarDia(this); calcularAulas()">
         </div>
-        <div class="dia-bloco" id="bloco-sab">
-          <div class="dia-nome">SÁB</div>
-          <input type="number" id="dia-6" value="0" min="0" max="6" onchange="marcarDia(this); calcularAulas()">
-        </div>
       </div>
       <div class="resumo-aulas" id="resumo-aulas">Defina o período e os dias para calcular o total de aulas</div>
+    </div>
+
+    <!-- 3b: Sábados letivos -->
+    <div class="card">
+      <h2><span class="step-badge">3b</span> Sábados letivos</h2>
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; margin-top:0;">
+        <input type="checkbox" id="tem-sabado" style="width:auto;" onchange="toggleSabados()">
+        A coordenação liberou algum sábado letivo?
+      </label>
+      <div id="bloco-sabados" style="display:none; margin-top:14px;">
+        <div class="dica" style="margin-bottom:12px;">Sábados letivos costumam seguir o horário de outro dia da semana. Adicione cada sábado e diga qual horário ele segue — as aulas extras já entram na programação.</div>
+        <div id="lista-sabados"></div>
+        <button class="btn-add" onclick="addSabado()">+ Adicionar sábado letivo</button>
+      </div>
     </div>
 
     <!-- 4: Eventos especiais -->
@@ -277,12 +287,53 @@ function marcarDia(input) {
 }
 
 function getAulasPorDia() {
-  // índice JS: 1=seg ... 6=sáb
+  // índice JS: 1=seg ... 5=sex
   const dias = {};
-  for (let i = 1; i <= 6; i++) {
+  for (let i = 1; i <= 5; i++) {
     dias[i] = parseInt(document.getElementById(`dia-${i}`).value) || 0;
   }
   return dias;
+}
+
+function toggleSabados() {
+  const on = document.getElementById('tem-sabado').checked;
+  document.getElementById('bloco-sabados').style.display = on ? 'block' : 'none';
+  if (on && document.querySelectorAll('.sabado-block').length === 0) addSabado();
+  calcularAulas();
+}
+
+function addSabado() {
+  const div = document.createElement('div');
+  div.className = 'evento-block sabado-block';
+  div.innerHTML = `
+    <button class="remove-evento" onclick="this.parentElement.remove(); calcularAulas()">✕</button>
+    <div class="row">
+      <div>
+        <label>Data do sábado</label>
+        <input type="date" onchange="calcularAulas()">
+      </div>
+      <div>
+        <label>Segue o horário de</label>
+        <select onchange="calcularAulas()">
+          <option value="1">Segunda</option>
+          <option value="2">Terça</option>
+          <option value="3">Quarta</option>
+          <option value="4">Quinta</option>
+          <option value="5">Sexta</option>
+        </select>
+      </div>
+    </div>
+  `;
+  document.getElementById('lista-sabados').appendChild(div);
+}
+
+function getSabados() {
+  if (!document.getElementById('tem-sabado').checked) return [];
+  const blocos = document.querySelectorAll('.sabado-block');
+  return Array.from(blocos).map(b => ({
+    data: b.querySelector('input[type=date]').value,
+    segue_dia: parseInt(b.querySelector('select').value)
+  })).filter(s => s.data);
 }
 
 function getEventos() {
@@ -308,14 +359,22 @@ function calcularAulas() {
   while (d <= end) {
     const dow = d.getDay(); // 0=dom, 1=seg...
     const iso = d.toISOString().slice(0, 10);
-    if (dow >= 1 && dow <= 6 && !feriados.has(iso)) {
+    if (dow >= 1 && dow <= 5 && !feriados.has(iso)) {
       total += dias[dow] || 0;
     }
     d.setDate(d.getDate() + 1);
   }
 
+  // Sábados letivos: somam as aulas do dia que seguem
+  let totalSabados = 0;
+  for (const s of getSabados()) {
+    totalSabados += dias[s.segue_dia] || 0;
+  }
+  total += totalSabados;
+
+  const extra = totalSabados > 0 ? ` (${totalSabados} em sábados letivos)` : '';
   document.getElementById('resumo-aulas').textContent =
-    total > 0 ? `📊 Total estimado: ${total} aulas no período` : 'Defina os dias da semana com aula';
+    total > 0 ? `📊 Total estimado: ${total} aulas no período${extra}` : 'Defina os dias da semana com aula';
 }
 
 function addEvento() {
@@ -381,6 +440,7 @@ async function executar() {
     fim: fim,
     aulas_por_dia: dias,
     eventos: getEventos(),
+    sabados_letivos: getSabados(),
     topicos: topicos
   };
 
