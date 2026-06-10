@@ -398,17 +398,8 @@ async def main():
                     log("  Chamada confirmada")
                 else:
                     log("  Botao chamada nao encontrado na lista")
-                        await page.wait_for_timeout(3000)
-                        confirmar = page.locator("button:has-text('Confirmar'), button:has-text('CONFIRMAR'), input[value='Confirmar']").first
-                        await confirmar.wait_for(timeout=5000)
-                        await confirmar.click()
-                        await page.wait_for_timeout(2000)
-                        log("  Frequencia confirmada")
-                        await page.goto(URL_AULAS)
-                        await page.wait_for_timeout(2000)
-                        await selecionar_solicitadas()
             except Exception as e:
-                log(f"  ERRO frequencia: {e}")
+                log(f"  ERRO chamada: {e}")
 
         log(f"\n{'=' * 55}")
         log(f"  CONCLUIDO! Total de aulas preenchidas: {aula_num}")
