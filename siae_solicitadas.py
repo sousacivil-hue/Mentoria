@@ -393,11 +393,8 @@ async def main():
                     await page.evaluate(f"{btn_chamada.rstrip(';')}")
                     await page.wait_for_timeout(2000)
 
-                    # Clica em Confirmar no final da pagina (sem marcar faltas)
-                    confirmar = page.locator(
-                        "button:has-text('Confirmar'), button:has-text('CONFIRMAR'), "
-                        "input[value='Confirmar'], input[value='CONFIRMAR']"
-                    ).last
+                    # Clica no botao verde CONFIRMAR do modal
+                    confirmar = page.locator("button.btn-success:has-text('CONFIRMAR'), button.btn-success:has-text('Confirmar')")
                     await confirmar.wait_for(timeout=5000)
                     await confirmar.click()
                     await page.wait_for_timeout(2000)
