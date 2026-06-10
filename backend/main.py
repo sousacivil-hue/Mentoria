@@ -552,11 +552,16 @@ async def gerar_topicos(req: GerarTopicosRequest):
         }).encode("utf-8")
 
         def chamar():
+            import urllib.error
             reqobj = urllib.request.Request(
                 url, data=body, headers={"Content-Type": "application/json"}
             )
-            with urllib.request.urlopen(reqobj, timeout=60) as resp:
-                return json.loads(resp.read().decode("utf-8"))
+            try:
+                with urllib.request.urlopen(reqobj, timeout=60) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except urllib.error.HTTPError as e:
+                detalhe = e.read().decode("utf-8", errors="ignore")
+                raise RuntimeError(f"HTTP {e.code}: {detalhe[:600]}")
 
         resultado = await asyncio.to_thread(chamar)
         texto = resultado["candidates"][0]["content"]["parts"][0]["text"]
