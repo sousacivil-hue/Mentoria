@@ -142,21 +142,30 @@ async def main():
             try:
                 objeto = popup.locator("textarea").nth(0)
                 await objeto.wait_for(timeout=6000)
-                await objeto.triple_click()
+                await objeto.click(click_count=3)
                 await objeto.fill(conteudo)
                 log("  Objeto preenchido")
             except Exception as e:
                 log(f"  ERRO objeto: {e}")
 
-            # Preenche Metodologia
-            try:
-                met = popup.locator("textarea").nth(1)
-                await met.wait_for(timeout=3000)
-                await met.click()
-                await met.fill(METODOLOGIA)
-                log("  Metodologia preenchida")
-            except Exception as e:
-                log(f"  ERRO metodologia: {e}")
+            # Preenche Metodologia (tenta textarea e input)
+            met_preenchida = False
+            for sel in ["textarea", "input[type='text']"]:
+                try:
+                    locs = popup.locator(sel)
+                    count = await locs.count()
+                    log(f"  {sel} count: {count}")
+                    if count >= 2:
+                        met = locs.nth(1)
+                        await met.click()
+                        await met.fill(METODOLOGIA)
+                        log("  Metodologia preenchida")
+                        met_preenchida = True
+                        break
+                except Exception as e:
+                    log(f"  ERRO metodologia ({sel}): {e}")
+            if not met_preenchida:
+                log("  Metodologia nao preenchida")
 
             # Salva
             try:
