@@ -156,3 +156,18 @@ Argumento de venda:
 Por R$ 19,90, sai a R$ 1,65 a hora recuperada.
 
 Colégios particulares (Vita, COESI, Salesiano): testar R$ 29,90.
+
+---
+
+## Uso de marcas (SIAE, ActiveSoft, TOTVS)
+
+- NAO usar logos/simbolos das empresas ou do Governo de Sergipe — sugere
+  parceria que nao existe e pode gerar notificacao juridica.
+- PODE mencionar compatibilidade em texto puro:
+  "Funciona com SIAE (rede estadual de Sergipe)"
+  "Compativel com portais ActiveSoft"
+- Alternativa visual: selos proprios no padrao do DiarioAuto:
+  [ V REDE ESTADUAL SE ]  [ V COLEGIOS PARTICULARES ]
+- Estrategia: ser discreto sobre quais sistemas automatiza prolonga a
+  vida do produto. O professor reconhece "SIAE" em texto, nao precisa
+  de brasao.
