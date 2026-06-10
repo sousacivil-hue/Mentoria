@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DiárioAuto — Automação do Diário Escolar</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, #1a73e8, #0d47a1);
+    color: white;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  header h1 { font-size: 1.4rem; font-weight: 700; }
+  header span { font-size: 0.85rem; opacity: 0.85; }
+
+  .container {
+    max-width: 680px;
+    margin: 32px auto;
+    padding: 0 16px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+
+  .card h2 {
+    font-size: 1rem;
+    color: #1a73e8;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .step-badge {
+    background: #1a73e8;
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 6px;
+    margin-top: 14px;
+  }
+  label:first-of-type { margin-top: 0; }
+
+  input, select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #ddd;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border 0.2s;
+    background: #fafafa;
+  }
+  input:focus, select:focus { border-color: #1a73e8; background: white; }
+
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+
+  .turma-block {
+    border: 1.5px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    position: relative;
+    background: #fafafa;
+  }
+  .turma-block h3 {
+    font-size: 0.9rem;
+    color: #333;
+    margin-bottom: 12px;
+  }
+  .remove-turma {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: none;
+    border: none;
+    color: #e53935;
+    cursor: pointer;
+    font-size: 1.1rem;
+  }
+
+  .btn-add {
+    background: none;
+    border: 1.5px dashed #1a73e8;
+    color: #1a73e8;
+    padding: 10px;
+    border-radius: 10px;
+    width: 100%;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 4px;
+    transition: background 0.2s;
+  }
+  .btn-add:hover { background: #e8f0fe; }
+
+  .opcoes-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .opcao {
+    border: 1.5px solid #ddd;
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    background: #fafafa;
+  }
+  .opcao:hover { border-color: #1a73e8; }
+  .opcao.ativo {
+    border-color: #1a73e8;
+    background: #e8f0fe;
+    color: #1a73e8;
+    font-weight: 600;
+  }
+  .opcao .icone { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+  .opcao .label { font-size: 0.8rem; }
+
+  .btn-executar {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, #1a73e8, #0d47a1);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.3px;
+  }
+  .btn-executar:hover { opacity: 0.92; transform: translateY(-1px); }
+  .btn-executar:active { transform: translateY(0); }
+  .btn-executar:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* Tela de progresso */
+  #tela-progresso {
+    display: none;
+  }
+
+  .progress-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .progress-header .titulo { font-size: 1.1rem; font-weight: 700; color: #333; }
+  .progress-header .subtitulo { font-size: 0.85rem; color: #888; margin-top: 4px; }
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e0e0e0;
+    border-top-color: #1a73e8;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .log-box {
+    background: #1a1a2e;
+    color: #a8ffb0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    padding: 16px;
+    border-radius: 12px;
+    height: 280px;
+    overflow-y: auto;
+    line-height: 1.6;
+  }
+  .log-box .log-erro { color: #ff6b6b; }
+  .log-box .log-ok { color: #69ff8a; }
+  .log-box .log-info { color: #74b9ff; }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #e8f0fe;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+  .status-bar .status-texto { font-size: 0.9rem; color: #1a73e8; font-weight: 600; }
+
+  /* Tela de sucesso */
+  #tela-sucesso {
+    display: none;
+    text-align: center;
+    padding: 20px 0;
+  }
+  .sucesso-icone { font-size: 4rem; margin-bottom: 12px; }
+  .sucesso-titulo { font-size: 1.3rem; font-weight: 700; color: #2e7d32; margin-bottom: 8px; }
+  .sucesso-sub { color: #666; font-size: 0.9rem; margin-bottom: 24px; }
+  .btn-novo {
+    background: #2e7d32;
+    color: white;
+    border: none;
+    padding: 13px 32px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .aviso {
+    background: #fff8e1;
+    border-left: 4px solid #f9a825;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    color: #555;
+    margin-top: 14px;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 480px) {
+    .opcoes-grid { grid-template-columns: 1fr 1fr; }
+    .row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📓 DiárioAuto</h1>
+    <span>Automação do Diário Escolar SIAE/SEDUC-SE</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- FORMULÁRIO -->
+  <div id="tela-form">
+
+    <!-- STEP 1: Login -->
+    <div class="card">
+      <h2><span class="step-badge">1</span> Acesso ao SIAE</h2>
+      <label>CPF (login)</label>
+      <input type="text" id="cpf" placeholder="000.000.000-00" autocomplete="username">
+      <label>Senha</label>
+      <input type="password" id="senha" placeholder="Sua senha do SIAE" autocomplete="current-password">
+      <div class="aviso">🔒 Sua senha é usada apenas nesta sessão e não é armazenada.</div>
+    </div>
+
+    <!-- STEP 2: O que fazer -->
+    <div class="card">
+      <h2><span class="step-badge">2</span> O que deseja automatizar?</h2>
+      <div class="opcoes-grid">
+        <div class="opcao ativo" onclick="toggleOpcao(this, 'aulas')" data-key="aulas">
+          <span class="icone">📝</span>
+          <span class="label">Lançar Aulas</span>
+        </div>
+        <div class="opcao" onclick="toggleOpcao(this, 'chamada')" data-key="chamada">
+          <span class="icone">✅</span>
+          <span class="label">Fazer Chamada</span>
+        </div>
+        <div class="opcao" onclick="toggleOpcao(this, 'notas')" data-key="notas">
+          <span class="icone">🔢</span>
+          <span class="label">Lançar Notas</span>
+        </div>
+        <div class="opcao" onclick="toggleOpcao(this, 'solicitadas')" data-key="solicitadas">
+          <span class="icone">📋</span>
+          <span class="label">Aulas Solicitadas</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: Turmas -->
+    <div class="card">
+      <h2><span class="step-badge">3</span> Turmas</h2>
+      <div id="lista-turmas">
+        <div class="turma-block" id="turma-0">
+          <h3>Turma 1</h3>
+          <label>Nome da turma</label>
+          <input type="text" placeholder="Ex: 3ª Série A, 7º Ano B...">
+          <div class="row">
+            <div>
+              <label>Série</label>
+              <select>
+                <option>6º Ano</option>
+                <option>7º Ano</option>
+                <option>8º Ano</option>
+                <option>9º Ano</option>
+                <option>1ª Série</option>
+                <option>2ª Série</option>
+                <option selected>3ª Série</option>
+                <option>EJA</option>
+              </select>
+            </div>
+            <div>
+              <label>Aulas/semana</label>
+              <input type="number" value="2" min="1" max="10">
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addTurma()">+ Adicionar turma</button>
+    </div>
+
+    <!-- STEP 4: Período -->
+    <div class="card">
+      <h2><span class="step-badge">4</span> Período</h2>
+      <div class="row">
+        <div>
+          <label>Bimestre</label>
+          <select id="bimestre">
+            <option>1º Bimestre</option>
+            <option selected>2º Bimestre</option>
+            <option>3º Bimestre</option>
+            <option>4º Bimestre</option>
+          </select>
+        </div>
+        <div>
+          <label>Ano letivo</label>
+          <input type="number" id="ano" value="2025">
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 5: Notas (aparece só se notas selecionado) -->
+    <div class="card" id="card-notas" style="display:none;">
+      <h2><span class="step-badge">5</span> Notas AV2</h2>
+      <label>Nota padrão para todos os alunos</label>
+      <input type="text" id="nota-av2" placeholder="Ex: 8,0" value="8,0">
+      <div class="aviso">⚠️ Esta nota será lançada para todos os alunos das turmas selecionadas. Verifique antes de confirmar.</div>
+    </div>
+
+    <button class="btn-executar" onclick="executar()">
+      🚀 Iniciar Automação
+    </button>
+
+  </div><!-- fim tela-form -->
+
+  <!-- PROGRESSO -->
+  <div id="tela-progresso">
+    <div class="card">
+      <div class="progress-header">
+        <div class="spinner"></div>
+        <div class="titulo">Automatizando o diário...</div>
+        <div class="subtitulo">Não feche esta janela</div>
+      </div>
+      <div class="status-bar">
+        <span class="status-texto" id="status-atual">Iniciando...</span>
+      </div>
+      <div class="log-box" id="log-box"></div>
+    </div>
+  </div>
+
+  <!-- SUCESSO -->
+  <div id="tela-sucesso">
+    <div class="card">
+      <div class="sucesso-icone">🎉</div>
+      <div class="sucesso-titulo">Diário atualizado com sucesso!</div>
+      <div class="sucesso-sub" id="sucesso-resumo">Todas as tarefas foram concluídas.</div>
+      <button class="btn-novo" onclick="reiniciar()">Fazer outra automação</button>
+    </div>
+  </div>
+
+</div><!-- fim container -->
+
+<script>
+const BACKEND_URL = 'http://localhost:8000';
+
+const opcoesSelecionadas = { aulas: true, chamada: false, notas: false, solicitadas: false };
+let turmaCount = 1;
+
+function toggleOpcao(el, key) {
+  opcoesSelecionadas[key] = !opcoesSelecionadas[key];
+  el.classList.toggle('ativo');
+  document.getElementById('card-notas').style.display =
+    opcoesSelecionadas.notas ? 'block' : 'none';
+}
+
+function addTurma() {
+  const idx = turmaCount++;
+  const div = document.createElement('div');
+  div.className = 'turma-block';
+  div.id = `turma-${idx}`;
+  div.innerHTML = `
+    <h3>Turma ${idx + 1}</h3>
+    <button class="remove-turma" onclick="this.parentElement.remove()">✕</button>
+    <label>Nome da turma</label>
+    <input type="text" placeholder="Ex: 3ª Série A, 7º Ano B...">
+    <div class="row">
+      <div>
+        <label>Série</label>
+        <select>
+          <option>6º Ano</option>
+          <option>7º Ano</option>
+          <option>8º Ano</option>
+          <option>9º Ano</option>
+          <option>1ª Série</option>
+          <option>2ª Série</option>
+          <option>3ª Série</option>
+          <option>EJA</option>
+        </select>
+      </div>
+      <div>
+        <label>Aulas/semana</label>
+        <input type="number" value="2" min="1" max="10">
+      </div>
+    </div>
+  `;
+  document.getElementById('lista-turmas').appendChild(div);
+}
+
+function coletarTurmas() {
+  const blocos = document.querySelectorAll('.turma-block');
+  return Array.from(blocos).map(b => ({
+    nome: b.querySelector('input[type=text]').value,
+    serie: b.querySelector('select').value,
+    aulas_semana: parseInt(b.querySelector('input[type=number]').value) || 2
+  }));
+}
+
+function addLog(msg, tipo = '') {
+  const box = document.getElementById('log-box');
+  const linha = document.createElement('div');
+  if (tipo) linha.className = `log-${tipo}`;
+  linha.textContent = msg;
+  box.appendChild(linha);
+  box.scrollTop = box.scrollHeight;
+
+  // Atualiza status
+  if (msg && !msg.startsWith('=')) {
+    document.getElementById('status-atual').textContent = msg.slice(0, 60);
+  }
+}
+
+async function executar() {
+  const cpf = document.getElementById('cpf').value.trim();
+  const senha = document.getElementById('senha').value.trim();
+
+  if (!cpf || !senha) { alert('Preencha CPF e senha.'); return; }
+  if (!Object.values(opcoesSelecionadas).some(v => v)) {
+    alert('Selecione pelo menos uma ação.'); return;
+  }
+
+  const dados = {
+    login: cpf,
+    senha: senha,
+    opcoes: opcoesSelecionadas,
+    turmas: coletarTurmas(),
+    bimestre: document.getElementById('bimestre').value,
+    ano: document.getElementById('ano').value,
+    nota_av2: document.getElementById('nota-av2')?.value || ''
+  };
+
+  document.getElementById('tela-form').style.display = 'none';
+  document.getElementById('tela-progresso').style.display = 'block';
+
+  try {
+    const resp = await fetch(`${BACKEND_URL}/executar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    });
+    const { job_id } = await resp.json();
+
+    const sse = new EventSource(`${BACKEND_URL}/progresso/${job_id}`);
+    sse.onmessage = (e) => {
+      const msg = e.data;
+      if (msg === '__CONCLUIDO__') {
+        sse.close();
+        mostrarSucesso();
+      } else if (msg === '__ERRO__') {
+        sse.close();
+        addLog('ERRO: automação encerrada com falha.', 'erro');
+      } else {
+        const tipo = msg.includes('ERRO') ? 'erro' : msg.includes('OK') || msg.includes('✓') ? 'ok' : 'info';
+        addLog(msg, tipo);
+      }
+    };
+    sse.onerror = () => {
+      addLog('Conexão perdida com o servidor.', 'erro');
+      sse.close();
+    };
+  } catch (err) {
+    addLog(`Erro ao conectar ao servidor: ${err.message}`, 'erro');
+  }
+}
+
+function mostrarSucesso() {
+  document.getElementById('tela-progresso').style.display = 'none';
+  document.getElementById('tela-sucesso').style.display = 'block';
+}
+
+function reiniciar() {
+  document.getElementById('tela-sucesso').style.display = 'none';
+  document.getElementById('tela-form').style.display = 'block';
+  document.getElementById('log-box').innerHTML = '';
+}
+</script>
+</body>
+</html>
