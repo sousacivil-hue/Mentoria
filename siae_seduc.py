@@ -71,7 +71,11 @@ async def main():
             conteudo = get_conteudo(serie_texto)
             print(f"Aula {aula_num + 1}: {serie_texto.strip()[:50]} -> {conteudo[:40]}...")
 
-            btn_azul = linha.locator("a.btn-primary, a.btn-info, a.btn[class*='primary']").first
+            try:
+                btn_azul = linha.locator("a.btn-primary, a.btn-info, a.btn[class*='primary']").first
+                await btn_azul.wait_for(timeout=3000)
+            except Exception:
+                btn_azul = linha.locator("a, button").last
             await btn_azul.scroll_into_view_if_needed()
             await btn_azul.click()
             await page.wait_for_timeout(2000)
