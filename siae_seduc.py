@@ -243,21 +243,20 @@ async def main():
 
         async def selecionar_solicitadas():
             try:
-                await page.evaluate("""
-                    () => {
-                        const radios = document.querySelectorAll('input[type=radio]');
-                        for (const r of radios) {
-                            const label = r.closest('label') || document.querySelector(`label[for="${r.id}"]`);
-                            const texto = label ? label.innerText : r.value;
-                            if (texto && texto.includes('Solicitada')) {
-                                r.click();
-                                return true;
-                            }
-                        }
-                        return false;
-                    }
-                """)
-                await page.wait_for_timeout(1500)
+                # Tenta clicar pelo texto do label
+                radio = page.locator("label:has-text('Solicitada') input[type=radio], input[type=radio][value*='olicita']")
+                if await radio.count() > 0:
+                    await radio.first.click(force=True)
+                    await page.wait_for_timeout(1500)
+                    log("  Aba Solicitadas selecionada")
+                    return
+                # Fallback: clica em qualquer radio que nao seja o primeiro (Regulares)
+                radios = page.locator("input[type=radio]")
+                count = await radios.count()
+                if count >= 2:
+                    await radios.nth(1).click(force=True)
+                    await page.wait_for_timeout(1500)
+                    log("  Aba Solicitadas selecionada (fallback)")
             except Exception as e:
                 log(f"  AVISO: nao selecionou Solicitadas: {e}")
 
