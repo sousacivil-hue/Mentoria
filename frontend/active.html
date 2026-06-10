@@ -570,7 +570,10 @@ async function executar() {
 }
 
 function mostrarSucesso() {
-  document.getElementById('tela-progresso').style.display = 'none';
+  // Mantém o log visível e mostra o sucesso acima dele
+  document.querySelector('#tela-progresso .spinner').style.display = 'none';
+  document.querySelector('#tela-progresso .titulo').textContent = 'Automação finalizada';
+  document.querySelector('#tela-progresso .subtitulo').textContent = 'Confira o relatório abaixo';
   document.getElementById('tela-sucesso').style.display = 'block';
 }
 
