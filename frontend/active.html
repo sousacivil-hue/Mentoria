@@ -165,6 +165,9 @@
     <!-- 1: Login -->
     <div class="card">
       <h2><span class="step-badge">1</span> Acesso ao sistema</h2>
+      <label>Link de acesso do seu colégio</label>
+      <input type="text" id="url-colegio" placeholder="Ex: https://siga.activesoft.com.br/login/?instituicao=VITA">
+      <div class="dica">Cole o endereço da página de login que o seu colégio usa (aquele que você acessa normalmente para entrar no sistema).</div>
       <label>Usuário (login do ActiveSoft)</label>
       <input type="text" id="usuario" placeholder="Seu login">
       <label>Senha</label>
@@ -418,9 +421,11 @@ function addLog(msg, tipo = '') {
 }
 
 async function executar() {
+  const urlColegio = document.getElementById('url-colegio').value.trim();
   const usuario = document.getElementById('usuario').value.trim();
   const senha = document.getElementById('senha').value.trim();
   const ini = document.getElementById('data-inicio').value;
+  if (!urlColegio) { alert('Cole o link de acesso do seu colégio.'); return; }
   const fim = document.getElementById('data-fim').value;
   const topicos = document.getElementById('topicos').value
     .split('\n').map(s => s.trim()).filter(s => s);
@@ -435,6 +440,7 @@ async function executar() {
 
   const dados = {
     sistema: 'activesoft',
+    url_colegio: urlColegio,
     usuario, senha,
     inicio: ini,
     fim: fim,

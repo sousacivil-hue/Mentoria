@@ -395,6 +395,7 @@ async def run_automacao(job_id: str, data: FormData):
 
 class ActiveFormData(BaseModel):
     sistema: str = "activesoft"
+    url_colegio: str = "https://siga.activesoft.com.br/login/"
     usuario: str
     senha: str
     inicio: str  # YYYY-MM-DD
@@ -466,7 +467,7 @@ async def run_active(job_id: str, data: ActiveFormData):
     if len(aulas) > 5:
         log.append(f"  ... e mais {len(aulas) - 5} aulas")
 
-    URL_ACTIVE = "https://siga.activesoft.com.br/login/"
+    URL_ACTIVE = data.url_colegio or "https://siga.activesoft.com.br/login/"
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
