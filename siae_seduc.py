@@ -18,15 +18,41 @@ SENHA = "130224"
 METODOLOGIA = "Aula expositiva dialogada com apresentacao do conteudo no quadro, resolucao de exercicios e participacao ativa dos alunos."
 
 CONTEUDOS = {
-    "6º": "Criterios de divisibilidade por 4 e por 5.",
-    "7º": "Problemas envolvendo porcentagem.",
-    "3ª": "Problemas envolvendo razao e proporcao.",
+    "6º": [
+        "Criterios de divisibilidade por 2 e por 3.",
+        "Criterios de divisibilidade por 4 e por 5.",
+        "Criterios de divisibilidade por 6 e por 9.",
+        "Numeros primos e compostos.",
+        "Decomposicao em fatores primos.",
+        # adicione mais linhas aqui conforme necessario
+    ],
+    "7º": [
+        "Porcentagem: conceito e calculo basico.",
+        "Problemas envolvendo porcentagem.",
+        "Aumentos e descontos percentuais.",
+        "Juros simples: conceito e formula.",
+        "Calculo de juros simples.",
+        # adicione mais linhas aqui conforme necessario
+    ],
+    "3ª": [
+        "Razao e proporcao: conceito.",
+        "Problemas envolvendo razao e proporcao.",
+        "Regra de tres simples.",
+        "Regra de tres composta.",
+        "Grandezas diretamente proporcionais.",
+        # adicione mais linhas aqui conforme necessario
+    ],
 }
+
+_indices: dict = {}
 
 
 def get_conteudo(serie: str) -> str:
-    for chave, conteudo in CONTEUDOS.items():
+    for chave, lista in CONTEUDOS.items():
         if chave in serie:
+            i = _indices.get(chave, 0)
+            conteudo = lista[i % len(lista)]
+            _indices[chave] = i + 1
             return conteudo
     return "Conteudo nao definido"
 
