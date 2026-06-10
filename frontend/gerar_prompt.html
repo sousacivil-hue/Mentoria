@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DiárioAuto — Gerador de Prompt</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; color: #333; min-height: 100vh; }
+
+    header {
+      background: #1a73e8;
+      color: white;
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h1 { font-size: 22px; font-weight: 700; }
+    header a {
+      color: white; text-decoration: none; font-size: 14px; opacity: 0.85;
+      border: 1px solid rgba(255,255,255,0.4); padding: 6px 14px; border-radius: 20px;
+    }
+
+    .container { max-width: 760px; margin: 40px auto; padding: 0 16px; }
+
+    .intro {
+      background: #e8f0fe;
+      border-left: 4px solid #1a73e8;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 28px;
+      font-size: 15px;
+      color: #333;
+      line-height: 1.6;
+    }
+    .intro b { color: #1a73e8; }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 28px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+    }
+    .card h2 { font-size: 17px; color: #1a73e8; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #e8f0fe; }
+
+    label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    input, select, textarea { width: 100%; padding: 10px 14px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 15px; font-family: inherit; transition: border-color 0.2s; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: #1a73e8; }
+
+    .row { display: flex; gap: 16px; margin-bottom: 18px; }
+    .col { flex: 1; }
+    .mb { margin-bottom: 18px; }
+
+    .btn-gerar {
+      background: #1a73e8; color: white; border: none; width: 100%;
+      padding: 14px; border-radius: 10px; font-size: 16px; font-weight: 700;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .btn-gerar:hover { background: #1558c0; }
+
+    .resultado { display: none; }
+
+    .prompt-box {
+      background: #f8faff;
+      border: 1.5px solid #d0e0ff;
+      border-radius: 10px;
+      padding: 20px;
+      font-size: 14px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      margin-bottom: 16px;
+      color: #222;
+      font-family: inherit;
+    }
+
+    .acoes { display: flex; gap: 12px; }
+
+    .btn-copiar {
+      flex: 1; background: #1a73e8; color: white; border: none;
+      padding: 12px; border-radius: 8px; font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: background 0.2s;
+    }
+    .btn-copiar:hover { background: #1558c0; }
+
+    .btn-chatgpt {
+      flex: 1; background: #10a37f; color: white; border: none;
+      padding: 12px; border-radius: 8px; font-size: 15px; font-weight: 700;
+      cursor: pointer; text-decoration: none; display: flex; align-items: center;
+      justify-content: center; gap: 8px;
+    }
+    .btn-chatgpt:hover { background: #0d8c6c; }
+
+    .aviso { display: none; color: #2e7d32; font-size: 13px; font-weight: 600; margin-top: 10px; text-align: center; }
+
+    .passo {
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 14px 0; border-bottom: 1px solid #f0f0f0;
+    }
+    .passo:last-child { border: none; }
+    .num {
+      background: #1a73e8; color: white; border-radius: 50%;
+      width: 28px; height: 28px; display: flex; align-items: center;
+      justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;
+    }
+    .passo-texto { font-size: 14px; line-height: 1.5; color: #444; }
+    .passo-texto b { color: #1a73e8; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>📝 DiárioAuto — Gerador de Prompt</h1>
+  <a href="index.html">← Voltar ao formulário</a>
+</header>
+
+<div class="container">
+
+  <div class="intro">
+    <b>Como funciona:</b> preencha os campos abaixo, gere o prompt e cole em qualquer IA
+    (ChatGPT, Gemini, Claude...). A IA vai devolver os tópicos prontos para você colar
+    no nosso formulário de preenchimento automático.
+  </div>
+
+  <div class="card">
+    <h2>Passos</h2>
+    <div class="passo">
+      <div class="num">1</div>
+      <div class="passo-texto">Preencha os campos abaixo com as informações da sua turma.</div>
+    </div>
+    <div class="passo">
+      <div class="num">2</div>
+      <div class="passo-texto">Clique em <b>Gerar Prompt</b> e copie o texto gerado.</div>
+    </div>
+    <div class="passo">
+      <div class="num">3</div>
+      <div class="passo-texto">Cole no <b>ChatGPT</b>, <b>Gemini</b> ou qualquer IA que você já usa.</div>
+    </div>
+    <div class="passo">
+      <div class="num">4</div>
+      <div class="passo-texto">Copie a resposta da IA e cole no campo <b>"Assuntos do bimestre"</b> do nosso formulário.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Informações da turma</h2>
+
+    <div class="row">
+      <div class="col mb">
+        <label>Série / Ano</label>
+        <select id="serie">
+          <option value="">Selecione...</option>
+          <option>6º Ano</option>
+          <option>7º Ano</option>
+          <option>8º Ano</option>
+          <option>9º Ano</option>
+          <option>1ª Série do Ensino Médio</option>
+          <option>2ª Série do Ensino Médio</option>
+          <option>3ª Série do Ensino Médio</option>
+        </select>
+      </div>
+      <div class="col mb">
+        <label>Disciplina</label>
+        <select id="disciplina">
+          <option value="">Selecione...</option>
+          <option>Matemática</option>
+          <option>Língua Portuguesa</option>
+          <option>História</option>
+          <option>Geografia</option>
+          <option>Ciências</option>
+          <option>Física</option>
+          <option>Química</option>
+          <option>Biologia</option>
+          <option>Inglês</option>
+          <option>Arte</option>
+          <option>Educação Física</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col mb">
+        <label>Bimestre</label>
+        <select id="bimestre">
+          <option>1º Bimestre</option>
+          <option selected>2º Bimestre</option>
+          <option>3º Bimestre</option>
+          <option>4º Bimestre</option>
+        </select>
+      </div>
+      <div class="col mb">
+        <label>Total de aulas</label>
+        <input type="number" id="total" value="18" min="1" max="60">
+      </div>
+    </div>
+
+    <div class="mb">
+      <label>Tópicos que você deu (resumido)</label>
+      <textarea id="topicos" rows="4" placeholder="Ex: divisibilidade, frações, porcentagem, razão e proporção"></textarea>
+    </div>
+
+    <div class="mb">
+      <label>Observação (opcional)</label>
+      <input type="text" id="obs" placeholder="Ex: turma com dificuldade, foco em exercícios práticos, inclua revisões">
+    </div>
+
+    <button class="btn-gerar" onclick="gerar()">✨ Gerar Prompt</button>
+  </div>
+
+  <div class="card resultado" id="resultado">
+    <h2>Prompt gerado — copie e cole em qualquer IA</h2>
+    <div class="prompt-box" id="prompt-box"></div>
+    <div class="acoes">
+      <button class="btn-copiar" onclick="copiar()">📋 Copiar prompt</button>
+      <a class="btn-chatgpt" href="https://chat.openai.com" target="_blank">🤖 Abrir ChatGPT</a>
+    </div>
+    <div class="aviso" id="aviso">✅ Prompt copiado! Agora cole no ChatGPT ou Gemini.</div>
+  </div>
+
+</div>
+
+<script>
+  function gerar() {
+    const serie = document.getElementById('serie').value;
+    const disciplina = document.getElementById('disciplina').value;
+    const bimestre = document.getElementById('bimestre').value;
+    const total = document.getElementById('total').value;
+    const topicos = document.getElementById('topicos').value.trim();
+    const obs = document.getElementById('obs').value.trim();
+
+    if (!serie || !disciplina) {
+      alert('Selecione a série e a disciplina.');
+      return;
+    }
+
+    let prompt = `Você é um assistente especializado em educação básica brasileira.\n\n`;
+    prompt += `Preciso que você gere uma lista de ${total} conteúdos de aula para o diário de classe.\n\n`;
+    prompt += `Informações:\n`;
+    prompt += `- Série: ${serie}\n`;
+    prompt += `- Disciplina: ${disciplina}\n`;
+    prompt += `- Bimestre: ${bimestre}\n`;
+    if (topicos) prompt += `- Tópicos abordados: ${topicos}\n`;
+    if (obs) prompt += `- Observação: ${obs}\n`;
+    prompt += `\nRegras importantes:\n`;
+    prompt += `- Retorne APENAS a lista de conteúdos, um por linha\n`;
+    prompt += `- Sem numeração, sem data, sem marcadores\n`;
+    prompt += `- Cada linha deve ser o enunciado completo do conteúdo da aula\n`;
+    prompt += `- Use linguagem formal e adequada para registro em diário escolar\n`;
+    prompt += `- Os conteúdos devem seguir uma progressão pedagógica lógica\n`;
+    prompt += `- Total exato de ${total} linhas\n\n`;
+    prompt += `Exemplo de formato esperado:\n`;
+    prompt += `Números naturais: conceito e representação na reta numérica.\n`;
+    prompt += `Operações com números naturais: adição e subtração.\n`;
+    prompt += `Multiplicação e divisão de números naturais.`;
+
+    document.getElementById('prompt-box').textContent = prompt;
+    document.getElementById('resultado').style.display = 'block';
+    document.getElementById('resultado').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function copiar() {
+    const texto = document.getElementById('prompt-box').textContent;
+    navigator.clipboard.writeText(texto).then(() => {
+      document.getElementById('aviso').style.display = 'block';
+      setTimeout(() => document.getElementById('aviso').style.display = 'none', 3000);
+    });
+  }
+</script>
+
+</body>
+</html>
