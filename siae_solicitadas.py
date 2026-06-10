@@ -391,7 +391,7 @@ async def main():
                 if btn_chamada:
                     await page.evaluate(f"{btn_chamada.rstrip(';')}")
                     await page.wait_for_timeout(2000)
-                    confirmar = page.locator("button.btn-success:has-text('CONFIRMAR'), button.btn-success:has-text('Confirmar')")
+                    confirmar = page.locator("#btnConfirmar")
                     await confirmar.wait_for(timeout=5000)
                     await confirmar.click()
                     await page.wait_for_timeout(2000)
