@@ -255,7 +255,12 @@
     <!-- 4: Eventos especiais -->
     <div class="card">
       <h2><span class="step-badge">4</span> Aulas especiais e feriados</h2>
-      <div class="dica" style="margin-bottom:12px;">Datas que não são aula normal: prova, simulado, feriado, conselho de classe... O robô vai usar o texto certo nessas datas (ou pular, no caso de feriado).</div>
+      <div class="dica" style="margin-bottom:12px;">✅ Feriados nacionais e de Sergipe já são pulados automaticamente (Carnaval, Semana Santa, Tiradentes, Corpus Christi, São João, 8 de Julho...). Adicione aqui apenas provas, simulados e recessos específicos do seu colégio.</div>
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+        <input type="checkbox" id="emendas" checked style="width:auto;">
+        Considerar emendas de feriado (quinta imprensa sexta, terça imprensa segunda)
+      </label>
+      <div style="height:10px;"></div>
       <div id="lista-eventos"></div>
       <button class="btn-add" onclick="addEvento()">+ Adicionar data especial</button>
     </div>
@@ -532,6 +537,7 @@ async function executar() {
     aulas_por_dia: dias,
     eventos: getEventos(),
     sabados_letivos: getSabados(),
+    emendas: document.getElementById('emendas').checked,
     topicos: topicos
   };
 

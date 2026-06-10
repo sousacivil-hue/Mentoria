@@ -406,7 +406,29 @@ class ActiveFormData(BaseModel):
     aulas_por_dia: dict  # {"1": 2, "2": 0, ...} 1=seg..5=sex
     eventos: list[dict] = []  # [{"data": "2025-04-21", "tipo": "Feriado"}]
     sabados_letivos: list[dict] = []  # [{"data": "2025-04-26", "segue_dia": 1}]
+    emendas: bool = True  # feriado qui->sex e ter->seg imprensados
     topicos: list[str] = []
+
+
+# Feriados nacionais + Sergipe (2026)
+FERIADOS_FIXOS = [
+    "2026-01-01",  # Confraternização Universal
+    "2026-02-16", "2026-02-17",  # Carnaval
+    "2026-02-18",  # Quarta de Cinzas (meio período, geralmente sem aula)
+    "2026-04-03",  # Sexta-feira Santa
+    "2026-04-21",  # Tiradentes
+    "2026-05-01",  # Dia do Trabalho
+    "2026-06-04",  # Corpus Christi
+    "2026-06-24",  # São João
+    "2026-07-08",  # Emancipação de Sergipe
+    "2026-09-07",  # Independência
+    "2026-10-12",  # N. Sra. Aparecida
+    "2026-10-15",  # Dia do Professor
+    "2026-11-02",  # Finados
+    "2026-11-15",  # Proclamação da República
+    "2026-11-20",  # Consciência Negra
+    "2026-12-25",  # Natal
+]
 
 
 def montar_calendario(data: ActiveFormData) -> list[dict]:
@@ -414,6 +436,25 @@ def montar_calendario(data: ActiveFormData) -> list[dict]:
     from datetime import date, timedelta
 
     eventos_map = {e["data"]: e["tipo"] for e in data.eventos if e.get("data")}
+
+    # Adiciona feriados nacionais/SE automaticamente
+    feriados_auto = set(FERIADOS_FIXOS)
+    for f in FERIADOS_FIXOS:
+        try:
+            df = date.fromisoformat(f)
+        except ValueError:
+            continue
+        if data.emendas:
+            # Feriado na quinta -> imprensa a sexta
+            if df.isoweekday() == 4:
+                feriados_auto.add((df + timedelta(days=1)).isoformat())
+            # Feriado na terça -> imprensa a segunda
+            if df.isoweekday() == 2:
+                feriados_auto.add((df - timedelta(days=1)).isoformat())
+
+    for f in feriados_auto:
+        if f not in eventos_map:
+            eventos_map[f] = "Feriado"
     # Sábados letivos: data -> dia da semana cujo horário ele segue
     sabados_map = {s["data"]: int(s["segue_dia"]) for s in data.sabados_letivos if s.get("data")}
     aulas = []
