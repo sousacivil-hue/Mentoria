@@ -392,7 +392,27 @@ async def main():
                     log(f"  Botao chamada: {btn_chamada}")
                     await page.evaluate(f"{btn_chamada.rstrip(';')}")
                     await page.wait_for_timeout(2000)
-                    confirmar = page.locator("button:has-text('Confirmar'), button:has-text('CONFIRMAR'), button:has-text('Salvar'), input[value='Confirmar']").first
+
+                    # Marca todos os checkboxes como presentes
+                    marcados = await page.evaluate("""
+                        () => {
+                            const checks = document.querySelectorAll('#lista input[type=checkbox], .modal input[type=checkbox]');
+                            let total = 0;
+                            for (const cb of checks) {
+                                if (!cb.checked) { cb.click(); total++; }
+                            }
+                            return total;
+                        }
+                    """)
+                    log(f"  Checkboxes marcados: {marcados}")
+                    await page.wait_for_timeout(1000)
+
+                    # Confirma
+                    confirmar = page.locator(
+                        "#lista button:has-text('Confirmar'), #lista button:has-text('Salvar'), "
+                        ".modal button:has-text('Confirmar'), .modal button:has-text('Salvar'), "
+                        "button:has-text('Confirmar'), input[value='Confirmar']"
+                    ).first
                     await confirmar.wait_for(timeout=5000)
                     await confirmar.click()
                     await page.wait_for_timeout(2000)
