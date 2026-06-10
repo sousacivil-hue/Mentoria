@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import re
 import uuid
 from typing import AsyncGenerator
@@ -499,6 +500,53 @@ async def run_active(job_id: str, data: ActiveFormData):
         log.append("📋 O calendário foi montado e validado com sucesso.")
         log.append("__CONCLUIDO__")
         await browser.close()
+
+
+class GerarTopicosRequest(BaseModel):
+    disciplina: str
+    serie: str
+    assunto: str = ""
+    quantidade: int = 30
+
+
+# Controle simples de uso por IP (anti-abuso)
+_geracoes_por_ip: dict[str, int] = {}
+LIMITE_GERACOES = 5
+
+
+@app.post("/gerar-topicos")
+async def gerar_topicos(req: GerarTopicosRequest):
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        return {
+            "erro": "IA não configurada ainda. Cole sua lista de tópicos manualmente, "
+                    "ou peça ao administrador para configurar a chave da API."
+        }
+
+    try:
+        import anthropic
+        client = anthropic.AsyncAnthropic(api_key=api_key)
+
+        assunto_txt = f" sobre o assunto '{req.assunto}'" if req.assunto else ""
+        prompt = (
+            f"Crie exatamente {req.quantidade} tópicos de aula de {req.disciplina} "
+            f"para a turma '{req.serie}'{assunto_txt}, em sequência didática lógica "
+            f"(do mais básico ao mais avançado), adequados ao currículo brasileiro (BNCC). "
+            f"Inclua aulas de exercícios e revisão distribuídas naturalmente. "
+            f"Responda APENAS com a lista, um tópico por linha, sem numeração e sem texto extra."
+        )
+
+        msg = await client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=2000,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        texto = msg.content[0].text
+        topicos = [l.strip().lstrip("-•").strip() for l in texto.split("\n") if l.strip()]
+        return {"topicos": topicos}
+
+    except Exception as e:
+        return {"erro": f"Falha ao gerar tópicos: {e}"}
 
 
 @app.post("/executar-active")

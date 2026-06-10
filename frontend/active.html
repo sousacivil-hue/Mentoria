@@ -243,12 +243,29 @@
     <!-- 5: Conteúdos -->
     <div class="card">
       <h2><span class="step-badge">5</span> Tópicos do conteúdo</h2>
-      <label>Cole seus tópicos (um por linha, na ordem que serão dados)</label>
-      <textarea id="topicos" placeholder="Equações do 2º grau - introdução
+
+      <div class="row">
+        <div>
+          <label>Disciplina</label>
+          <input type="text" id="ia-disciplina" placeholder="Ex: Matemática">
+        </div>
+        <div>
+          <label>Série/Turma</label>
+          <input type="text" id="ia-serie" placeholder="Ex: 9º Ano">
+        </div>
+      </div>
+      <label>Assunto principal (opcional)</label>
+      <input type="text" id="ia-assunto" placeholder="Ex: Equações do 2º grau">
+      <button class="btn-add" style="margin-top:12px;" onclick="gerarTopicosIA()" id="btn-gerar-ia">
+        ✨ Gerar tópicos com IA
+      </button>
+
+      <label style="margin-top:18px;">Tópicos (gerados pela IA ou cole os seus, um por linha)</label>
+      <textarea id="topicos" placeholder="Clique em 'Gerar tópicos com IA' acima, ou cole sua própria lista aqui...
+Equações do 2º grau - introdução
 Equações do 2º grau - fórmula de Bhaskara
-Exercícios sobre equações
 ..."></textarea>
-      <div class="dica">💡 O robô distribui os tópicos em sequência nas datas de aula normal. Se acabarem os tópicos, ele recomeça do início com "continuação/exercícios". Peça ao ChatGPT/Gemini para gerar a lista se preferir.</div>
+      <div class="dica">💡 Você pode editar a lista gerada antes de iniciar — remova ou troque o que quiser. O robô distribui os tópicos em sequência nas datas de aula.</div>
     </div>
 
     <button class="btn-executar" onclick="executar()">🚀 Iniciar Automação</button>
@@ -406,6 +423,41 @@ function addEvento() {
     </div>
   `;
   document.getElementById('lista-eventos').appendChild(div);
+}
+
+async function gerarTopicosIA() {
+  const disciplina = document.getElementById('ia-disciplina').value.trim();
+  const serie = document.getElementById('ia-serie').value.trim();
+  const assunto = document.getElementById('ia-assunto').value.trim();
+
+  if (!disciplina || !serie) {
+    alert('Preencha a disciplina e a série para gerar os tópicos.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-gerar-ia');
+  btn.textContent = '⏳ Gerando tópicos...';
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch(`${BACKEND_URL}/gerar-topicos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ disciplina, serie, assunto, quantidade: 30 })
+    });
+    const dados = await resp.json();
+
+    if (dados.erro) {
+      alert(dados.erro);
+    } else {
+      document.getElementById('topicos').value = dados.topicos.join('\n');
+    }
+  } catch (err) {
+    alert('Erro ao conectar ao servidor: ' + err.message);
+  } finally {
+    btn.textContent = '✨ Gerar tópicos com IA';
+    btn.disabled = false;
+  }
 }
 
 function addLog(msg, tipo = '') {
