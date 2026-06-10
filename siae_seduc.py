@@ -241,6 +241,28 @@ async def main():
         log("\nIniciando preenchimento...\n")
         aula_num = 0
 
+        async def selecionar_solicitadas():
+            try:
+                await page.evaluate("""
+                    () => {
+                        const radios = document.querySelectorAll('input[type=radio]');
+                        for (const r of radios) {
+                            const label = r.closest('label') || document.querySelector(`label[for="${r.id}"]`);
+                            const texto = label ? label.innerText : r.value;
+                            if (texto && texto.includes('Solicitada')) {
+                                r.click();
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                """)
+                await page.wait_for_timeout(1500)
+            except Exception as e:
+                log(f"  AVISO: nao selecionou Solicitadas: {e}")
+
+        await selecionar_solicitadas()
+
         while True:
             await page.wait_for_timeout(1000)
 
@@ -332,9 +354,10 @@ async def main():
             aula_num += 1
             log(f"  OK")
 
-            # Clica no botao verde (frequencia) da aula recem salva
+            # Volta para lista e seleciona aba Solicitadas
             await page.goto(URL_AULAS)
             await page.wait_for_timeout(2000)
+            await selecionar_solicitadas()
             try:
                 btn_verde = await page.evaluate(f"""
                     () => {{
@@ -363,6 +386,7 @@ async def main():
                         log("  Frequencia confirmada")
                         await page.goto(URL_AULAS)
                         await page.wait_for_timeout(2000)
+                        await selecionar_solicitadas()
             except Exception as e:
                 log(f"  ERRO frequencia: {e}")
 
