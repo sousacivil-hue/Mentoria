@@ -171,3 +171,16 @@ Colégios particulares (Vita, COESI, Salesiano): testar R$ 29,90.
 - Estrategia: ser discreto sobre quais sistemas automatiza prolonga a
   vida do produto. O professor reconhece "SIAE" em texto, nao precisa
   de brasao.
+
+### Texto recomendado (sem citar sistemas)
+
+Anuncio publico / trafego pago:
+  "Funciona com o portal da sua escola? Consulte gratis pelo WhatsApp"
+  "Compativel com os principais portais escolares. Consulte o seu."
+
+Vantagens: zero risco de marca, gera conversa no WhatsApp (lead),
+discreto, escala sem mudar o anuncio.
+
+Stories para seguidores / grupos de WhatsApp de professores SE:
+  pode nomear a dor direto — "Professor da rede estadual: seu diario
+  do SIAE em dia em minutos" (alcance fechado, conversao maior).
