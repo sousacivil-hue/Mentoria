@@ -18,9 +18,9 @@ SENHA = "130224"
 METODOLOGIA = "Aula expositiva dialogada com apresentacao do conteudo no quadro, resolucao de exercicios e participacao ativa dos alunos."
 
 CONTEUDOS = {
-    "6": "Criterios de divisibilidade por 4 e por 5.",
-    "7": "Problemas envolvendo porcentagem.",
-    "3": "Problemas envolvendo razao e proporcao.",
+    "6º": "Criterios de divisibilidade por 4 e por 5.",
+    "7º": "Problemas envolvendo porcentagem.",
+    "3ª": "Problemas envolvendo razao e proporcao.",
 }
 
 
@@ -124,18 +124,22 @@ async def main():
                 log(f"  ERRO objeto: {e}")
 
             # Preenche Metodologia
-            try:
-                textareas = page.locator("textarea")
-                count = await textareas.count()
-                log(f"  Total textareas: {count}")
-                if count >= 2:
-                    await textareas.nth(1).click()
-                    await textareas.nth(1).fill(METODOLOGIA)
-                    log("  Metodologia preenchida")
-                else:
-                    log("  Apenas 1 textarea encontrada")
-            except Exception as e:
-                log(f"  ERRO metodologia: {e}")
+            # Metodologia: tenta textarea, depois input text
+            met_ok = False
+            for sel in ["textarea:nth-of-type(2)", "input[type='text']", "input[type='text']:not([readonly])"]:
+                try:
+                    locs = page.locator(sel)
+                    c = await locs.count()
+                    if c > 0:
+                        await locs.first.click()
+                        await locs.first.fill(METODOLOGIA)
+                        log(f"  Metodologia preenchida ({sel})")
+                        met_ok = True
+                        break
+                except Exception:
+                    pass
+            if not met_ok:
+                log("  Metodologia nao preenchida (campo nao encontrado)")
 
             # Salva
             try:
@@ -150,21 +154,42 @@ async def main():
                 await page.wait_for_timeout(2000)
                 continue
 
-            # Confirma chamada se aparecer
-            try:
-                confirmar = page.locator("button:has-text('Confirmar'), button:has-text('CONFIRMAR'), input[value='Confirmar']").first
-                await confirmar.wait_for(timeout=4000)
-                await confirmar.click()
-                await page.wait_for_timeout(2000)
-                log("  Chamada confirmada")
-            except Exception:
-                pass
-
             aula_num += 1
             log(f"  OK")
 
+            # Clica no botao verde (frequencia) da aula recem salva
             await page.goto(URL_AULAS)
             await page.wait_for_timeout(2000)
+            try:
+                btn_verde = await page.evaluate(f"""
+                    () => {{
+                        const btns = document.querySelectorAll('button.btn-success[onclick], a.btn-success[onclick]');
+                        for (const btn of btns) {{
+                            const tr = btn.closest('tr');
+                            if (tr) {{
+                                const onclick = btn.getAttribute('onclick') || '';
+                                if (onclick.includes('{aula_id}')) return onclick;
+                            }}
+                        }}
+                        return null;
+                    }}
+                """)
+                if btn_verde:
+                    log(f"  Botao verde onclick: {btn_verde}")
+                    match_verde = re.search(r"\((\d+)\)", btn_verde)
+                    if match_verde:
+                        freq_id = match_verde.group(1)
+                        await page.evaluate(f"({btn_verde.split('(')[0]})({freq_id})")
+                        await page.wait_for_timeout(3000)
+                        confirmar = page.locator("button:has-text('Confirmar'), button:has-text('CONFIRMAR'), input[value='Confirmar']").first
+                        await confirmar.wait_for(timeout=5000)
+                        await confirmar.click()
+                        await page.wait_for_timeout(2000)
+                        log("  Frequencia confirmada")
+                        await page.goto(URL_AULAS)
+                        await page.wait_for_timeout(2000)
+            except Exception as e:
+                log(f"  ERRO frequencia: {e}")
 
         log(f"\n{'=' * 55}")
         log(f"  CONCLUIDO! Total de aulas preenchidas: {aula_num}")
