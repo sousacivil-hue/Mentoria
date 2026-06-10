@@ -353,30 +353,50 @@ async def main():
             aula_num += 1
             log(f"  OK")
 
-            # Volta para lista e seleciona aba Solicitadas
-            await page.goto(URL_AULAS)
+            # Nao navega — apos salvar o SIAE ja fica na lista de Solicitadas
             await page.wait_for_timeout(2000)
-            await selecionar_solicitadas()
+
+            # Loga todos os botoes verdes visiveis para debug
+            todos_verdes = await page.evaluate(f"""
+                () => {{
+                    const resultado = [];
+                    const btns = document.querySelectorAll('button[class*="success"], a[class*="success"], button.btn-success, a.btn-success');
+                    for (const btn of btns) {{
+                        resultado.push({{
+                            tag: btn.tagName,
+                            classes: btn.className,
+                            onclick: btn.getAttribute('onclick') || '',
+                            href: btn.getAttribute('href') || '',
+                            texto: btn.innerText.trim()
+                        }});
+                    }}
+                    return resultado;
+                }}
+            """)
+            log(f"  Botoes verdes encontrados: {len(todos_verdes)}")
+            for b in todos_verdes:
+                log(f"    {b['tag']} class={b['classes']} onclick={b['onclick']} href={b['href']}")
+
             try:
-                btn_verde = await page.evaluate(f"""
+                btn_chamada = await page.evaluate(f"""
                     () => {{
-                        const btns = document.querySelectorAll('button.btn-success[onclick], a.btn-success[onclick]');
+                        const btns = document.querySelectorAll('button[onclick^="carregarListaDePresenca"]');
                         for (const btn of btns) {{
-                            const tr = btn.closest('tr');
-                            if (tr) {{
-                                const onclick = btn.getAttribute('onclick') || '';
-                                if (onclick.includes('{aula_id}')) return onclick;
-                            }}
+                            const onclick = btn.getAttribute('onclick') || '';
+                            if (onclick.includes('{aula_id}')) return onclick;
                         }}
                         return null;
                     }}
                 """)
-                if btn_verde:
-                    log(f"  Botao verde onclick: {btn_verde}")
-                    match_verde = re.search(r"\((\d+)\)", btn_verde)
-                    if match_verde:
-                        freq_id = match_verde.group(1)
-                        await page.evaluate(f"({btn_verde.split('(')[0]})({freq_id})")
+                if btn_chamada:
+                    log(f"  Botao chamada: {btn_chamada}")
+                    await page.evaluate(f"{btn_chamada.rstrip(';')}")
+                    await page.wait_for_timeout(2000)
+                    confirmar = page.locator("button:has-text('Confirmar'), button:has-text('CONFIRMAR'), button:has-text('Salvar'), input[value='Confirmar']").first
+                    await confirmar.wait_for(timeout=5000)
+                    await confirmar.click()
+                    await page.wait_for_timeout(2000)
+                    log("  Chamada confirmada")
                         await page.wait_for_timeout(3000)
                         confirmar = page.locator("button:has-text('Confirmar'), button:has-text('CONFIRMAR'), input[value='Confirmar']").first
                         await confirmar.wait_for(timeout=5000)
