@@ -360,44 +360,20 @@ async def main():
             await page.wait_for_timeout(1500)
 
             try:
-                # Acha o botao verde na mesma linha do botao azul que tem o aula_id
-                btn_chamada = await page.evaluate(f"""
-                    () => {{
-                        const btnAzuis = document.querySelectorAll('button[onclick*="registrar({aula_id})"], button[onclick*="registrar({aula_id} )"]');
-                        if (btnAzuis.length === 0) {{
-                            // Tenta achar pelo onclick exato
-                            const todos = document.querySelectorAll('button[onclick]');
-                            for (const b of todos) {{
-                                if (b.getAttribute('onclick').includes('{aula_id}')) {{
-                                    const tr = b.closest('tr');
-                                    if (tr) {{
-                                        const verde = tr.querySelector('button[onclick*="carregarListaDePresenca"]');
-                                        if (verde) return verde.getAttribute('onclick');
-                                    }}
-                                }}
-                            }}
-                        }}
-                        for (const btn of btnAzuis) {{
-                            const tr = btn.closest('tr');
-                            if (tr) {{
-                                const verde = tr.querySelector('button[onclick*="carregarListaDePresenca"]');
-                                if (verde) return verde.getAttribute('onclick');
-                            }}
-                        }}
-                        return null;
-                    }}
-                """)
-                log(f"  Botao chamada encontrado: {btn_chamada}")
-                if btn_chamada:
-                    await page.evaluate(f"{btn_chamada.rstrip(';')}")
-                    await page.wait_for_timeout(2000)
-                    confirmar = page.locator("#btnConfirmar")
-                    await confirmar.wait_for(timeout=5000)
-                    await confirmar.click()
+                btn_verde = page.locator(f"button[onclick*='{aula_id}']").locator("xpath=../..").locator("button[onclick*='carregarListaDePresenca']")
+                if await btn_verde.count() == 0:
+                    # Tenta achar direto pelo aula_id na linha
+                    btn_verde = page.locator(f"tr:has(button[onclick*='{aula_id}']) button[onclick*='carregarListaDePresenca']")
+
+                if await btn_verde.count() > 0:
+                    await btn_verde.first.click()
+                    await page.wait_for_selector("#lista.in, #lista[style*='display: block']", timeout=8000)
+                    await page.wait_for_timeout(1000)
+                    await page.locator("#btnConfirmar").click()
                     await page.wait_for_timeout(2000)
                     log("  Chamada confirmada")
                 else:
-                    log("  Botao chamada nao encontrado na lista")
+                    log("  Botao chamada nao encontrado")
             except Exception as e:
                 log(f"  ERRO chamada: {e}")
 
