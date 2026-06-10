@@ -184,3 +184,24 @@ discreto, escala sem mudar o anuncio.
 Stories para seguidores / grupos de WhatsApp de professores SE:
   pode nomear a dor direto — "Professor da rede estadual: seu diario
   do SIAE em dia em minutos" (alcance fechado, conversao maior).
+
+---
+
+## Video do Reel 2 — como produzir
+
+NAO usar IA (Veo/Gemini) para simular a tela do sistema: texto sai
+embaralhado e parece montagem. Gravar a tela REAL:
+
+1. Win + G (barra de jogos do Windows) > gravar tela. Ou OBS (gratis).
+2. Rodar siae_solicitadas.py ou siga_activesoft.py no proximo lote.
+3. Gravar do inicio ao fim (navegador abrindo, aulas preenchendo).
+4. Editar no CapCut (gratis):
+   - acelerar 8-10x
+   - cronometro/contador na tela
+   - BORRAR nome da escola, alunos, dados pessoais
+   - textos do Reel 2 ("25 aulas OK / 4 minutos OK")
+
+Gemini/Veo entra bem nas cenas humanas de abertura/fechamento
+(ex.: professora aliviada fechando o notebook sorrindo).
+
+Formula: tela real (prova) + cena IA (emocao) + CapCut (montagem).
