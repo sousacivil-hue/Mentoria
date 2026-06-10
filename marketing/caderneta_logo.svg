@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="200" viewBox="0 0 640 200">
+  <!-- Caderneta (capa do caderno) -->
+  <g>
+    <!-- capa -->
+    <rect x="30" y="35" width="110" height="130" rx="8" fill="#1F3A2E"/>
+    <!-- lombada costurada -->
+    <rect x="30" y="35" width="16" height="130" rx="8" fill="#152B21"/>
+    <circle cx="38" cy="55" r="2.5" fill="#C9A227"/>
+    <circle cx="38" cy="75" r="2.5" fill="#C9A227"/>
+    <circle cx="38" cy="95" r="2.5" fill="#C9A227"/>
+    <circle cx="38" cy="115" r="2.5" fill="#C9A227"/>
+    <circle cx="38" cy="135" r="2.5" fill="#C9A227"/>
+    <!-- etiqueta clássica -->
+    <rect x="58" y="60" width="68" height="34" rx="3" fill="#F5EFE0"/>
+    <line x1="64" y1="72" x2="120" y2="72" stroke="#1F3A2E" stroke-width="2" stroke-linecap="round"/>
+    <line x1="64" y1="82" x2="108" y2="82" stroke="#C9A227" stroke-width="2" stroke-linecap="round"/>
+    <!-- linhas escritas (check de preenchido) -->
+    <line x1="58" y1="112" x2="126" y2="112" stroke="#F5EFE0" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+    <line x1="58" y1="126" x2="126" y2="126" stroke="#F5EFE0" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+    <line x1="58" y1="140" x2="100" y2="140" stroke="#F5EFE0" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+    <!-- pena dourada (toque velha guarda) -->
+    <path d="M 118 150 Q 140 110 162 88 Q 148 122 130 152 Z" fill="#C9A227"/>
+    <line x1="120" y1="148" x2="158" y2="92" stroke="#1F3A2E" stroke-width="1.5"/>
+  </g>
+  <!-- Nome -->
+  <text x="195" y="115" font-family="Georgia, 'Times New Roman', serif" font-size="64" font-weight="bold" fill="#1F3A2E" letter-spacing="1">Caderneta</text>
+  <!-- Slogan -->
+  <text x="198" y="150" font-family="Georgia, serif" font-size="19" font-style="italic" fill="#C9A227">o diário de classe, do jeito antigo, no tempo moderno</text>
+</svg>

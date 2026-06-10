@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caderneta — Identidade Visual</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: Georgia, 'Times New Roman', serif; background:#F5EFE0; color:#1F3A2E; }
+  .pagina { max-width:900px; margin:0 auto; padding:50px 30px; }
+  h1 { font-size:42px; margin-bottom:6px; }
+  .sub { font-style:italic; color:#C9A227; font-size:18px; margin-bottom:50px; }
+  h2 { font-size:24px; margin:50px 0 18px; border-bottom:2px solid #C9A227; padding-bottom:8px; }
+  .logo-box { background:#fff; border-radius:12px; padding:30px; text-align:center; box-shadow:0 2px 12px rgba(31,58,46,.12); }
+  .logo-box.escuro { background:#1F3A2E; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .cores { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
+  .cor { border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.1); }
+  .cor .bloco { height:90px; }
+  .cor .info { background:#fff; padding:10px; font-size:13px; text-align:center; }
+  .cor .info b { display:block; font-size:14px; }
+  .tipografia p { margin:10px 0; }
+  .botao-ex { display:inline-block; background:#1F3A2E; color:#F5EFE0; padding:14px 34px; border-radius:8px; font-size:17px; margin:8px 12px 8px 0; text-decoration:none; }
+  .botao-ex.dourado { background:#C9A227; color:#1F3A2E; }
+  .voz { background:#fff; border-left:4px solid #C9A227; padding:18px 22px; border-radius:0 10px 10px 0; margin:12px 0; }
+  .voz em { color:#C9A227; }
+  footer { margin-top:60px; text-align:center; font-style:italic; color:#1F3A2E; opacity:.6; }
+</style>
+</head>
+<body>
+<div class="pagina">
+
+  <h1>Caderneta</h1>
+  <div class="sub">Manual de identidade visual</div>
+
+  <h2>Logo</h2>
+  <div class="grid">
+    <div class="logo-box"><img src="caderneta_logo.svg" alt="Logo Caderneta" style="max-width:100%"></div>
+    <div class="logo-box escuro"><img src="caderneta_logo.svg" alt="Logo Caderneta fundo escuro" style="max-width:100%; filter:invert(0)"></div>
+  </div>
+  <p style="margin-top:14px; font-size:14px; opacity:.7;">A caderneta de capa verde com etiqueta — o objeto que todo professor conhece — com a pena dourada marcando o preenchimento.</p>
+
+  <h2>Cores</h2>
+  <div class="cores">
+    <div class="cor"><div class="bloco" style="background:#1F3A2E"></div><div class="info"><b>Verde Lousa</b>#1F3A2E<br>cor principal</div></div>
+    <div class="cor"><div class="bloco" style="background:#C9A227"></div><div class="info"><b>Dourado Medalha</b>#C9A227<br>destaque</div></div>
+    <div class="cor"><div class="bloco" style="background:#F5EFE0"></div><div class="info"><b>Papel Antigo</b>#F5EFE0<br>fundo</div></div>
+    <div class="cor"><div class="bloco" style="background:#8C2F2F"></div><div class="info"><b>Vermelho Caneta</b>#8C2F2F<br>avisos / erros</div></div>
+  </div>
+
+  <h2>Tipografia</h2>
+  <div class="tipografia">
+    <p style="font-size:30px; font-weight:bold;">Georgia Bold — títulos</p>
+    <p style="font-size:18px;">Georgia regular — textos corridos, com a elegância de livro antigo.</p>
+    <p style="font-family:Arial, sans-serif; font-size:16px;">Arial / Helvetica — apenas em formulários e botões, para leitura rápida em telas.</p>
+  </div>
+
+  <h2>Botões</h2>
+  <a class="botao-ex">Preencher minha caderneta</a>
+  <a class="botao-ex dourado">Começar agora</a>
+
+  <h2>Tom de voz</h2>
+  <div class="voz">Respeitoso e caloroso, como um colega de sala dos professores. Fala <em>"caderneta"</em>, não "sistema". Fala <em>"preencher"</em>, não "processar".</div>
+  <div class="voz">Exemplos: <em>"Sua caderneta está pronta, professora."</em> — <em>"Deixa que a gente preenche."</em> — <em>"Mais tempo pra aula, menos tempo pra papelada."</em></div>
+
+  <footer>Caderneta — o diário de classe, do jeito antigo, no tempo moderno.</footer>
+</div>
+</body>
+</html>
