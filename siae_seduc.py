@@ -78,53 +78,74 @@ async def main():
                 btn_azul = linha.locator("a, button").last
             await btn_azul.scroll_into_view_if_needed()
             await btn_azul.click()
-            await page.wait_for_timeout(2000)
+            await page.wait_for_timeout(3000)
 
-            try:
-                objeto = page.locator("textarea").nth(0)
-                await objeto.wait_for(timeout=5000)
-                await objeto.click()
-                await objeto.fill(conteudo)
-            except Exception as e:
-                print(f"  ERRO objeto: {e}")
+            print(f"  URL: {page.url}")
 
+            # Passo 1: se caiu na chamada, marcar todos presentes e confirmar
             try:
-                metodologia = page.locator("textarea").nth(1)
-                await metodologia.wait_for(timeout=5000)
-                await metodologia.click()
-                await metodologia.fill(METODOLOGIA)
+                btn_todos = page.locator("button:has-text('Todos Presentes'), a:has-text('Todos Presentes'), button:has-text('TODOS'), input[value*='Presentes']").first
+                await btn_todos.wait_for(timeout=3000)
+                await btn_todos.click()
+                await page.wait_for_timeout(2000)
+                print("  Chamada: marcou todos presentes")
+            except Exception:
+                pass
+
+            # Confirma chamada se houver botao de confirmacao
+            try:
+                confirmar_chamada = page.locator("button:has-text('Confirmar'), button:has-text('CONFIRMAR'), input[value='Confirmar']").first
+                await confirmar_chamada.wait_for(timeout=3000)
+                await confirmar_chamada.click()
+                await page.wait_for_timeout(3000)
+                print("  Chamada confirmada")
+            except Exception:
+                pass
+
+            print(f"  URL apos chamada: {page.url}")
+
+            # Passo 2: preencher conteudo (objeto de conhecimento)
+            campo_obj = None
+            for sel in ["textarea", "input[type='text']:not([readonly])"]:
+                try:
+                    loc = page.locator(sel).first
+                    await loc.wait_for(timeout=4000)
+                    campo_obj = loc
+                    print(f"  Campo conteudo: {sel}")
+                    break
+                except Exception:
+                    pass
+
+            if campo_obj:
+                await campo_obj.click()
+                await campo_obj.fill(conteudo)
+            else:
+                print("  ERRO: campo de conteudo nao encontrado")
+
+            # Passo 3: preencher metodologia (segundo campo)
+            try:
+                textareas = page.locator("textarea")
+                count = await textareas.count()
+                if count >= 2:
+                    await textareas.nth(1).click()
+                    await textareas.nth(1).fill(METODOLOGIA)
+                    print("  Metodologia preenchida")
             except Exception as e:
                 print(f"  ERRO metodologia: {e}")
 
+            # Passo 4: salvar
             try:
-                salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar')").first
+                salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar'), input[value='SALVAR'], input[value='Salvar']").first
                 await salvar.wait_for(timeout=5000)
                 await salvar.click()
-                await page.wait_for_timeout(2500)
+                await page.wait_for_timeout(3000)
+                aula_num += 1
+                print(f"  OK")
             except Exception as e:
                 print(f"  ERRO ao salvar: {e}")
                 await page.go_back()
                 await page.wait_for_timeout(2000)
                 continue
-
-            try:
-                btn_verde = page.locator("a.btn-success, button.btn-success").last
-                await btn_verde.wait_for(timeout=5000)
-                await btn_verde.click()
-                await page.wait_for_timeout(2000)
-            except Exception as e:
-                print(f"  ERRO frequencia: {e}")
-
-            try:
-                confirmar = page.locator("button:has-text('CONFIRMAR'), button:has-text('Confirmar')").first
-                await confirmar.wait_for(timeout=5000)
-                await confirmar.click()
-                await page.wait_for_timeout(2000)
-            except Exception as e:
-                print(f"  ERRO confirmar: {e}")
-
-            aula_num += 1
-            print(f"  OK")
 
             if "Aulas" not in page.url:
                 await page.goto(URL_AULAS)
