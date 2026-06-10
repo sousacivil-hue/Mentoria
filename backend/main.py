@@ -400,6 +400,7 @@ class ActiveFormData(BaseModel):
     usuario: str
     senha: str
     bimestre: str = "2"  # 1, 2, 3 ou 4
+    turma: str = ""  # vazio = todas as turmas
     inicio: str  # YYYY-MM-DD
     fim: str
     aulas_por_dia: dict  # {"1": 2, "2": 0, ...} 1=seg..5=sex
@@ -508,35 +509,34 @@ async def run_active(job_id: str, data: ActiveFormData):
         except Exception as e:
             log.append(f"⚠️ Botão EXIBIR não encontrado: {e}")
 
-        # ---- 2. Abre o Diário de classe da turma ----
+        # ---- 2. Descobre as turmas disponíveis ----
+        url_lista_turmas = page.url
+        links_diario = page.locator("a:has-text('Diário de classe')")
         try:
-            diario = page.locator("a:has-text('Diário de classe')").first
-            await diario.wait_for(timeout=8000)
-            await diario.click()
-            await page.wait_for_timeout(3000)
-            log.append("✅ Diário de classe aberto")
+            await links_diario.first.wait_for(timeout=8000)
         except Exception as e:
-            log.append(f"❌ ERRO: link 'Diário de classe' não encontrado: {e}")
+            log.append(f"❌ ERRO: nenhum 'Diário de classe' encontrado: {e}")
             log.append("__CONCLUIDO__")
             await browser.close()
             return
 
-        # ---- 3. Clica em Registro de aulas do bimestre escolhido ----
-        try:
+        total_turmas = await links_diario.count()
+        log.append(f"📚 Turmas encontradas: {total_turmas}")
+
+        async def preencher_turma(indice_link: int):
+            """Abre o diário de uma turma e preenche as aulas do bimestre."""
+            links = page.locator("a:has-text('Diário de classe')")
+            await links.nth(indice_link).click()
+            await page.wait_for_timeout(3000)
+
+            # Registro de aulas do bimestre
             linha_bim = page.locator(f"tr:has-text('{data.bimestre}º BIMESTRE')").first
             reg = linha_bim.locator("a:has-text('Registro de aulas')").first
             await reg.wait_for(timeout=8000)
             await reg.click()
             await page.wait_for_timeout(3000)
             log.append(f"✅ Registro de aulas do {data.bimestre}º bimestre aberto")
-        except Exception as e:
-            log.append(f"❌ ERRO: 'Registro de aulas' do {data.bimestre}º bimestre não encontrado: {e}")
-            log.append("__CONCLUIDO__")
-            await browser.close()
-            return
 
-        # ---- 4. Preenche os conteúdos nas linhas vazias ----
-        try:
             linhas = page.locator("table tr:has(textarea)")
             total_linhas = await linhas.count()
             log.append(f"📋 Linhas de aula encontradas: {total_linhas}")
@@ -545,11 +545,10 @@ async def run_active(job_id: str, data: ActiveFormData):
             preenchidas = 0
             for i in range(total_linhas):
                 linha = linhas.nth(i)
-                # Primeiro textarea da linha = Conteúdo ministrado
                 conteudo_box = linha.locator("textarea").first
                 valor_atual = (await conteudo_box.input_value()).strip()
                 if valor_atual:
-                    continue  # já preenchida
+                    continue
 
                 if idx_aula < len(aulas):
                     texto = aulas[idx_aula]["conteudo"]
@@ -565,23 +564,52 @@ async def run_active(job_id: str, data: ActiveFormData):
 
             log.append(f"📊 {preenchidas} aulas preenchidas no formulário")
 
-            # ---- 5. Salva ----
-            salvar = page.locator(
-                "button:has-text('Gravar'), input[value*='Gravar' i], "
-                "button:has-text('Salvar'), input[value*='Salvar' i], "
-                "button:has-text('Confirmar'), input[type='submit']"
-            )
-            if await salvar.count() > 0:
-                await salvar.first.click()
-                await page.wait_for_timeout(4000)
-                log.append("✅ Aulas salvas com sucesso!")
-            else:
-                log.append("⚠️ Botão de salvar não encontrado — me mande um print do final da página")
+            if preenchidas > 0:
+                salvar = page.locator(
+                    "button:has-text('Gravar'), input[value*='Gravar' i], "
+                    "button:has-text('Salvar'), input[value*='Salvar' i], "
+                    "button:has-text('Confirmar'), input[type='submit']"
+                )
+                if await salvar.count() > 0:
+                    await salvar.first.click()
+                    await page.wait_for_timeout(4000)
+                    log.append("✅ Aulas salvas!")
+                else:
+                    log.append("⚠️ Botão de salvar não encontrado — salve manualmente e me avise")
 
-        except Exception as e:
-            log.append(f"❌ ERRO ao preencher: {e}")
+        # ---- 3. Processa turma(s), uma por vez ----
+        turmas_feitas = 0
+        for idx in range(total_turmas):
+            # Volta para a lista de turmas
+            await page.goto(url_lista_turmas)
+            await page.wait_for_timeout(2500)
+            try:
+                exibir = page.locator("button:has-text('EXIBIR'), input[value*='EXIBIR' i]").first
+                if await exibir.count() > 0 and await links_diario.count() == 0:
+                    await exibir.click()
+                    await page.wait_for_timeout(3000)
+            except Exception:
+                pass
 
-        log.append("🎉 Automação concluída!")
+            # Se o professor escolheu uma turma específica, pula as outras
+            if data.turma:
+                bloco_texto = await page.locator("a:has-text('Diário de classe')").nth(idx).evaluate(
+                    "el => { let p = el.closest('div,section,table,tr'); "
+                    "for (let i=0; i<6 && p; i++) { "
+                    "if (p.innerText.includes('" + data.turma.replace("'", "") + "')) return p.innerText.slice(0,120); "
+                    "p = p.parentElement; } return ''; }"
+                )
+                if not bloco_texto:
+                    continue
+
+            log.append(f"➡️ Turma {idx + 1} de {total_turmas}...")
+            try:
+                await preencher_turma(idx)
+                turmas_feitas += 1
+            except Exception as e:
+                log.append(f"⚠️ Erro na turma {idx + 1}: {e}")
+
+        log.append(f"🎉 Automação concluída! Turmas preenchidas: {turmas_feitas}")
         log.append("__CONCLUIDO__")
         await browser.close()
 

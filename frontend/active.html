@@ -188,6 +188,9 @@
     <!-- 2: Período -->
     <div class="card">
       <h2><span class="step-badge">2</span> Período do bimestre</h2>
+      <label>Qual turma?</label>
+      <input type="text" id="turma" placeholder="Ex: 8ºA — ou deixe vazio para TODAS">
+      <div class="dica">Digite exatamente como aparece no sistema (ex: 8ºA). Se deixar vazio, o robô preenche TODAS as suas turmas, uma após a outra, com os mesmos tópicos.</div>
       <label>Qual bimestre?</label>
       <select id="bimestre">
         <option value="1">1º Bimestre</option>
@@ -523,6 +526,7 @@ async function executar() {
     url_colegio: urlColegio,
     usuario, senha,
     bimestre: document.getElementById('bimestre').value,
+    turma: document.getElementById('turma').value.trim(),
     inicio: ini,
     fim: fim,
     aulas_por_dia: dias,
