@@ -537,45 +537,61 @@ async def run_active(job_id: str, data: ActiveFormData):
             await page.wait_for_timeout(3000)
             log.append(f"✅ Registro de aulas do {data.bimestre}º bimestre aberto")
 
+            # Conta quantas aulas JÁ existem (linhas com conteúdo preenchido)
+            ja_existentes = 0
             linhas = page.locator("table tr:has(textarea)")
             total_linhas = await linhas.count()
-            log.append(f"📋 Linhas de aula encontradas: {total_linhas}")
-
-            idx_aula = 0
-            preenchidas = 0
             for i in range(total_linhas):
-                linha = linhas.nth(i)
-                conteudo_box = linha.locator("textarea").first
-                valor_atual = (await conteudo_box.input_value()).strip()
-                if valor_atual:
-                    continue
+                txt = (await linhas.nth(i).locator("textarea").first.input_value()).strip()
+                if txt:
+                    ja_existentes += 1
 
-                if idx_aula < len(aulas):
-                    texto = aulas[idx_aula]["conteudo"]
-                else:
-                    texto = aulas[idx_aula % len(aulas)]["conteudo"] + " — continuação"
+            if ja_existentes > 0:
+                log.append(f"📋 Já existem {ja_existentes} aulas — continuando da aula {ja_existentes + 1}")
 
+            preenchidas = 0
+            # Cria as aulas restantes, uma por vez: data + conteúdo + Gravar
+            for idx_aula in range(ja_existentes, len(aulas)):
+                aula = aulas[idx_aula]
+                partes = aula["data"].split("-")
+                data_br = f"{partes[2]}/{partes[1]}/{partes[0]}"
+
+                # Acha a linha em branco (textarea de conteúdo vazio)
+                linha_vazia = None
+                linhas = page.locator("table tr:has(textarea)")
+                total_linhas = await linhas.count()
+                for i in range(total_linhas):
+                    linha = linhas.nth(i)
+                    txt = (await linha.locator("textarea").first.input_value()).strip()
+                    if not txt:
+                        linha_vazia = linha
+                        break
+
+                if linha_vazia is None:
+                    log.append("⚠️ Nenhuma linha em branco disponível — limite de aulas atingido?")
+                    break
+
+                # Preenche a data
+                campo_data = linha_vazia.locator("input").first
+                await campo_data.click()
+                await campo_data.fill(data_br)
+
+                # Preenche o conteúdo (primeiro textarea; Tarefas fica em branco)
+                conteudo_box = linha_vazia.locator("textarea").first
                 await conteudo_box.click()
-                await conteudo_box.fill(texto)
-                idx_aula += 1
+                await conteudo_box.fill(aula["conteudo"])
+
+                # Grava esta aula
+                gravar = linha_vazia.locator(
+                    "button:has-text('Gravar'), input[value*='Gravar' i]"
+                ).first
+                await gravar.click()
+                await page.wait_for_timeout(2500)
+
                 preenchidas += 1
-                log.append(f"✏️ Aula {i + 1}: {texto[:50]}")
-                await page.wait_for_timeout(300)
+                log.append(f"✏️ {data_br} — {aula['conteudo'][:50]}")
 
-            log.append(f"📊 {preenchidas} aulas preenchidas no formulário")
-
-            if preenchidas > 0:
-                salvar = page.locator(
-                    "button:has-text('Gravar'), input[value*='Gravar' i], "
-                    "button:has-text('Salvar'), input[value*='Salvar' i], "
-                    "button:has-text('Confirmar'), input[type='submit']"
-                )
-                if await salvar.count() > 0:
-                    await salvar.first.click()
-                    await page.wait_for_timeout(4000)
-                    log.append("✅ Aulas salvas!")
-                else:
-                    log.append("⚠️ Botão de salvar não encontrado — salve manualmente e me avise")
+            log.append(f"📊 {preenchidas} aulas gravadas nesta turma")
 
         # ---- 3. Processa turma(s), uma por vez ----
         turmas_feitas = 0
