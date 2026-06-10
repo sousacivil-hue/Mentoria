@@ -112,9 +112,24 @@ async def main():
                 await page.evaluate(f"{onclick.rstrip(';')}")
                 await page.wait_for_timeout(3000)
 
-                confirmar = page.locator("#btnConfirmar")
-                await confirmar.wait_for(state="visible", timeout=8000)
-                await confirmar.click(force=True)
+                # Forca o modal a ficar visivel e clica no confirmar
+                await page.evaluate("""
+                    () => {
+                        const modal = document.querySelector('#lista');
+                        if (modal) {
+                            modal.style.display = 'block';
+                            modal.classList.add('in');
+                            modal.removeAttribute('aria-hidden');
+                        }
+                        const btn = document.querySelector('#btnConfirmar');
+                        if (btn) {
+                            btn.style.display = 'inline-block';
+                            btn.removeAttribute('hidden');
+                        }
+                    }
+                """)
+                await page.wait_for_timeout(1000)
+                await page.locator("#btnConfirmar").click(force=True)
                 await page.wait_for_timeout(2000)
                 log("  Chamada confirmada!")
                 chamada_num += 1
