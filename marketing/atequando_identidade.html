@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>atéquando? — Identidade Visual</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI', Arial, sans-serif; background:#0D1117; color:#E6EAF2; }
+  .pagina { max-width:920px; margin:0 auto; padding:50px 30px; }
+  h1 { font-size:44px; font-weight:800; }
+  h1 .grad { background:linear-gradient(90deg,#7C5CFF,#00D4AA); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .sub { color:#8B93A7; font-size:18px; margin:8px 0 50px; }
+  h2 { font-size:22px; margin:50px 0 18px; color:#fff; }
+  h2::before { content:''; display:inline-block; width:26px; height:4px; border-radius:2px; margin-right:10px; vertical-align:middle; background:linear-gradient(90deg,#7C5CFF,#00D4AA); }
+  .logo-box { background:#161B26; border:1px solid #232A38; border-radius:16px; padding:36px; text-align:center; }
+  .logo-box.claro { background:#F4F6FB; }
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  .cores { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; }
+  .cor { border-radius:12px; overflow:hidden; border:1px solid #232A38; }
+  .cor .bloco { height:84px; }
+  .cor .info { background:#161B26; padding:10px 8px; font-size:12px; text-align:center; color:#8B93A7; }
+  .cor .info b { display:block; color:#fff; font-size:13px; }
+  .botao-ex { display:inline-block; padding:14px 34px; border-radius:12px; font-size:16px; font-weight:700; margin:8px 12px 8px 0; text-decoration:none; cursor:pointer; }
+  .botao-primario { background:linear-gradient(90deg,#7C5CFF,#00D4AA); color:#0D1117; }
+  .botao-secundario { background:transparent; color:#E6EAF2; border:1.5px solid #3A4357; }
+  .voz { background:#161B26; border-left:4px solid #00D4AA; padding:18px 22px; border-radius:0 12px 12px 0; margin:12px 0; color:#C3CAD8; }
+  .voz em { color:#00D4AA; font-style:normal; font-weight:600; }
+  .tipografia p { margin:10px 0; color:#C3CAD8; }
+  .chip { display:inline-block; background:#1D2433; border:1px solid #2C3548; color:#9BA6BC; border-radius:999px; padding:6px 16px; font-size:13px; margin:4px 6px 4px 0; }
+  footer { margin-top:60px; text-align:center; color:#5B6478; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="pagina">
+
+  <h1>até<span class="grad">quando</span><span style="color:#00D4AA">?</span></h1>
+  <div class="sub">Manual de identidade visual — versão tech</div>
+
+  <h2>Logo</h2>
+  <div class="grid">
+    <div class="logo-box"><img src="atequando_logo.svg" alt="Logo atéquando?" style="max-width:100%"></div>
+    <div class="logo-box claro"><img src="atequando_logo.svg" alt="Logo em fundo claro" style="max-width:100%"></div>
+  </div>
+  <p style="margin-top:14px;font-size:14px;color:#8B93A7;">O símbolo: as linhas do diário sendo cortadas por um raio — o preenchimento instantâneo. O "?" verde é a assinatura da marca.</p>
+
+  <h2>Cores</h2>
+  <div class="cores">
+    <div class="cor"><div class="bloco" style="background:#0D1117"></div><div class="info"><b>Meia-noite</b>#0D1117<br>fundo</div></div>
+    <div class="cor"><div class="bloco" style="background:#7C5CFF"></div><div class="info"><b>Violeta IA</b>#7C5CFF<br>principal</div></div>
+    <div class="cor"><div class="bloco" style="background:#00D4AA"></div><div class="info"><b>Verde Neon</b>#00D4AA<br>ação / sucesso</div></div>
+    <div class="cor"><div class="bloco" style="background:#5FA8FF"></div><div class="info"><b>Azul Dados</b>#5FA8FF<br>apoio</div></div>
+    <div class="cor"><div class="bloco" style="background:#E6EAF2"></div><div class="info"><b>Gelo</b>#E6EAF2<br>textos</div></div>
+  </div>
+
+  <h2>Tipografia</h2>
+  <div class="tipografia">
+    <p style="font-size:30px;font-weight:800;color:#fff;">Segoe UI / Inter Extra Bold — títulos</p>
+    <p style="font-size:17px;">Segoe UI / Inter regular — textos. Limpa, moderna, a mesma família dos grandes apps.</p>
+    <p style="font-family:Consolas,monospace;font-size:15px;color:#00D4AA;">Consolas / monospace — logs do robô em tempo real ("✅ aula 12 preenchida")</p>
+  </div>
+
+  <h2>Botões</h2>
+  <span class="botao-ex botao-primario">Preencher meu diário ⚡</span>
+  <span class="botao-ex botao-secundario">Ver como funciona</span>
+
+  <h2>Tom de voz</h2>
+  <div class="voz">Direto, confiante e levemente provocador — fala de igual pra igual com o professor, como um colega que descobriu um atalho.</div>
+  <div class="voz">Exemplos: <em>"O diário é até quando? Até agora."</em> — <em>"Enquanto você lê isso, seu diário já estaria pronto."</em> — <em>"Domingo é seu de novo."</em></div>
+
+  <h2>Palavras-chave da marca</h2>
+  <span class="chip">⚡ instantâneo</span>
+  <span class="chip">🤖 inteligência artificial</span>
+  <span class="chip">🔒 sem salvar sua senha</span>
+  <span class="chip">📓 diário · chamada · notas</span>
+  <span class="chip">🕊️ domingo livre</span>
+
+  <footer>atéquando? — seu diário preenchido por inteligência artificial</footer>
+</div>
+</body>
+</html>

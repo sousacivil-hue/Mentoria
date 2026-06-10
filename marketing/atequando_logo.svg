@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="200" viewBox="0 0 640 200">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C5CFF"/>
+      <stop offset="100%" stop-color="#00D4AA"/>
+    </linearGradient>
+    <linearGradient id="gradTexto" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7C5CFF"/>
+      <stop offset="100%" stop-color="#00D4AA"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Símbolo: diário + raio (automação instantânea) -->
+  <g>
+    <!-- página do diário estilizada -->
+    <rect x="35" y="40" width="105" height="120" rx="16" fill="none" stroke="url(#grad)" stroke-width="5"/>
+    <!-- linhas do diário se transformando em sinal digital -->
+    <line x1="55" y1="70" x2="118" y2="70" stroke="#7C5CFF" stroke-width="5" stroke-linecap="round"/>
+    <line x1="55" y1="92" x2="105" y2="92" stroke="#5FA8FF" stroke-width="5" stroke-linecap="round"/>
+    <line x1="55" y1="114" x2="90" y2="114" stroke="#00D4AA" stroke-width="5" stroke-linecap="round" opacity="0.8"/>
+    <!-- raio de automação -->
+    <path d="M 122 95 L 100 132 L 114 132 L 104 162 L 138 118 L 122 118 L 134 95 Z" fill="url(#grad)"/>
+  </g>
+
+  <!-- Nome -->
+  <text x="180" y="110" font-family="'Segoe UI', Arial, sans-serif" font-size="58" font-weight="800" fill="#FFFFFF">até<tspan fill="url(#gradTexto)">quando</tspan></text>
+  <!-- ponto de interrogação como destaque -->
+  <text x="568" y="110" font-family="'Segoe UI', Arial, sans-serif" font-size="58" font-weight="800" fill="#00D4AA">?</text>
+  <!-- Slogan -->
+  <text x="183" y="148" font-family="'Segoe UI', Arial, sans-serif" font-size="19" fill="#8B93A7">seu diário preenchido por inteligência artificial</text>
+</svg>
