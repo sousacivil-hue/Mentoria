@@ -108,7 +108,50 @@ async def main():
                     pass
 
             # Clica no botao btn-primary (usa JS, href pode ser vazio)
-            try:
+            # Inspeciona o botao antes de clicar
+            info = await page.evaluate("""
+                () => {
+                    const btns = document.querySelectorAll('a.btn-primary');
+                    for (const btn of btns) {
+                        const tr = btn.closest('tr');
+                        if (tr && tr.innerText.includes('para registrar')) {
+                            const obj = tr.querySelectorAll('td')[2];
+                            if (obj && obj.innerText.trim() === '') {
+                                return {
+                                    onclick: btn.getAttribute('onclick') || '',
+                                    href: btn.getAttribute('href') || '',
+                                    datahref: btn.getAttribute('data-href') || '',
+                                    dataurl: btn.getAttribute('data-url') || '',
+                                    outerhtml: btn.outerHTML.substring(0, 200)
+                                };
+                            }
+                        }
+                    }
+                    return null;
+                }
+            """)
+            log(f"  Botao info: {info}")
+
+            if info is None:
+                log("  Nenhum botao pendente encontrado")
+                break
+
+            # Se tem onclick com URL, navega direto
+            onclick = info.get("onclick", "")
+            datahref = info.get("datahref", "")
+            dataurl = info.get("dataurl", "")
+
+            navegou = False
+            for val in [datahref, dataurl]:
+                if val and val != "#":
+                    log(f"  Navegando para: {val}")
+                    await page.goto(val if val.startswith("http") else f"https://siae.seduc.se.gov.br{val}")
+                    await page.wait_for_timeout(3000)
+                    navegou = True
+                    break
+
+            if not navegou:
+                # Clica normalmente e aguarda mudanca de URL ou modal
                 await page.evaluate("""
                     () => {
                         const btns = document.querySelectorAll('a.btn-primary');
@@ -117,18 +160,15 @@ async def main():
                             if (tr && tr.innerText.includes('para registrar')) {
                                 const obj = tr.querySelectorAll('td')[2];
                                 if (obj && obj.innerText.trim() === '') {
-                                    btn.click();
+                                    btn.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
                                     return;
                                 }
                             }
                         }
                     }
                 """)
-                await page.wait_for_timeout(3000)
-                log("  Botao clicado via JS")
-            except Exception as e:
-                log(f"  ERRO ao clicar: {e}")
-                break
+                await page.wait_for_timeout(4000)
+                log("  Clique disparado")
 
             log(f"  URL: {page.url}")
 
