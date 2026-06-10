@@ -360,12 +360,29 @@ async def main():
             await page.wait_for_timeout(1500)
 
             try:
+                # Acha o botao verde na mesma linha do botao azul que tem o aula_id
                 btn_chamada = await page.evaluate(f"""
                     () => {{
-                        const btns = document.querySelectorAll('button[onclick*="carregarListaDePresenca"]');
-                        for (const btn of btns) {{
-                            const onclick = btn.getAttribute('onclick') || '';
-                            if (onclick.includes('{aula_id}')) return onclick;
+                        const btnAzuis = document.querySelectorAll('button[onclick*="registrar({aula_id})"], button[onclick*="registrar({aula_id} )"]');
+                        if (btnAzuis.length === 0) {{
+                            // Tenta achar pelo onclick exato
+                            const todos = document.querySelectorAll('button[onclick]');
+                            for (const b of todos) {{
+                                if (b.getAttribute('onclick').includes('{aula_id}')) {{
+                                    const tr = b.closest('tr');
+                                    if (tr) {{
+                                        const verde = tr.querySelector('button[onclick*="carregarListaDePresenca"]');
+                                        if (verde) return verde.getAttribute('onclick');
+                                    }}
+                                }}
+                            }}
+                        }}
+                        for (const btn of btnAzuis) {{
+                            const tr = btn.closest('tr');
+                            if (tr) {{
+                                const verde = tr.querySelector('button[onclick*="carregarListaDePresenca"]');
+                                if (verde) return verde.getAttribute('onclick');
+                            }}
                         }}
                         return null;
                     }}
