@@ -63,24 +63,12 @@ async def main():
             await page.goto(URL_AULAS)
             await page.wait_for_timeout(3000)
 
-        # Descobre o que a funcao registrar() faz
-        js_registrar = await page.evaluate("""
-            () => {
-                if (typeof registrar === 'function') {
-                    return registrar.toString().substring(0, 500);
-                }
-                return 'funcao nao encontrada';
-            }
-        """)
-        log(f"  Funcao registrar: {js_registrar}")
-
         log("\nIniciando preenchimento...\n")
         aula_num = 0
 
         while True:
             await page.wait_for_timeout(1000)
 
-            # Pega todos os botoes de registrar com seus IDs
             botoes_info = await page.evaluate("""
                 () => {
                     const result = [];
@@ -108,39 +96,26 @@ async def main():
             alvo = botoes_info[0]
             onclick = alvo["onclick"]
             serie_texto = alvo["serie"]
-            log(f"Aula {aula_num + 1}: {serie_texto[:50]} | onclick: {onclick}")
 
-            # Extrai o ID do onclick: registrar(165565786)
             match = re.search(r"registrar\((\d+)\)", onclick)
             if not match:
-                log("  ERRO: ID nao encontrado no onclick")
+                log("  ERRO: ID nao encontrado")
                 break
             aula_id = match.group(1)
 
             conteudo = get_conteudo(serie_texto)
-            log(f"  ID: {aula_id} | conteudo: {conteudo[:40]}")
+            log(f"Aula {aula_num + 1}: {serie_texto[:50]}")
+            log(f"  ID: {aula_id} | conteudo: {conteudo[:50]}")
 
-            # Chama a funcao registrar() via JS e captura o popup
-            context = page.context
-            try:
-                async with context.expect_page(timeout=8000) as popup_info:
-                    await page.evaluate(f"registrar({aula_id})")
-                popup = await popup_info.value
-                await popup.wait_for_load_state("domcontentloaded")
-                await popup.wait_for_timeout(2000)
-                log(f"  Popup URL: {popup.url}")
-            except Exception as e:
-                log(f"  ERRO popup: {e}")
-                # Tenta navegar direto para a URL de registro
-                url_reg = f"https://siae.seduc.se.gov.br/siae.diario/Aula/Registrar/{aula_id}"
-                log(f"  Tentando URL direta: {url_reg}")
-                await page.goto(url_reg)
-                await page.wait_for_timeout(3000)
-                popup = page
+            # Navega para a pagina de registro (registrar() faz location.href)
+            url_reg = f"https://siae.seduc.se.gov.br/siae.diario/Aula/Registrar/{aula_id}"
+            await page.goto(url_reg)
+            await page.wait_for_timeout(3000)
+            log(f"  URL: {page.url}")
 
             # Preenche Objeto de Conhecimento
             try:
-                objeto = popup.locator("textarea").nth(0)
+                objeto = page.locator("textarea").nth(0)
                 await objeto.wait_for(timeout=6000)
                 await objeto.click(click_count=3)
                 await objeto.fill(conteudo)
@@ -148,59 +123,46 @@ async def main():
             except Exception as e:
                 log(f"  ERRO objeto: {e}")
 
-            # Preenche Metodologia (tenta textarea e input)
-            met_preenchida = False
-            for sel in ["textarea", "input[type='text']"]:
-                try:
-                    locs = popup.locator(sel)
-                    count = await locs.count()
-                    log(f"  {sel} count: {count}")
-                    if count >= 2:
-                        met = locs.nth(1)
-                        await met.click()
-                        await met.fill(METODOLOGIA)
-                        log("  Metodologia preenchida")
-                        met_preenchida = True
-                        break
-                except Exception as e:
-                    log(f"  ERRO metodologia ({sel}): {e}")
-            if not met_preenchida:
-                log("  Metodologia nao preenchida")
+            # Preenche Metodologia
+            try:
+                textareas = page.locator("textarea")
+                count = await textareas.count()
+                log(f"  Total textareas: {count}")
+                if count >= 2:
+                    await textareas.nth(1).click()
+                    await textareas.nth(1).fill(METODOLOGIA)
+                    log("  Metodologia preenchida")
+                else:
+                    log("  Apenas 1 textarea encontrada")
+            except Exception as e:
+                log(f"  ERRO metodologia: {e}")
 
             # Salva
             try:
-                salvar = popup.locator("button:has-text('SALVAR'), button:has-text('Salvar'), input[value='SALVAR'], input[value='Salvar']").first
+                salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar'), input[value='SALVAR'], input[value='Salvar']").first
                 await salvar.wait_for(timeout=5000)
                 await salvar.click()
-                await popup.wait_for_timeout(3000)
-                log("  Salvo!")
+                await page.wait_for_timeout(3000)
+                log(f"  Salvo! URL pos salvar: {page.url}")
             except Exception as e:
                 log(f"  ERRO ao salvar: {e}")
-                try:
-                    await popup.close()
-                except Exception:
-                    pass
+                await page.goto(URL_AULAS)
+                await page.wait_for_timeout(2000)
                 continue
 
-            # Confirma chamada
+            # Confirma chamada se aparecer
             try:
-                confirmar = popup.locator("button:has-text('Confirmar'), button:has-text('CONFIRMAR'), input[value='Confirmar']").first
+                confirmar = page.locator("button:has-text('Confirmar'), button:has-text('CONFIRMAR'), input[value='Confirmar']").first
                 await confirmar.wait_for(timeout=4000)
                 await confirmar.click()
-                await popup.wait_for_timeout(2000)
+                await page.wait_for_timeout(2000)
                 log("  Chamada confirmada")
-            except Exception:
-                pass
-
-            # Fecha popup
-            try:
-                if popup != page and not popup.is_closed():
-                    await popup.close()
             except Exception:
                 pass
 
             aula_num += 1
             log(f"  OK")
+
             await page.goto(URL_AULAS)
             await page.wait_for_timeout(2000)
 
