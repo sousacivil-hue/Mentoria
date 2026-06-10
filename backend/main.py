@@ -555,8 +555,23 @@ async def run_active(job_id: str, data: ActiveFormData):
                 await page.wait_for_timeout(1500)
             return None, None
 
+        # ---- DIAGNÓSTICO: o que o robô enxerga na página ----
+        await page.wait_for_timeout(4000)
+        log.append(f"🔍 URL atual: {page.url}")
+        log.append(f"🔍 Frames na página: {len(page.frames)}")
+        for fi, frame in enumerate(page.frames):
+            try:
+                textos = await frame.evaluate(
+                    "() => Array.from(document.querySelectorAll('button, input[type=button], "
+                    "input[type=submit], a')).map(e => (e.innerText || e.value || '').trim())"
+                    ".filter(t => t).slice(0, 25)"
+                )
+                if textos:
+                    log.append(f"🔍 Frame {fi}: {textos}")
+            except Exception:
+                continue
+
         # ---- 1. Clica em EXIBIR (filtro de período) ----
-        await page.wait_for_timeout(2000)
         frame_ex, exibir = await achar("button:has-text('EXIBIR'), input[value*='EXIBIR' i], a:has-text('EXIBIR'), *[onclick]:has-text('EXIBIR')")
         if exibir:
             await exibir.click()
