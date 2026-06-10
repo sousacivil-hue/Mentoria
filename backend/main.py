@@ -399,6 +399,7 @@ class ActiveFormData(BaseModel):
     url_colegio: str = "https://siga.activesoft.com.br/login/"
     usuario: str
     senha: str
+    bimestre: str = "2"  # 1, 2, 3 ou 4
     inicio: str  # YYYY-MM-DD
     fim: str
     aulas_por_dia: dict  # {"1": 2, "2": 0, ...} 1=seg..5=sex
@@ -494,10 +495,89 @@ async def run_active(job_id: str, data: ActiveFormData):
             await browser.close()
             return
 
-        # TODO: navegação e lançamento de aulas no ActiveSoft
-        # Aguardando mapeamento das telas (fotos do professor)
-        log.append("⚠️ Lançamento no ActiveSoft em desenvolvimento.")
-        log.append("📋 O calendário foi montado e validado com sucesso.")
+        # ---- 1. Clica em EXIBIR (filtro de período) ----
+        try:
+            exibir = page.locator("button:has-text('EXIBIR'), input[value*='EXIBIR' i], a:has-text('EXIBIR')").first
+            await exibir.click()
+            await page.wait_for_timeout(3000)
+            log.append("✅ Período exibido")
+        except Exception as e:
+            log.append(f"⚠️ Botão EXIBIR não encontrado: {e}")
+
+        # ---- 2. Abre o Diário de classe da turma ----
+        try:
+            diario = page.locator("a:has-text('Diário de classe')").first
+            await diario.wait_for(timeout=8000)
+            await diario.click()
+            await page.wait_for_timeout(3000)
+            log.append("✅ Diário de classe aberto")
+        except Exception as e:
+            log.append(f"❌ ERRO: link 'Diário de classe' não encontrado: {e}")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        # ---- 3. Clica em Registro de aulas do bimestre escolhido ----
+        try:
+            linha_bim = page.locator(f"tr:has-text('{data.bimestre}º BIMESTRE')").first
+            reg = linha_bim.locator("a:has-text('Registro de aulas')").first
+            await reg.wait_for(timeout=8000)
+            await reg.click()
+            await page.wait_for_timeout(3000)
+            log.append(f"✅ Registro de aulas do {data.bimestre}º bimestre aberto")
+        except Exception as e:
+            log.append(f"❌ ERRO: 'Registro de aulas' do {data.bimestre}º bimestre não encontrado: {e}")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        # ---- 4. Preenche os conteúdos nas linhas vazias ----
+        try:
+            linhas = page.locator("table tr:has(textarea)")
+            total_linhas = await linhas.count()
+            log.append(f"📋 Linhas de aula encontradas: {total_linhas}")
+
+            idx_aula = 0
+            preenchidas = 0
+            for i in range(total_linhas):
+                linha = linhas.nth(i)
+                # Primeiro textarea da linha = Conteúdo ministrado
+                conteudo_box = linha.locator("textarea").first
+                valor_atual = (await conteudo_box.input_value()).strip()
+                if valor_atual:
+                    continue  # já preenchida
+
+                if idx_aula < len(aulas):
+                    texto = aulas[idx_aula]["conteudo"]
+                else:
+                    texto = aulas[idx_aula % len(aulas)]["conteudo"] + " — continuação"
+
+                await conteudo_box.click()
+                await conteudo_box.fill(texto)
+                idx_aula += 1
+                preenchidas += 1
+                log.append(f"✏️ Aula {i + 1}: {texto[:50]}")
+                await page.wait_for_timeout(300)
+
+            log.append(f"📊 {preenchidas} aulas preenchidas no formulário")
+
+            # ---- 5. Salva ----
+            salvar = page.locator(
+                "button:has-text('Gravar'), input[value*='Gravar' i], "
+                "button:has-text('Salvar'), input[value*='Salvar' i], "
+                "button:has-text('Confirmar'), input[type='submit']"
+            )
+            if await salvar.count() > 0:
+                await salvar.first.click()
+                await page.wait_for_timeout(4000)
+                log.append("✅ Aulas salvas com sucesso!")
+            else:
+                log.append("⚠️ Botão de salvar não encontrado — me mande um print do final da página")
+
+        except Exception as e:
+            log.append(f"❌ ERRO ao preencher: {e}")
+
+        log.append("🎉 Automação concluída!")
         log.append("__CONCLUIDO__")
         await browser.close()
 

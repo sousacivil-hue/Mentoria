@@ -188,7 +188,14 @@
     <!-- 2: Período -->
     <div class="card">
       <h2><span class="step-badge">2</span> Período do bimestre</h2>
-      <div class="row">
+      <label>Qual bimestre?</label>
+      <select id="bimestre">
+        <option value="1">1º Bimestre</option>
+        <option value="2" selected>2º Bimestre</option>
+        <option value="3">3º Bimestre</option>
+        <option value="4">4º Bimestre</option>
+      </select>
+      <div class="row" style="margin-top:14px;">
         <div>
           <label>Início</label>
           <input type="date" id="data-inicio" onchange="calcularAulas()">
@@ -515,6 +522,7 @@ async function executar() {
     sistema: 'activesoft',
     url_colegio: urlColegio,
     usuario, senha,
+    bimestre: document.getElementById('bimestre').value,
     inicio: ini,
     fim: fim,
     aulas_por_dia: dias,
