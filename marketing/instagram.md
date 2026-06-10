@@ -106,3 +106,53 @@ Nome do perfil: **@diarioauto** (ou @diarioemdia, @professorsemdiario)
 
 **"Quanto custa?"**
 > Primeira execução grátis. Depois R$ 19,90/mês com preenchimentos ilimitados, ou R$ 10 avulso por bimestre preenchido.
+
+---
+
+## Prompts para gerar imagem de anúncio (DALL-E, Midjourney, Ideogram, Canva)
+
+### Anúncio 1 — Professora relaxada
+
+```
+Anúncio para Instagram, formato quadrado 1080x1080, estilo moderno e limpo.
+Cena: professora brasileira de uns 35 anos, relaxada num sofá confortável
+em casa à noite, sorrindo, segurando uma xícara de café, luz aconchegante.
+Ao lado dela, sobre a mesa, um notebook FECHADO.
+Na metade superior, texto grande em português:
+"SEU DIÁRIO DE CLASSE EM DIA. SEM DIGITAR NADA."
+Na parte inferior, faixa azul (#1a73e8) com texto branco:
+"Primeira execução grátis — DiárioAuto"
+Paleta: azul (#1a73e8), branco e tons quentes. Estilo fotográfico
+realista, texto perfeitamente legível.
+```
+
+### Anúncio 2 — Antes/depois
+
+```
+Imagem dividida ao meio, formato 1080x1080, estilo ilustração flat moderna.
+LADO ESQUERDO (tons cinza, caótico): professor exausto à meia-noite,
+pilha de papéis, digitando no computador, texto "DOMINGO, 23H47".
+LADO DIREITO (tons azuis vibrantes, leve): mesmo professor tranquilo
+no parque com a família, celular no bolso, texto "DIÁRIO JÁ PREENCHIDO".
+Rodapé: "DiárioAuto — a partir de R$ 19,90/mês". Texto em português, legível.
+```
+
+Dica: se o gerador errar o texto em português, gere SEM texto e adicione
+depois no Canva.
+
+---
+
+## Tabela de preços
+
+| Plano | Preço | Lógica |
+|---|---|---|
+| Teste | Grátis (1ª execução) | Ele precisa VER funcionando |
+| Avulso | R$ 15 por execução | Para quem não quer assinar |
+| Mensal | R$ 19,90/mês | Carro-chefe — preço de um lanche |
+| Bimestral | R$ 49 | Casa com o ciclo do diário |
+
+Argumento de venda:
+3 horas/semana digitando x 4 semanas = 12 horas/mês.
+Por R$ 19,90, sai a R$ 1,65 a hora recuperada.
+
+Colégios particulares (Vita, COESI, Salesiano): testar R$ 29,90.
