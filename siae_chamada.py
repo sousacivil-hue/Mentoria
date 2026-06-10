@@ -110,11 +110,11 @@ async def main():
 
             try:
                 await page.evaluate(f"{onclick.rstrip(';')}")
-                await page.wait_for_timeout(2000)
+                await page.wait_for_timeout(3000)
 
                 confirmar = page.locator("#btnConfirmar")
-                await confirmar.wait_for(timeout=5000)
-                await confirmar.click()
+                await confirmar.wait_for(state="visible", timeout=8000)
+                await confirmar.click(force=True)
                 await page.wait_for_timeout(2000)
                 log("  Chamada confirmada!")
                 chamada_num += 1
