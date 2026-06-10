@@ -420,7 +420,7 @@ def montar_calendario(data: ActiveFormData) -> list[dict]:
         iso = d.isoformat()
         qtd = int(data.aulas_por_dia.get(str(dow), 0) or 0)
 
-        if 1 <= dow <= 5 and qtd > 0:
+        if 1 <= dow <= 6 and qtd > 0:
             tipo_especial = eventos_map.get(iso)
             if tipo_especial == "Feriado":
                 pass  # pula o dia
