@@ -679,11 +679,17 @@ async def run_active(job_id: str, data: ActiveFormData):
             if data.turma:
                 bloco_texto = await fr_check.locator("a:has-text('Diário de classe')").nth(idx).evaluate(
                     "el => { let p = el.closest('div,section,table,tr'); "
-                    "for (let i=0; i<6 && p; i++) { "
-                    "if (p.innerText.includes('" + data.turma.replace("'", "") + "')) return p.innerText.slice(0,120); "
-                    "p = p.parentElement; } return ''; }"
+                    "for (let i = 0; i < 8 && p; i++) p = p.parentElement ? p : p; "
+                    "let q = el; for (let i = 0; i < 8 && q; i++) { "
+                    "if ((q.innerText || '').length > 20) return q.innerText.slice(0, 300); "
+                    "q = q.parentElement; } return ''; }"
                 )
-                if not bloco_texto:
+                # Normaliza: minúsculas, sem º/°/ª, sem espaços
+                def norm(s):
+                    return (s.lower().replace("º", "").replace("°", "").replace("ª", "")
+                            .replace(" ", "").replace("/", ""))
+                if norm(data.turma) not in norm(bloco_texto or ""):
+                    log.append(f"⏭️ Turma {idx + 1} não é '{data.turma}' — pulando")
                     continue
 
             log.append(f"➡️ Turma {idx + 1} de {total_turmas}...")
