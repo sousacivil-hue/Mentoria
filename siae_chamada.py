@@ -112,27 +112,19 @@ async def main():
             log(f"  onclick: {onclick}")
 
             try:
-                await page.evaluate(f"{onclick.rstrip(';')}")
-                await page.wait_for_timeout(3000)
-
-                # Forca o modal a ficar visivel e clica no confirmar
-                await page.evaluate("""
-                    () => {
-                        const modal = document.querySelector('#lista');
-                        if (modal) {
-                            modal.style.display = 'block';
-                            modal.classList.add('in');
-                            modal.removeAttribute('aria-hidden');
-                        }
-                        const btn = document.querySelector('#btnConfirmar');
-                        if (btn) {
-                            btn.style.display = 'inline-block';
-                            btn.removeAttribute('hidden');
-                        }
-                    }
-                """)
+                # Clica no botao verde diretamente na pagina
+                btn = page.locator(f"button[onclick='{onclick}']").first
+                await btn.click()
+                # Aguarda o modal abrir de verdade via AJAX
+                await page.wait_for_selector("#lista.in, #lista[style*='display: block']", timeout=8000)
                 await page.wait_for_timeout(1000)
-                await page.locator("#btnConfirmar").click(force=True)
+                await page.locator("#btnConfirmar").click()
+                await page.wait_for_timeout(2000)
+                # Recarrega a pagina para pegar estado atualizado
+                await page.goto(URL_AULAS)
+                await page.wait_for_timeout(2000)
+                await selecionar_solicitadas()
+                await page.wait_for_timeout(1000)
                 await page.wait_for_timeout(2000)
                 log("  Chamada confirmada!")
                 chamada_num += 1
