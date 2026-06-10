@@ -71,114 +71,69 @@ async def main():
             linhas = page.locator("tr:has-text('para registrar')")
             total_linhas = await linhas.count()
 
-            if total_linhas == 0:
-                log("Todas as aulas preenchidas!")
-                break
-
-            linha = linhas.first
-            serie_texto = await linha.locator("td").nth(3).inner_text()
-            conteudo = get_conteudo(serie_texto)
-            log(f"Aula {aula_num + 1}: {serie_texto.strip()[:50]} -> {conteudo[:40]}...")
-
-            # Descobre todos os links/botoes na linha
-            todos_links = linha.locator("a, button")
-            qtd = await todos_links.count()
-            log(f"  Botoes na linha: {qtd}")
-            for idx in range(qtd):
-                el = todos_links.nth(idx)
+            # Pega a primeira linha com coluna Objeto vazia
+            linha_alvo = None
+            serie_texto = ""
+            for i in range(total_linhas):
+                ln = linhas.nth(i)
                 try:
-                    href = await el.get_attribute("href") or ""
-                    txt = await el.inner_text() or ""
-                    cls = await el.get_attribute("class") or ""
-                    log(f"    [{idx}] txt='{txt.strip()}' href='{href[:60]}' class='{cls}'")
-                except Exception:
-                    pass
-
-            # Clica no primeiro link que vai para Registrar
-            btn_azul = None
-            for idx in range(qtd):
-                el = todos_links.nth(idx)
-                try:
-                    href = await el.get_attribute("href") or ""
-                    cls = await el.get_attribute("class") or ""
-                    if "Registrar" in href or "registrar" in href:
-                        btn_azul = el
-                        log(f"  Clicando botao Registrar [{idx}]")
+                    obj_texto = await ln.locator("td").nth(2).inner_text()
+                    if obj_texto.strip() == "":
+                        linha_alvo = ln
+                        serie_texto = await ln.locator("td").nth(3).inner_text()
                         break
                 except Exception:
                     pass
 
-            if not btn_azul:
-                try:
-                    btn_azul = linha.locator("a.btn-primary, a.btn-info").first
-                    await btn_azul.wait_for(timeout=2000)
-                    log("  Clicando btn-primary")
-                except Exception:
-                    btn_azul = todos_links.first
-                    log("  Clicando primeiro link da linha")
+            if linha_alvo is None:
+                log("Todas as aulas preenchidas!")
+                break
 
-            await btn_azul.scroll_into_view_if_needed()
-            await btn_azul.click()
-            await page.wait_for_timeout(3000)
+            conteudo = get_conteudo(serie_texto)
+            log(f"Aula {aula_num + 1}: {serie_texto.strip()[:50]} -> {conteudo[:40]}...")
+
+            # Clica no botao azul
+            try:
+                btn = linha_alvo.locator("a.btn-primary").first
+                await btn.wait_for(timeout=5000)
+                href = await btn.get_attribute("href") or ""
+                log(f"  href: {href[:80]}")
+                await btn.scroll_into_view_if_needed()
+                await btn.click()
+                await page.wait_for_timeout(3000)
+            except Exception as e:
+                log(f"  ERRO botao: {e}")
+                break
 
             log(f"  URL: {page.url}")
 
-            # Passo 1: se caiu na chamada, marcar todos presentes e confirmar
+            # Preenche Objeto de Conhecimento (textarea 0)
             try:
-                btn_todos = page.locator("button:has-text('Todos Presentes'), a:has-text('Todos Presentes'), button:has-text('TODOS'), input[value*='Presentes']").first
-                await btn_todos.wait_for(timeout=3000)
-                await btn_todos.click()
-                await page.wait_for_timeout(2000)
-                log("  Chamada: marcou todos presentes")
-            except Exception:
-                pass
+                objeto = page.locator("textarea").nth(0)
+                await objeto.wait_for(timeout=6000)
+                await objeto.triple_click()
+                await objeto.fill(conteudo)
+                log("  Objeto preenchido")
+            except Exception as e:
+                log(f"  ERRO objeto: {e}")
 
+            # Preenche Metodologia (textarea 1)
             try:
-                confirmar_chamada = page.locator("button:has-text('Confirmar'), button:has-text('CONFIRMAR'), input[value='Confirmar']").first
-                await confirmar_chamada.wait_for(timeout=3000)
-                await confirmar_chamada.click()
-                await page.wait_for_timeout(3000)
-                log("  Chamada confirmada")
-            except Exception:
-                pass
-
-            log(f"  URL apos chamada: {page.url}")
-
-            # Passo 2: preencher conteudo
-            campo_obj = None
-            for sel in ["textarea", "input[type='text']:not([readonly])"]:
-                try:
-                    loc = page.locator(sel).first
-                    await loc.wait_for(timeout=4000)
-                    campo_obj = loc
-                    log(f"  Campo conteudo: {sel}")
-                    break
-                except Exception:
-                    pass
-
-            if campo_obj:
-                await campo_obj.click()
-                await campo_obj.fill(conteudo)
-            else:
-                log("  ERRO: campo de conteudo nao encontrado")
-
-            # Passo 3: metodologia
-            try:
-                textareas = page.locator("textarea")
-                count = await textareas.count()
-                if count >= 2:
-                    await textareas.nth(1).click()
-                    await textareas.nth(1).fill(METODOLOGIA)
-                    log("  Metodologia preenchida")
+                met = page.locator("textarea").nth(1)
+                await met.wait_for(timeout=3000)
+                await met.click()
+                await met.fill(METODOLOGIA)
+                log("  Metodologia preenchida")
             except Exception as e:
                 log(f"  ERRO metodologia: {e}")
 
-            # Passo 4: salvar
+            # Salva
             try:
                 salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar'), input[value='SALVAR'], input[value='Salvar']").first
                 await salvar.wait_for(timeout=5000)
                 await salvar.click()
                 await page.wait_for_timeout(3000)
+                log(f"  URL pos salvar: {page.url}")
                 aula_num += 1
                 log(f"  OK")
             except Exception as e:
