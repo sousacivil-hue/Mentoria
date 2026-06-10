@@ -165,9 +165,19 @@
     <!-- 1: Login -->
     <div class="card">
       <h2><span class="step-badge">1</span> Acesso ao sistema</h2>
-      <label>Link de acesso do seu colégio</label>
-      <input type="text" id="url-colegio" placeholder="Ex: https://siga.activesoft.com.br/login/?instituicao=VITA">
-      <div class="dica">Cole o endereço da página de login que o seu colégio usa (aquele que você acessa normalmente para entrar no sistema).</div>
+      <label>Seu colégio</label>
+      <select id="select-colegio" onchange="trocarColegio()">
+        <option value="https://siga.activesoft.com.br/login/?instituicao=VITA">Vita</option>
+        <option value="https://siga.activesoft.com.br/login/?instituicao=JARDINS">Jardins</option>
+        <option value="https://siga.activesoft.com.br/login/?instituicao=COESI">COESI</option>
+        <option value="https://siga.activesoft.com.br/login/?instituicao=FUTUROFELIZ">Futuro Feliz</option>
+        <option value="outro">Outro colégio...</option>
+      </select>
+      <div id="bloco-url-outro" style="display:none;">
+        <label>Link de acesso do seu colégio</label>
+        <input type="text" id="url-colegio" placeholder="Cole o endereço da página de login do seu colégio">
+        <div class="dica">É o endereço que você acessa normalmente para entrar no sistema do colégio.</div>
+      </div>
       <label>Usuário (login do ActiveSoft)</label>
       <input type="text" id="usuario" placeholder="Seu login">
       <label>Senha</label>
@@ -313,6 +323,11 @@ function getAulasPorDia() {
     dias[i] = parseInt(document.getElementById(`dia-${i}`).value) || 0;
   }
   return dias;
+}
+
+function trocarColegio() {
+  const outro = document.getElementById('select-colegio').value === 'outro';
+  document.getElementById('bloco-url-outro').style.display = outro ? 'block' : 'none';
 }
 
 function toggleSabados() {
@@ -473,11 +488,14 @@ function addLog(msg, tipo = '') {
 }
 
 async function executar() {
-  const urlColegio = document.getElementById('url-colegio').value.trim();
+  const selectVal = document.getElementById('select-colegio').value;
+  const urlColegio = selectVal === 'outro'
+    ? document.getElementById('url-colegio').value.trim()
+    : selectVal;
   const usuario = document.getElementById('usuario').value.trim();
   const senha = document.getElementById('senha').value.trim();
   const ini = document.getElementById('data-inicio').value;
-  if (!urlColegio) { alert('Cole o link de acesso do seu colégio.'); return; }
+  if (!urlColegio) { alert('Selecione seu colégio ou cole o link de acesso.'); return; }
   const fim = document.getElementById('data-fim').value;
   const topicos = document.getElementById('topicos').value
     .split('\n').map(s => s.trim()).filter(s => s);
