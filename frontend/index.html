@@ -264,13 +264,34 @@
     </div>
   </div>
 
-  <button class="btn-executar" onclick="executar()">▶ Executar Preenchimento Automático</button>
+  <button class="btn-executar" id="btn-exec" onclick="executar()">▶ Executar Preenchimento Automático</button>
 
-  <div class="status rodando" id="status-rodando">
-    ⏳ Executando... O sistema está preenchendo as aulas automaticamente.
+  <!-- Painel de progresso -->
+  <div id="painel-progresso" style="display:none; margin-top:24px;">
+    <div class="card">
+      <h2>⚙️ Executando...</h2>
+      <div style="margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; font-size:13px; color:#555; margin-bottom:6px;">
+          <span>Progresso</span>
+          <span id="prog-texto">0 de 6 aulas</span>
+        </div>
+        <div style="background:#e8f0fe; border-radius:20px; height:14px; overflow:hidden;">
+          <div id="barra" style="height:100%; width:0%; background:#1a73e8; border-radius:20px; transition:width 0.5s;"></div>
+        </div>
+      </div>
+      <div id="log-aulas" style="background:#f8faff; border-radius:8px; padding:16px; font-size:14px; font-family:monospace; max-height:220px; overflow-y:auto; border:1px solid #d0e0ff;">
+        <div style="color:#999;">Aguardando início...</div>
+      </div>
+    </div>
   </div>
-  <div class="status ok" id="status-ok">
-    ✅ Concluído! Todas as aulas foram preenchidas com sucesso.
+
+  <div id="painel-ok" style="display:none; margin-top:24px;">
+    <div class="card" style="text-align:center; border:2px solid #a5d6a7;">
+      <div style="font-size:48px; margin-bottom:12px;">✅</div>
+      <h2 style="color:#2e7d32; border:none;">Concluído com sucesso!</h2>
+      <p style="color:#555; margin-top:8px;" id="resumo-final">6 aulas preenchidas automaticamente.</p>
+      <button onclick="reiniciar()" style="margin-top:20px; background:#1a73e8; color:white; border:none; padding:10px 28px; border-radius:8px; font-size:15px; cursor:pointer;">Nova execução</button>
+    </div>
   </div>
 
 </div>
@@ -313,12 +334,62 @@
   }
 
   function executar() {
-    document.getElementById('status-rodando').style.display = 'block';
-    document.getElementById('status-ok').style.display = 'none';
-    setTimeout(() => {
-      document.getElementById('status-rodando').style.display = 'none';
-      document.getElementById('status-ok').style.display = 'block';
-    }, 3000);
+    document.getElementById('btn-exec').disabled = true;
+    document.getElementById('btn-exec').textContent = '⏳ Executando...';
+    document.getElementById('painel-progresso').style.display = 'block';
+    document.getElementById('painel-ok').style.display = 'none';
+    document.getElementById('log-aulas').innerHTML = '';
+
+    const aulas = [
+      { turma: '6º Ano - A', conteudo: 'Critérios de divisibilidade por 4 e por 5.' },
+      { turma: '6º Ano - A', conteudo: 'Critérios de divisibilidade por 4 e por 5.' },
+      { turma: '7º Ano - A', conteudo: 'Problemas envolvendo porcentagem.' },
+      { turma: '7º Ano - A', conteudo: 'Problemas envolvendo porcentagem.' },
+      { turma: '3ª Série - A', conteudo: 'Problemas envolvendo razão e proporção.' },
+      { turma: '3ª Série - A', conteudo: 'Problemas envolvendo razão e proporção.' },
+    ];
+
+    const total = aulas.length;
+    let atual = 0;
+
+    function proximaAula() {
+      if (atual >= total) {
+        document.getElementById('painel-progresso').style.display = 'none';
+        document.getElementById('painel-ok').style.display = 'block';
+        document.getElementById('resumo-final').textContent = `${total} aulas preenchidas automaticamente.`;
+        document.getElementById('btn-exec').disabled = false;
+        document.getElementById('btn-exec').textContent = '▶ Executar Preenchimento Automático';
+        return;
+      }
+
+      const a = aulas[atual];
+      const pct = Math.round((atual / total) * 100);
+      document.getElementById('barra').style.width = pct + '%';
+      document.getElementById('prog-texto').textContent = `${atual} de ${total} aulas`;
+
+      const log = document.getElementById('log-aulas');
+      const linha = document.createElement('div');
+      linha.style.color = '#555';
+      linha.style.padding = '3px 0';
+      linha.innerHTML = `<span style="color:#999">[${atual + 1}/${total}]</span> <b>${a.turma}</b> — ${a.conteudo.substring(0, 45)}... <span style="color:#f57c00">⏳</span>`;
+      log.appendChild(linha);
+      log.scrollTop = log.scrollHeight;
+
+      setTimeout(() => {
+        linha.innerHTML = `<span style="color:#999">[${atual + 1}/${total}]</span> <b>${a.turma}</b> — ${a.conteudo.substring(0, 45)}... <span style="color:#2e7d32">✅ OK</span>`;
+        atual++;
+        document.getElementById('barra').style.width = Math.round((atual / total) * 100) + '%';
+        document.getElementById('prog-texto').textContent = `${atual} de ${total} aulas`;
+        setTimeout(proximaAula, 800);
+      }, 1200);
+    }
+
+    setTimeout(proximaAula, 500);
+  }
+
+  function reiniciar() {
+    document.getElementById('painel-ok').style.display = 'none';
+    document.getElementById('painel-progresso').style.display = 'none';
   }
 
   function mostrarCampos() {}
