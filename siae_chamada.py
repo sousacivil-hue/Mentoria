@@ -69,6 +69,7 @@ async def main():
 
         log("\nIniciando chamadas...\n")
         chamada_num = 0
+        ja_feitos = set()
 
         while True:
             await page.wait_for_timeout(1000)
@@ -84,23 +85,25 @@ async def main():
                         const tds = tr.querySelectorAll('td');
                         const objeto = tds[2] ? tds[2].innerText.trim() : '';
                         const serie = tds[3] ? tds[3].innerText.trim() : '';
-                        const situacao = tds[7] ? tds[7].innerText.trim() : '';
                         const onclick = btn.getAttribute('onclick') || '';
-                        // Apenas aulas com conteudo preenchido
                         if (objeto && objeto !== '-' && objeto !== '') {
-                            result.push({onclick, serie, objeto, situacao});
+                            result.push({onclick, serie, objeto});
                         }
                     }
                     return result;
                 }
             """)
 
-            if not botoes:
+            # Filtra os que ja foram processados
+            pendentes = [b for b in botoes if b["onclick"] not in ja_feitos]
+
+            if not pendentes:
                 log("Todas as chamadas confirmadas!")
                 break
 
-            alvo = botoes[0]
+            alvo = pendentes[0]
             onclick = alvo["onclick"]
+            ja_feitos.add(onclick)
             serie = alvo["serie"]
             objeto = alvo["objeto"]
 
