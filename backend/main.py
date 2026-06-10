@@ -545,7 +545,7 @@ async def gerar_topicos(req: GerarTopicosRequest):
 
         url = (
             "https://generativelanguage.googleapis.com/v1beta/models/"
-            f"gemini-2.0-flash:generateContent?key={api_key}"
+            f"gemini-2.5-flash-lite:generateContent?key={api_key}"
         )
         body = json.dumps({
             "contents": [{"parts": [{"text": prompt}]}]
