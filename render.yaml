@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: diarioauto
+    runtime: python
+    plan: free
+    buildCommand: pip install -r backend/requirements.txt && playwright install chromium --with-deps
+    startCommand: cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false

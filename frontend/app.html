@@ -313,10 +313,17 @@ Equações do 2º grau - exercícios
     </div>
   </div>
 
+<!-- Espaço para anúncio (AdSense ou banner direto) -->
+<div id="anuncio" style="max-width:720px;margin:24px auto;text-align:center;min-height:90px;
+     border:1px dashed rgba(255,255,255,.15);border-radius:12px;display:flex;
+     align-items:center;justify-content:center;color:rgba(255,255,255,.3);font-size:13px;">
+  Espaço publicitário
+</div>
+
 </div>
 
 <script>
-const BACKEND_URL = 'http://localhost:8000';
+const BACKEND_URL = location.protocol === 'file:' ? 'http://localhost:8000' : '';
 
 const opcoes = { aulas: true, solicitadas: false, chamada: false, notas: false };
 let modoConteudo = 'pronto';

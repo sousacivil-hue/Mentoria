@@ -850,3 +850,11 @@ async def progresso(job_id: str):
             await asyncio.sleep(0.5)
 
     return StreamingResponse(stream(), media_type="text/event-stream")
+
+
+# ---- Servir o site (frontend) pelo mesmo servidor ----
+from fastapi.staticfiles import StaticFiles
+
+FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
+if os.path.isdir(FRONTEND_DIR):
+    app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
