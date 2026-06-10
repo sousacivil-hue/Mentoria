@@ -353,34 +353,16 @@ async def main():
             aula_num += 1
             log(f"  OK")
 
-            # Nao navega — apos salvar o SIAE ja fica na lista de Solicitadas
+            # Vai direto para a lista Solicitadas e busca o botao de chamada da aula salva
+            await page.goto(URL_AULAS)
             await page.wait_for_timeout(2000)
-
-            # Loga todos os botoes verdes visiveis para debug
-            todos_verdes = await page.evaluate(f"""
-                () => {{
-                    const resultado = [];
-                    const btns = document.querySelectorAll('button[class*="success"], a[class*="success"], button.btn-success, a.btn-success');
-                    for (const btn of btns) {{
-                        resultado.push({{
-                            tag: btn.tagName,
-                            classes: btn.className,
-                            onclick: btn.getAttribute('onclick') || '',
-                            href: btn.getAttribute('href') || '',
-                            texto: btn.innerText.trim()
-                        }});
-                    }}
-                    return resultado;
-                }}
-            """)
-            log(f"  Botoes verdes encontrados: {len(todos_verdes)}")
-            for b in todos_verdes:
-                log(f"    {b['tag']} class={b['classes']} onclick={b['onclick']} href={b['href']}")
+            await selecionar_solicitadas()
+            await page.wait_for_timeout(1500)
 
             try:
                 btn_chamada = await page.evaluate(f"""
                     () => {{
-                        const btns = document.querySelectorAll('button[onclick^="carregarListaDePresenca"]');
+                        const btns = document.querySelectorAll('button[onclick*="carregarListaDePresenca"]');
                         for (const btn of btns) {{
                             const onclick = btn.getAttribute('onclick') || '';
                             if (onclick.includes('{aula_id}')) return onclick;
@@ -388,17 +370,17 @@ async def main():
                         return null;
                     }}
                 """)
+                log(f"  Botao chamada encontrado: {btn_chamada}")
                 if btn_chamada:
-                    log(f"  Botao chamada: {btn_chamada}")
                     await page.evaluate(f"{btn_chamada.rstrip(';')}")
                     await page.wait_for_timeout(2000)
-
-                    # Clica no botao verde CONFIRMAR do modal
                     confirmar = page.locator("button.btn-success:has-text('CONFIRMAR'), button.btn-success:has-text('Confirmar')")
                     await confirmar.wait_for(timeout=5000)
                     await confirmar.click()
                     await page.wait_for_timeout(2000)
                     log("  Chamada confirmada")
+                else:
+                    log("  Botao chamada nao encontrado na lista")
                         await page.wait_for_timeout(3000)
                         confirmar = page.locator("button:has-text('Confirmar'), button:has-text('CONFIRMAR'), input[value='Confirmar']").first
                         await confirmar.wait_for(timeout=5000)
