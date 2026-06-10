@@ -134,13 +134,24 @@ async def main():
                 await salvar.click()
                 await page.wait_for_timeout(3000)
                 log(f"  URL pos salvar: {page.url}")
-                aula_num += 1
-                log(f"  OK")
             except Exception as e:
                 log(f"  ERRO ao salvar: {e}")
                 await page.go_back()
                 await page.wait_for_timeout(2000)
                 continue
+
+            # Confirma chamada se abrir
+            try:
+                confirmar = page.locator("button:has-text('Confirmar'), button:has-text('CONFIRMAR'), input[value='Confirmar'], input[value='CONFIRMAR']").first
+                await confirmar.wait_for(timeout=5000)
+                await confirmar.click()
+                await page.wait_for_timeout(3000)
+                log("  Chamada confirmada")
+            except Exception:
+                pass
+
+            aula_num += 1
+            log(f"  OK")
 
             if "Aulas" not in page.url:
                 await page.goto(URL_AULAS)
