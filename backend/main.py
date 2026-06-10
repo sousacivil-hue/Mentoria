@@ -541,15 +541,18 @@ async def run_active(job_id: str, data: ActiveFormData):
             await browser.close()
             return
 
-        async def achar(seletor):
-            """Procura um elemento na página e em todos os frames internos."""
-            for frame in page.frames:
-                try:
-                    loc = frame.locator(seletor)
-                    if await loc.count() > 0:
-                        return frame, loc.first
-                except Exception:
-                    continue
+        async def achar(seletor, tentativas=10):
+            """Procura um elemento na página e em todos os frames internos.
+            Repete por até `tentativas` x 1,5s para aguardar a página carregar."""
+            for _ in range(tentativas):
+                for frame in page.frames:
+                    try:
+                        loc = frame.locator(seletor)
+                        if await loc.count() > 0:
+                            return frame, loc.first
+                    except Exception:
+                        continue
+                await page.wait_for_timeout(1500)
             return None, None
 
         # ---- 1. Clica em EXIBIR (filtro de período) ----
