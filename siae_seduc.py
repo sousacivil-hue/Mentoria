@@ -33,6 +33,7 @@ def get_conteudo(serie: str) -> str:
 async def main():
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=False, slow_mo=500)
+        context = browser.contexts[0]
         page = await browser.new_page(viewport={"width": 1400, "height": 900})
 
         log("=" * 55)
@@ -62,6 +63,8 @@ async def main():
             await page.goto(URL_AULAS)
             await page.wait_for_timeout(3000)
 
+        context = page.context
+
         log("\nIniciando preenchimento...\n")
         aula_num = 0
 
@@ -71,7 +74,6 @@ async def main():
             linhas = page.locator("tr:has-text('para registrar')")
             total_linhas = await linhas.count()
 
-            # Pega a primeira linha com coluna Objeto vazia
             linha_alvo = None
             serie_texto = ""
             for i in range(total_linhas):
@@ -92,89 +94,22 @@ async def main():
             conteudo = get_conteudo(serie_texto)
             log(f"Aula {aula_num + 1}: {serie_texto.strip()[:50]} -> {conteudo[:40]}...")
 
-            # Clica no botao azul
-            # Loga todos os links da linha para debug
-            todos = linha_alvo.locator("a, button")
-            qtd = await todos.count()
-            log(f"  Links na linha: {qtd}")
-            for idx in range(qtd):
-                el = todos.nth(idx)
-                try:
-                    href = await el.get_attribute("href") or ""
-                    cls = await el.get_attribute("class") or ""
-                    txt = (await el.inner_text()).strip()
-                    log(f"    [{idx}] class='{cls}' href='{href[:60]}' txt='{txt[:30]}'")
-                except Exception:
-                    pass
-
-            # Clica no botao btn-primary (usa JS, href pode ser vazio)
-            # Inspeciona o botao antes de clicar
-            info = await page.evaluate("""
-                () => {
-                    const btns = document.querySelectorAll('a.btn-primary');
-                    for (const btn of btns) {
-                        const tr = btn.closest('tr');
-                        if (tr && tr.innerText.includes('para registrar')) {
-                            const obj = tr.querySelectorAll('td')[2];
-                            if (obj && obj.innerText.trim() === '') {
-                                return {
-                                    onclick: btn.getAttribute('onclick') || '',
-                                    href: btn.getAttribute('href') || '',
-                                    datahref: btn.getAttribute('data-href') || '',
-                                    dataurl: btn.getAttribute('data-url') || '',
-                                    outerhtml: btn.outerHTML.substring(0, 200)
-                                };
-                            }
-                        }
-                    }
-                    return null;
-                }
-            """)
-            log(f"  Botao info: {info}")
-
-            if info is None:
-                log("  Nenhum botao pendente encontrado")
+            # Clica no botao e captura o popup
+            try:
+                async with context.expect_page() as popup_info:
+                    btn = linha_alvo.locator("a.btn-primary").first
+                    await btn.click(force=True)
+                popup = await popup_info.value
+                await popup.wait_for_load_state("domcontentloaded")
+                await popup.wait_for_timeout(2000)
+                log(f"  Popup URL: {popup.url}")
+            except Exception as e:
+                log(f"  ERRO popup: {e}")
                 break
 
-            # Se tem onclick com URL, navega direto
-            onclick = info.get("onclick", "")
-            datahref = info.get("datahref", "")
-            dataurl = info.get("dataurl", "")
-
-            navegou = False
-            for val in [datahref, dataurl]:
-                if val and val != "#":
-                    log(f"  Navegando para: {val}")
-                    await page.goto(val if val.startswith("http") else f"https://siae.seduc.se.gov.br{val}")
-                    await page.wait_for_timeout(3000)
-                    navegou = True
-                    break
-
-            if not navegou:
-                # Clica normalmente e aguarda mudanca de URL ou modal
-                await page.evaluate("""
-                    () => {
-                        const btns = document.querySelectorAll('a.btn-primary');
-                        for (const btn of btns) {
-                            const tr = btn.closest('tr');
-                            if (tr && tr.innerText.includes('para registrar')) {
-                                const obj = tr.querySelectorAll('td')[2];
-                                if (obj && obj.innerText.trim() === '') {
-                                    btn.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                """)
-                await page.wait_for_timeout(4000)
-                log("  Clique disparado")
-
-            log(f"  URL: {page.url}")
-
-            # Preenche Objeto de Conhecimento (textarea 0)
+            # Preenche Objeto de Conhecimento no popup
             try:
-                objeto = page.locator("textarea").nth(0)
+                objeto = popup.locator("textarea").nth(0)
                 await objeto.wait_for(timeout=6000)
                 await objeto.triple_click()
                 await objeto.fill(conteudo)
@@ -182,9 +117,9 @@ async def main():
             except Exception as e:
                 log(f"  ERRO objeto: {e}")
 
-            # Preenche Metodologia (textarea 1)
+            # Preenche Metodologia no popup
             try:
-                met = page.locator("textarea").nth(1)
+                met = popup.locator("textarea").nth(1)
                 await met.wait_for(timeout=3000)
                 await met.click()
                 await met.fill(METODOLOGIA)
@@ -192,35 +127,38 @@ async def main():
             except Exception as e:
                 log(f"  ERRO metodologia: {e}")
 
-            # Salva
+            # Salva no popup
             try:
-                salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar'), input[value='SALVAR'], input[value='Salvar']").first
+                salvar = popup.locator("button:has-text('SALVAR'), button:has-text('Salvar'), input[value='SALVAR'], input[value='Salvar']").first
                 await salvar.wait_for(timeout=5000)
                 await salvar.click()
-                await page.wait_for_timeout(3000)
-                log(f"  URL pos salvar: {page.url}")
+                await popup.wait_for_timeout(3000)
+                log(f"  Salvo!")
             except Exception as e:
                 log(f"  ERRO ao salvar: {e}")
-                await page.go_back()
-                await page.wait_for_timeout(2000)
+                await popup.close()
                 continue
 
-            # Confirma chamada se abrir
+            # Confirma chamada se aparecer
             try:
-                confirmar = page.locator("button:has-text('Confirmar'), button:has-text('CONFIRMAR'), input[value='Confirmar'], input[value='CONFIRMAR']").first
-                await confirmar.wait_for(timeout=5000)
+                confirmar = popup.locator("button:has-text('Confirmar'), button:has-text('CONFIRMAR'), input[value='Confirmar']").first
+                await confirmar.wait_for(timeout=4000)
                 await confirmar.click()
-                await page.wait_for_timeout(3000)
+                await popup.wait_for_timeout(2000)
                 log("  Chamada confirmada")
+            except Exception:
+                pass
+
+            # Fecha popup se ainda aberto
+            try:
+                if not popup.is_closed():
+                    await popup.close()
             except Exception:
                 pass
 
             aula_num += 1
             log(f"  OK")
-
-            if "Aulas" not in page.url:
-                await page.goto(URL_AULAS)
-                await page.wait_for_timeout(2000)
+            await page.wait_for_timeout(1000)
 
         log(f"\n{'=' * 55}")
         log(f"  CONCLUIDO! Total de aulas preenchidas: {aula_num}")
