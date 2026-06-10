@@ -379,6 +379,8 @@ function getEventos() {
   })).filter(e => e.data);
 }
 
+let totalAulasCalculado = 0;
+
 function calcularAulas() {
   const ini = document.getElementById('data-inicio').value;
   const fim = document.getElementById('data-fim').value;
@@ -407,6 +409,7 @@ function calcularAulas() {
   }
   total += totalSabados;
 
+  totalAulasCalculado = total;
   const extra = totalSabados > 0 ? ` (${totalSabados} em sábados letivos)` : '';
   document.getElementById('resumo-aulas').textContent =
     total > 0 ? `📊 Total estimado: ${total} aulas no período${extra}` : 'Defina os dias da semana com aula';
@@ -458,7 +461,7 @@ async function gerarTopicosIA() {
     const resp = await fetch(`${BACKEND_URL}/gerar-topicos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ disciplina, serie, assunto, quantidade: 30 })
+      body: JSON.stringify({ disciplina, serie, assunto, quantidade: totalAulasCalculado > 0 ? totalAulasCalculado : 30 })
     });
     const dados = await resp.json();
 
