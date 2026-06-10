@@ -542,20 +542,34 @@ async def gerar_topicos(req: GerarTopicosRequest):
 
     try:
         import urllib.request
+        import urllib.error
 
-        url = (
-            "https://generativelanguage.googleapis.com/v1beta/models/"
-            f"gemini-2.5-flash-lite:generateContent?key={api_key}"
-        )
-        body = json.dumps({
-            "contents": [{"parts": [{"text": prompt}]}]
-        }).encode("utf-8")
+        if api_key.startswith("sk-ant"):
+            # API do Claude (Anthropic)
+            url = "https://api.anthropic.com/v1/messages"
+            body = json.dumps({
+                "model": "claude-haiku-4-5-20251001",
+                "max_tokens": 3000,
+                "messages": [{"role": "user", "content": prompt}],
+            }).encode("utf-8")
+            headers = {
+                "Content-Type": "application/json",
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+            }
+        else:
+            # API do Gemini (Google)
+            url = (
+                "https://generativelanguage.googleapis.com/v1beta/models/"
+                f"gemini-2.5-flash-lite:generateContent?key={api_key}"
+            )
+            body = json.dumps({
+                "contents": [{"parts": [{"text": prompt}]}]
+            }).encode("utf-8")
+            headers = {"Content-Type": "application/json"}
 
         def chamar():
-            import urllib.error
-            reqobj = urllib.request.Request(
-                url, data=body, headers={"Content-Type": "application/json"}
-            )
+            reqobj = urllib.request.Request(url, data=body, headers=headers)
             try:
                 with urllib.request.urlopen(reqobj, timeout=60) as resp:
                     return json.loads(resp.read().decode("utf-8"))
@@ -564,7 +578,12 @@ async def gerar_topicos(req: GerarTopicosRequest):
                 raise RuntimeError(f"HTTP {e.code}: {detalhe[:600]}")
 
         resultado = await asyncio.to_thread(chamar)
-        texto = resultado["candidates"][0]["content"]["parts"][0]["text"]
+
+        if api_key.startswith("sk-ant"):
+            texto = resultado["content"][0]["text"]
+        else:
+            texto = resultado["candidates"][0]["content"]["parts"][0]["text"]
+
         topicos = [l.strip().lstrip("-•*").strip() for l in texto.split("\n") if l.strip()]
         return {"topicos": topicos}
 
