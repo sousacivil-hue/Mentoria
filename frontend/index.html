@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DiárioAuto - Preenchimento Automático</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #1a73e8;
+      color: white;
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header h1 { font-size: 24px; font-weight: 700; }
+    header span { font-size: 14px; opacity: 0.85; }
+
+    .container {
+      max-width: 720px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      margin-bottom: 24px;
+    }
+
+    .card h2 {
+      font-size: 18px;
+      color: #1a73e8;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid #e8f0fe;
+    }
+
+    .field {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: border-color 0.2s;
+      font-family: inherit;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #1a73e8;
+    }
+
+    textarea { resize: vertical; min-height: 80px; }
+
+    .row { display: flex; gap: 16px; }
+    .row .field { flex: 1; }
+
+    .turma-bloco {
+      background: #f8faff;
+      border: 1.5px solid #d0e0ff;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .turma-bloco h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a73e8;
+      margin-bottom: 14px;
+    }
+
+    .btn-add {
+      background: none;
+      border: 2px dashed #1a73e8;
+      color: #1a73e8;
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    .btn-add:hover { background: #e8f0fe; }
+
+    .btn-executar {
+      background: #1a73e8;
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-executar:hover { background: #1558c0; }
+
+    .status {
+      display: none;
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .status.rodando {
+      display: block;
+      background: #fff8e1;
+      color: #f57c00;
+      border: 1.5px solid #ffe082;
+    }
+
+    .status.ok {
+      display: block;
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1.5px solid #a5d6a7;
+    }
+
+    .tag {
+      display: inline-block;
+      background: #e8f0fe;
+      color: #1a73e8;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-left: 8px;
+    }
+
+    footer {
+      text-align: center;
+      color: #999;
+      font-size: 13px;
+      padding: 32px 0;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>📚 DiárioAuto</h1>
+    <span>Preenchimento automático de diário de classe</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h2>1. Sistema Escolar</h2>
+    <div class="field">
+      <label>Sistema</label>
+      <select id="sistema" onchange="mostrarCampos()">
+        <option value="">Selecione o sistema...</option>
+        <option value="siga">SIGA ActiveSoft (Colégio Vita / Futuro Feliz)</option>
+        <option value="siae">SIAE SEDUC-SE</option>
+        <option value="totvs">TOTVS RM (Salesiano)</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Escola / Instituição</label>
+      <input type="text" placeholder="Ex: Colégio Vita">
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2. Acesso <span class="tag">🔒 Seguro</span></h2>
+    <div class="row">
+      <div class="field">
+        <label>Login / CPF</label>
+        <input type="text" id="login" placeholder="Ex: 789.626.335-15">
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" id="senha" placeholder="••••••••">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>3. Turmas e Conteúdos</h2>
+    <div id="turmas">
+      <div class="turma-bloco">
+        <h3>Turma 1</h3>
+        <div class="row">
+          <div class="field">
+            <label>Série / Ano</label>
+            <input type="text" placeholder="Ex: 6º Ano">
+          </div>
+          <div class="field">
+            <label>Disciplina</label>
+            <input type="text" placeholder="Ex: Matemática">
+          </div>
+        </div>
+        <div class="field">
+          <label>Objeto de Conhecimento (conteúdo)</label>
+          <textarea placeholder="Ex: Critérios de divisibilidade por 4 e por 5."></textarea>
+        </div>
+        <div class="field">
+          <label>Metodologia</label>
+          <textarea placeholder="Ex: Aula expositiva dialogada com resolução de exercícios."></textarea>
+        </div>
+      </div>
+    </div>
+    <button class="btn-add" onclick="adicionarTurma()">+ Adicionar outra turma</button>
+  </div>
+
+  <div class="card">
+    <h2>4. Bimestre</h2>
+    <div class="row">
+      <div class="field">
+        <label>Bimestre</label>
+        <select>
+          <option>1º Bimestre</option>
+          <option selected>2º Bimestre</option>
+          <option>3º Bimestre</option>
+          <option>4º Bimestre</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Ano</label>
+        <input type="text" value="2026">
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-executar" onclick="executar()">▶ Executar Preenchimento Automático</button>
+
+  <div class="status rodando" id="status-rodando">
+    ⏳ Executando... O sistema está preenchendo as aulas automaticamente.
+  </div>
+  <div class="status ok" id="status-ok">
+    ✅ Concluído! Todas as aulas foram preenchidas com sucesso.
+  </div>
+
+</div>
+
+<footer>DiárioAuto © 2026 — Automação de diários escolares</footer>
+
+<script>
+  let numTurmas = 1;
+
+  function adicionarTurma() {
+    numTurmas++;
+    const div = document.createElement('div');
+    div.className = 'turma-bloco';
+    div.innerHTML = `
+      <h3>Turma ${numTurmas}</h3>
+      <div class="row">
+        <div class="field">
+          <label>Série / Ano</label>
+          <input type="text" placeholder="Ex: 7º Ano">
+        </div>
+        <div class="field">
+          <label>Disciplina</label>
+          <input type="text" placeholder="Ex: Matemática">
+        </div>
+      </div>
+      <div class="field">
+        <label>Objeto de Conhecimento (conteúdo)</label>
+        <textarea placeholder="Ex: Problemas envolvendo porcentagem."></textarea>
+      </div>
+      <div class="field">
+        <label>Metodologia</label>
+        <textarea placeholder="Ex: Aula expositiva dialogada com resolução de exercícios."></textarea>
+      </div>
+    `;
+    document.getElementById('turmas').appendChild(div);
+  }
+
+  function executar() {
+    document.getElementById('status-rodando').style.display = 'block';
+    document.getElementById('status-ok').style.display = 'none';
+    setTimeout(() => {
+      document.getElementById('status-rodando').style.display = 'none';
+      document.getElementById('status-ok').style.display = 'block';
+    }, 3000);
+  }
+
+  function mostrarCampos() {}
+</script>
+
+</body>
+</html>
