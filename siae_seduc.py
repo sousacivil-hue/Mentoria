@@ -109,10 +109,23 @@ async def main():
 
             # Clica no botao btn-primary (usa JS, href pode ser vazio)
             try:
-                btn = linha_alvo.locator("a.btn-primary").first
-                await btn.click(force=True)
+                await page.evaluate("""
+                    () => {
+                        const btns = document.querySelectorAll('a.btn-primary');
+                        for (const btn of btns) {
+                            const tr = btn.closest('tr');
+                            if (tr && tr.innerText.includes('para registrar')) {
+                                const obj = tr.querySelectorAll('td')[2];
+                                if (obj && obj.innerText.trim() === '') {
+                                    btn.click();
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                """)
                 await page.wait_for_timeout(3000)
-                log("  Botao clicado")
+                log("  Botao clicado via JS")
             except Exception as e:
                 log(f"  ERRO ao clicar: {e}")
                 break
