@@ -110,8 +110,7 @@ async def main():
             # Clica no botao btn-primary (usa JS, href pode ser vazio)
             try:
                 btn = linha_alvo.locator("a.btn-primary").first
-                await btn.scroll_into_view_if_needed()
-                await btn.click()
+                await btn.click(force=True)
                 await page.wait_for_timeout(3000)
                 log("  Botao clicado")
             except Exception as e:
