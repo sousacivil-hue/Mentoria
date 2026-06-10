@@ -518,6 +518,14 @@ LIMITE_GERACOES = 5
 async def gerar_topicos(req: GerarTopicosRequest):
     api_key = os.environ.get("GEMINI_API_KEY", "")
     if not api_key:
+        # Tenta ler do arquivo chave.txt na mesma pasta
+        try:
+            caminho = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chave.txt")
+            with open(caminho, encoding="utf-8") as f:
+                api_key = f.read().strip()
+        except FileNotFoundError:
+            pass
+    if not api_key:
         return {
             "erro": "IA não configurada ainda. Cole sua lista de tópicos manualmente, "
                     "ou peça ao administrador para configurar a chave da API."
