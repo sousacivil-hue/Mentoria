@@ -76,8 +76,8 @@ CONTEUDOS = {
         "Atividade de recuperacao.",
     ],
 
-    # 1 SERIE — Funcoes, geometria analitica e trigonometria
-    "1ª": [
+    # 1 SERIE EM — Funcoes, geometria analitica e trigonometria
+    "1ª Série": [
         "Conjuntos: conceito, representacao e operacoes.",
         "Relacoes e funcoes: conceito e notacao.",
         "Funcao do 1 grau: definicao e grafico.",
@@ -105,8 +105,8 @@ CONTEUDOS = {
         "Atividade de recuperacao e reforco.",
     ],
 
-    # 2 SERIE — Logaritmos, geometria e probabilidade
-    "2ª": [
+    # 2 SERIE EM — Logaritmos, geometria e probabilidade
+    "2ª Série": [
         "Funcao exponencial: definicao e grafico.",
         "Equacoes exponenciais: resolucao.",
         "Logaritmo: definicao e propriedades basicas.",
@@ -164,7 +164,7 @@ CONTEUDOS = {
     ],
 
     # EJA — Matematica basica para jovens e adultos
-    "EJA": [
+    "(EJA)": [
         "Numeros naturais: leitura, escrita e comparacao.",
         "Operacoes basicas: adicao e subtracao.",
         "Operacoes basicas: multiplicacao e divisao.",
