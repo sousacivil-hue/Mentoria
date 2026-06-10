@@ -612,10 +612,12 @@ async def run_active(job_id: str, data: ActiveFormData):
                     log.append("⚠️ Nenhuma linha em branco disponível — limite de aulas atingido?")
                     break
 
-                # Preenche a data
-                campo_data = linha_vazia.locator("input").first
+                # Preenche a data (input de texto, não a checkbox)
+                campo_data = linha_vazia.locator("input[type='text']").first
                 await campo_data.click()
                 await campo_data.fill(data_br)
+                # Dispara eventos de máscara de data, se houver
+                await campo_data.press("Tab")
 
                 # Preenche o conteúdo (primeiro textarea; Tarefas fica em branco)
                 conteudo_box = linha_vazia.locator("textarea").first
