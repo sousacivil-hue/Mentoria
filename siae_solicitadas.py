@@ -241,6 +241,27 @@ async def main():
         log("\nIniciando preenchimento...\n")
         aula_num = 0
 
+        async def selecionar_solicitadas():
+            try:
+                # Tenta clicar pelo texto do label
+                radio = page.locator("label:has-text('Solicitada') input[type=radio], input[type=radio][value*='olicita']")
+                if await radio.count() > 0:
+                    await radio.first.click(force=True)
+                    await page.wait_for_timeout(1500)
+                    log("  Aba Solicitadas selecionada")
+                    return
+                # Fallback: clica em qualquer radio que nao seja o primeiro (Regulares)
+                radios = page.locator("input[type=radio]")
+                count = await radios.count()
+                if count >= 2:
+                    await radios.nth(1).click(force=True)
+                    await page.wait_for_timeout(1500)
+                    log("  Aba Solicitadas selecionada (fallback)")
+            except Exception as e:
+                log(f"  AVISO: nao selecionou Solicitadas: {e}")
+
+        await selecionar_solicitadas()
+
         while True:
             await page.wait_for_timeout(1000)
 
@@ -332,8 +353,10 @@ async def main():
             aula_num += 1
             log(f"  OK")
 
+            # Volta para lista e seleciona aba Solicitadas
             await page.goto(URL_AULAS)
             await page.wait_for_timeout(2000)
+            await selecionar_solicitadas()
             try:
                 btn_verde = await page.evaluate(f"""
                     () => {{
@@ -362,6 +385,7 @@ async def main():
                         log("  Frequencia confirmada")
                         await page.goto(URL_AULAS)
                         await page.wait_for_timeout(2000)
+                        await selecionar_solicitadas()
             except Exception as e:
                 log(f"  ERRO frequencia: {e}")
 
