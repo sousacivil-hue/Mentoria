@@ -81,7 +81,7 @@ async def main():
                         const objeto = tds[2] ? tds[2].innerText.trim() : '';
                         const serie = tds[3] ? tds[3].innerText.trim() : '';
                         const onclick = btn.getAttribute('onclick') || '';
-                        if (situacao.includes('para registrar') && objeto === '') {
+                        if (situacao.includes('para registrar') && (objeto === '' || objeto === '-')) {
                             result.push({onclick, serie, situacao});
                         }
                     }
