@@ -107,24 +107,15 @@ async def main():
                 except Exception:
                     pass
 
-            # Clica no primeiro link com href
-            btn_clicado = False
-            for idx in range(qtd):
-                el = todos.nth(idx)
-                try:
-                    href = await el.get_attribute("href") or ""
-                    if href and href != "#":
-                        log(f"  Clicando [{idx}] href={href[:60]}")
-                        await el.scroll_into_view_if_needed()
-                        await el.click()
-                        await page.wait_for_timeout(3000)
-                        btn_clicado = True
-                        break
-                except Exception:
-                    pass
-
-            if not btn_clicado:
-                log("  ERRO: nenhum botao clicavel encontrado")
+            # Clica no botao btn-primary (usa JS, href pode ser vazio)
+            try:
+                btn = linha_alvo.locator("a.btn-primary").first
+                await btn.scroll_into_view_if_needed()
+                await btn.click()
+                await page.wait_for_timeout(3000)
+                log("  Botao clicado")
+            except Exception as e:
+                log(f"  ERRO ao clicar: {e}")
                 break
 
             log(f"  URL: {page.url}")
