@@ -678,11 +678,11 @@ async def run_active(job_id: str, data: ActiveFormData):
             # Se o professor escolheu uma turma específica, pula as outras
             if data.turma:
                 bloco_texto = await fr_check.locator("a:has-text('Diário de classe')").nth(idx).evaluate(
-                    "el => { let p = el.closest('div,section,table,tr'); "
-                    "for (let i = 0; i < 8 && p; i++) p = p.parentElement ? p : p; "
-                    "let q = el; for (let i = 0; i < 8 && q; i++) { "
-                    "if ((q.innerText || '').length > 20) return q.innerText.slice(0, 300); "
-                    "q = q.parentElement; } return ''; }"
+                    "el => { let q = el, melhor = ''; "
+                    "for (let i = 0; i < 10 && q; i++) { "
+                    "const t = q.innerText || ''; "
+                    "if (t.length > melhor.length && t.length < 2000) melhor = t; "
+                    "q = q.parentElement; } return melhor.slice(0, 500); }"
                 )
                 # Normaliza: minúsculas, sem º/°/ª, sem espaços
                 def norm(s):
