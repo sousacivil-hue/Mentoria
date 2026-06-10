@@ -541,46 +541,66 @@ async def run_active(job_id: str, data: ActiveFormData):
             await browser.close()
             return
 
+        async def achar(seletor):
+            """Procura um elemento na página e em todos os frames internos."""
+            for frame in page.frames:
+                try:
+                    loc = frame.locator(seletor)
+                    if await loc.count() > 0:
+                        return frame, loc.first
+                except Exception:
+                    continue
+            return None, None
+
         # ---- 1. Clica em EXIBIR (filtro de período) ----
-        try:
-            exibir = page.locator("button:has-text('EXIBIR'), input[value*='EXIBIR' i], a:has-text('EXIBIR')").first
+        await page.wait_for_timeout(2000)
+        frame_ex, exibir = await achar("button:has-text('EXIBIR'), input[value*='EXIBIR' i], a:has-text('EXIBIR'), *[onclick]:has-text('EXIBIR')")
+        if exibir:
             await exibir.click()
             await page.wait_for_timeout(3000)
             log.append("✅ Período exibido")
-        except Exception as e:
-            log.append(f"⚠️ Botão EXIBIR não encontrado: {e}")
+        else:
+            log.append("⚠️ Botão EXIBIR não encontrado — tentando seguir mesmo assim")
 
-        # ---- 2. Descobre as turmas disponíveis ----
+        # ---- 2. Descobre as turmas disponíveis (procurando em frames) ----
         url_lista_turmas = page.url
-        links_diario = page.locator("a:has-text('Diário de classe')")
-        try:
-            await links_diario.first.wait_for(timeout=8000)
-        except Exception as e:
-            log.append(f"❌ ERRO: nenhum 'Diário de classe' encontrado: {e}")
-            log.append("__CONCLUIDO__")
+        await page.wait_for_timeout(2000)
+        frame_diario, _ = await achar("a:has-text('Diário de classe')")
+        if frame_diario is None:
+            log.append("❌ ERRO: nenhum 'Diário de classe' encontrado na página")
+            log.append("__ERRO__")
             await browser.close()
             return
 
-        total_turmas = await links_diario.count()
+        total_turmas = await frame_diario.locator("a:has-text('Diário de classe')").count()
         log.append(f"📚 Turmas encontradas: {total_turmas}")
 
         async def preencher_turma(indice_link: int):
             """Abre o diário de uma turma e preenche as aulas do bimestre."""
-            links = page.locator("a:has-text('Diário de classe')")
+            fr, _ = await achar("a:has-text('Diário de classe')")
+            links = fr.locator("a:has-text('Diário de classe')")
             await links.nth(indice_link).click()
             await page.wait_for_timeout(3000)
 
-            # Registro de aulas do bimestre
-            linha_bim = page.locator(f"tr:has-text('{data.bimestre}º BIMESTRE')").first
+            # Registro de aulas do bimestre (pode abrir em frame ou nova página)
+            fr2, _ = await achar(f"tr:has-text('{data.bimestre}º BIMESTRE')")
+            if fr2 is None:
+                raise RuntimeError(f"Tabela de bimestres não encontrada")
+            linha_bim = fr2.locator(f"tr:has-text('{data.bimestre}º BIMESTRE')").first
             reg = linha_bim.locator("a:has-text('Registro de aulas')").first
             await reg.wait_for(timeout=8000)
             await reg.click()
             await page.wait_for_timeout(3000)
             log.append(f"✅ Registro de aulas do {data.bimestre}º bimestre aberto")
 
+            # Localiza o frame onde está a tabela de aulas
+            fr3, _ = await achar("table tr:has(textarea)")
+            if fr3 is None:
+                raise RuntimeError("Tabela de aulas não encontrada")
+
             # Conta quantas aulas JÁ existem (linhas com conteúdo preenchido)
             ja_existentes = 0
-            linhas = page.locator("table tr:has(textarea)")
+            linhas = fr3.locator("table tr:has(textarea)")
             total_linhas = await linhas.count()
             for i in range(total_linhas):
                 txt = (await linhas.nth(i).locator("textarea").first.input_value()).strip()
@@ -599,7 +619,7 @@ async def run_active(job_id: str, data: ActiveFormData):
 
                 # Acha a linha em branco (textarea de conteúdo vazio)
                 linha_vazia = None
-                linhas = page.locator("table tr:has(textarea)")
+                linhas = fr3.locator("table tr:has(textarea)")
                 total_linhas = await linhas.count()
                 for i in range(total_linhas):
                     linha = linhas.nth(i)
@@ -638,21 +658,26 @@ async def run_active(job_id: str, data: ActiveFormData):
 
         # ---- 3. Processa turma(s), uma por vez ----
         turmas_feitas = 0
+        teve_erro = False
         for idx in range(total_turmas):
             # Volta para a lista de turmas
             await page.goto(url_lista_turmas)
             await page.wait_for_timeout(2500)
-            try:
-                exibir = page.locator("button:has-text('EXIBIR'), input[value*='EXIBIR' i]").first
-                if await exibir.count() > 0 and await links_diario.count() == 0:
-                    await exibir.click()
+            fr_check, _ = await achar("a:has-text('Diário de classe')")
+            if fr_check is None:
+                _, exibir2 = await achar("button:has-text('EXIBIR'), input[value*='EXIBIR' i]")
+                if exibir2:
+                    await exibir2.click()
                     await page.wait_for_timeout(3000)
-            except Exception:
-                pass
+                fr_check, _ = await achar("a:has-text('Diário de classe')")
+            if fr_check is None:
+                log.append(f"⚠️ Não consegui voltar à lista de turmas")
+                teve_erro = True
+                break
 
             # Se o professor escolheu uma turma específica, pula as outras
             if data.turma:
-                bloco_texto = await page.locator("a:has-text('Diário de classe')").nth(idx).evaluate(
+                bloco_texto = await fr_check.locator("a:has-text('Diário de classe')").nth(idx).evaluate(
                     "el => { let p = el.closest('div,section,table,tr'); "
                     "for (let i=0; i<6 && p; i++) { "
                     "if (p.innerText.includes('" + data.turma.replace("'", "") + "')) return p.innerText.slice(0,120); "
@@ -667,9 +692,17 @@ async def run_active(job_id: str, data: ActiveFormData):
                 turmas_feitas += 1
             except Exception as e:
                 log.append(f"⚠️ Erro na turma {idx + 1}: {e}")
+                teve_erro = True
 
-        log.append(f"🎉 Automação concluída! Turmas preenchidas: {turmas_feitas}")
-        log.append("__CONCLUIDO__")
+        if turmas_feitas > 0 and not teve_erro:
+            log.append(f"🎉 Automação concluída! Turmas preenchidas: {turmas_feitas}")
+            log.append("__CONCLUIDO__")
+        elif turmas_feitas > 0:
+            log.append(f"⚠️ Concluído com avisos. Turmas preenchidas: {turmas_feitas}")
+            log.append("__CONCLUIDO__")
+        else:
+            log.append("❌ Nenhuma turma foi preenchida. Veja os erros acima.")
+            log.append("__ERRO__")
         await browser.close()
 
 

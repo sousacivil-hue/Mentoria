@@ -556,7 +556,7 @@ async function executar() {
     sse.onmessage = (e) => {
       const msg = e.data;
       if (msg === '__CONCLUIDO__') { sse.close(); mostrarSucesso(); }
-      else if (msg === '__ERRO__') { sse.close(); addLog('ERRO: automação encerrada com falha.', 'erro'); }
+      else if (msg === '__ERRO__') { sse.close(); mostrarFalha(); }
       else {
         const tipo = msg.includes('ERRO') ? 'erro'
           : (msg.includes('✅') || msg.includes('OK')) ? 'ok' : 'info';
@@ -567,6 +567,13 @@ async function executar() {
   } catch (err) {
     addLog(`Erro ao conectar ao servidor: ${err.message}`, 'erro');
   }
+}
+
+function mostrarFalha() {
+  document.querySelector('#tela-progresso .spinner').style.display = 'none';
+  document.querySelector('#tela-progresso .titulo').textContent = '❌ A automação falhou';
+  document.querySelector('#tela-progresso .subtitulo').textContent = 'Veja os erros no relatório abaixo e tente novamente';
+  addLog('Automação encerrada com falha.', 'erro');
 }
 
 function mostrarSucesso() {
