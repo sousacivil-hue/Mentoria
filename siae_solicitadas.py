@@ -2,7 +2,7 @@ import asyncio
 import re
 from playwright.async_api import async_playwright
 
-LOG_FILE = open("erro_siae.txt", "w", encoding="utf-8")
+LOG_FILE = open("erro_siae_solicitadas.txt", "w", encoding="utf-8")
 
 
 def log(msg):
