@@ -464,10 +464,14 @@ async def run_active(job_id: str, data: ActiveFormData):
     aulas = montar_calendario(data)
     log.append(f"📊 Total de aulas a lançar: {len(aulas)}")
 
-    for a in aulas[:5]:
-        log.append(f"  {a['data']}: {a['conteudo'][:50]}")
-    if len(aulas) > 5:
-        log.append(f"  ... e mais {len(aulas) - 5} aulas")
+    log.append("=" * 40)
+    log.append("📅 PROGRAMAÇÃO DAS AULAS:")
+    for i, a in enumerate(aulas):
+        # Converte 2026-04-06 -> 06/04/2026
+        partes = a["data"].split("-")
+        data_br = f"{partes[2]}/{partes[1]}/{partes[0]}"
+        log.append(f"  {i + 1}. {data_br} — {a['conteudo'][:60]}")
+    log.append("=" * 40)
 
     URL_ACTIVE = data.url_colegio or "https://siga.activesoft.com.br/login/"
 
