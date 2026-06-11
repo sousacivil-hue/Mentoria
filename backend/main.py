@@ -1610,7 +1610,10 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
             await page.keyboard.press("Tab")
             await page.wait_for_timeout(600)
 
-            await page.locator("button:has-text('Pesquisar'), po-button:has-text('Pesquisar')").first.click()
+            await page.locator(
+                "button.po-button:has(.po-button-label:has-text('Pesquisar')), "
+                "button:has-text('Pesquisar'), po-button:has-text('Pesquisar')"
+            ).first.click()
             await page.wait_for_timeout(3000)
 
         async def preencher_aulas() -> int:
