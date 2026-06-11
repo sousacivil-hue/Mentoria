@@ -276,9 +276,9 @@
         <div class="dica">É o endereço que você acessa normalmente para entrar no sistema do colégio.</div>
       </div>
       <label>Usuário (login do ActiveSoft)</label>
-      <input type="text" id="usuario" placeholder="Seu login">
+      <input type="text" id="active_usuario" placeholder="Seu login" autocomplete="off">
       <label>Senha</label>
-      <input type="password" id="senha" placeholder="Sua senha">
+      <input type="password" id="active_senha" placeholder="Sua senha" autocomplete="new-password">
       <div class="aviso">🔒 Sua senha é usada apenas durante esta automação e não fica armazenada.</div>
     </div>
 
@@ -777,8 +777,8 @@ async function executar() {
   const urlColegio = selectVal === 'outro'
     ? document.getElementById('url-colegio').value.trim()
     : selectVal;
-  const usuario = document.getElementById('usuario').value.trim();
-  const senha = document.getElementById('senha').value.trim();
+  const usuario = document.getElementById('active_usuario').value.trim();
+  const senha = document.getElementById('active_senha').value.trim();
   const ini = document.getElementById('data-inicio').value;
   if (!urlColegio) { alert('Selecione seu colégio ou cole o link de acesso.'); return; }
   const fim = document.getElementById('data-fim').value;
@@ -1017,10 +1017,11 @@ function reiniciar() {
   document.getElementById('log-box').innerHTML = '';
 }
 
-const CAMPOS_SALVOS_ACTIVE = ['usuario','turma','data-inicio','data-fim','bimestre','topicos','url-colegio'];
+const CAMPOS_SALVOS_ACTIVE = ['active_usuario','turma','data-inicio','data-fim','bimestre','topicos','url-colegio'];
 function salvarFormulario() {
   const d = {};
   CAMPOS_SALVOS_ACTIVE.forEach(id => { const el = document.getElementById(id); if (el) d[id] = el.value; });
+  d['active_senha_salva'] = ''; // nunca salva a senha
   d['select-colegio'] = document.getElementById('select-colegio')?.value;
   d['emendas'] = document.getElementById('emendas')?.checked;
   localStorage.setItem('active_form', JSON.stringify(d));
