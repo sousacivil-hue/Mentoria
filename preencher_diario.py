@@ -15,7 +15,7 @@ from playwright.async_api import async_playwright
 # ─────────────────────────────────────────────────────────────
 
 # URL da página do plano de aula (cole a URL completa do portal)
-URL_PORTAL = "https://portalprdsalesianos.rm.cloudtotvs.com.br/FrameHTML/web/app/edu/PortalDoProfessor/#/portal/class/lessonPlan/3/627237"
+URL_PORTAL = "https://portalprdsalesianos.rm.cloudtotvs.com.br/FrameHTML/web/app/edu/PortalDoProfessor/#/portal/class/lessonPlan/3/627185?classDate=2026%2F06%2F11"
 
 # Se quiser começar de uma aula específica (1 = primeira aula da tabela)
 AULA_INICIO = 1
