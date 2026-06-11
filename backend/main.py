@@ -1520,15 +1520,18 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                 "a[href*='classdiary' i]",
                 "a[href*='teacherdiary' i]",
             ]
-            for sel in candidatos:
-                loc = page.locator(sel).first
-                if await loc.count() > 0:
-                    try:
-                        await loc.click(timeout=5000)
-                        await page.wait_for_timeout(3000)
-                        return
-                    except Exception:
-                        continue
+            # o app Angular pode demorar para montar a tela após o login: espera até 30s
+            for espera in range(30):
+                for sel in candidatos:
+                    loc = page.locator(sel).first
+                    if await loc.count() > 0:
+                        try:
+                            await loc.click(timeout=5000)
+                            await page.wait_for_timeout(3000)
+                            return
+                        except Exception:
+                            continue
+                await page.wait_for_timeout(1000)
 
             # fallback: 2º ícone do menu lateral (home é o 1º)
             for sel in ["po-menu a", ".po-menu-item", "nav a", "aside a"]:
@@ -1541,16 +1544,17 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                     except Exception:
                         continue
 
-            # diagnóstico: mostra os links da página para calibrar o seletor
-            links = await page.evaluate(
-                """() => Array.from(document.querySelectorAll('a')).slice(0, 30).map(a =>
-                    (a.getAttribute('href') || '?') + ' | ' +
-                    (a.title || a.getAttribute('aria-label') || a.innerText || '').trim().slice(0, 40)
-                )"""
-            )
+            # diagnóstico: mostra o que existe na página para calibrar o seletor
             log.append("🧭 Página atual: " + page.url)
-            for l in links:
-                log.append("🧭 link: " + l)
+            itens = await page.evaluate(
+                """() => Array.from(document.querySelectorAll('a, [aria-label], .po-menu-item, button')).slice(0, 30).map(e =>
+                    e.tagName + ' | ' + (e.getAttribute('aria-label') || e.title || e.innerText || '').trim().slice(0, 40)
+                ).filter(t => t.split('|')[1].trim())"""
+            )
+            for l in itens:
+                log.append("🧭 item: " + l)
+            corpo = await page.evaluate("() => document.body.innerText.trim().slice(0, 300)")
+            log.append("🧭 texto da página: " + corpo)
             raise RuntimeError("não encontrei o menu 'Diário de classe' — me envie as linhas 🧭 do log")
 
         async def abrir_plano_da_turma(turma: str):
