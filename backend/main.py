@@ -1560,7 +1560,9 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
             await mais_acoes.click()
             await page.wait_for_timeout(800)
 
-            plano = page.locator("text=Plano de aula").first
+            plano = page.locator(
+                ".po-item-list-label:has-text('Plano de aula'), text=Plano de aula"
+            ).first
             await plano.wait_for(timeout=8000)
             await plano.click()
             await page.wait_for_timeout(3000)
