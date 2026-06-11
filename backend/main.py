@@ -716,11 +716,18 @@ async def run_active(job_id: str, data: ActiveFormData):
                 partes = aula["data"].split("-")
                 data_br = f"{partes[2]}/{partes[1]}/{partes[0]}"
 
-                # Acha a primeira linha em branco (reavalia após cada gravação)
+                # Reobtém o frame a cada aula (a página pode recarregar após Gravar)
+                for tentativa in range(3):
+                    fr3, _ = await achar("table tr:has(textarea)")
+                    if fr3 is not None:
+                        break
+                    await page.wait_for_timeout(2000)
+                if fr3 is None:
+                    log.append("⚠️ Tabela de aulas sumiu após recarregar")
+                    break
+
+                # Acha a primeira linha em branco
                 linha_vazia = None
-                # scroll para o topo da tabela para garantir visibilidade
-                await fr3.locator("table").first.evaluate("el => el.scrollIntoView()")
-                await page.wait_for_timeout(300)
                 linhas = fr3.locator("table tr:has(textarea)")
                 total_linhas = await linhas.count()
                 for i in range(total_linhas):
@@ -735,29 +742,28 @@ async def run_active(job_id: str, data: ActiveFormData):
                     log.append("⚠️ Nenhuma linha em branco disponível — limite de aulas atingido?")
                     break
 
-                # Preenche a data (input de texto, não a checkbox)
+                # Preenche a data
                 campo_data = linha_vazia.locator("input[type='text']").first
                 await campo_data.click()
                 await campo_data.fill(data_br)
-                # Dispara eventos de máscara de data, se houver
                 await campo_data.press("Tab")
 
-                # Preenche o conteúdo (primeiro textarea; Tarefas fica em branco)
+                # Preenche o conteúdo
                 conteudo_box = linha_vazia.locator("textarea").first
                 await conteudo_box.click()
                 await conteudo_box.fill(aula["conteudo"])
 
-                # Grava esta aula
+                # Grava
                 gravar = linha_vazia.locator(
                     "button:has-text('Gravar'), input[value*='Gravar' i]"
                 ).first
                 await gravar.click()
-                # espera a página estabilizar após gravar (pode haver reload)
+                # espera a página estabilizar
                 try:
-                    await page.wait_for_load_state("networkidle", timeout=8000)
+                    await page.wait_for_load_state("networkidle", timeout=10000)
                 except Exception:
                     pass
-                await page.wait_for_timeout(1000)
+                await page.wait_for_timeout(1500)
 
                 preenchidas += 1
                 log.append(f"✏️ {data_br} — {aula['conteudo'][:50]}")
