@@ -765,25 +765,28 @@ async def run_active(job_id: str, data: ActiveFormData):
                 teve_erro = True
                 break
 
+            # Identifica o nome da turma (para o log e para o filtro)
+            bloco_texto = await fr_check.locator("a:has-text('Diário de classe')").nth(idx).evaluate(
+                "el => { let q = el, melhor = ''; "
+                "for (let i = 0; i < 10 && q; i++) { "
+                "const t = q.innerText || ''; "
+                "if (t.length > melhor.length && t.length < 2000) melhor = t; "
+                "q = q.parentElement; } return melhor.slice(0, 500); }"
+            )
+            nome_turma = " ".join((bloco_texto or "").split())[:80] or f"Turma {idx + 1}"
+
             # Se o professor escolheu uma turma específica, pula as outras
             if data.turma:
-                bloco_texto = await fr_check.locator("a:has-text('Diário de classe')").nth(idx).evaluate(
-                    "el => { let q = el, melhor = ''; "
-                    "for (let i = 0; i < 10 && q; i++) { "
-                    "const t = q.innerText || ''; "
-                    "if (t.length > melhor.length && t.length < 2000) melhor = t; "
-                    "q = q.parentElement; } return melhor.slice(0, 500); }"
-                )
                 # Normaliza: minúsculas, sem º/°/ª, sem espaços, sem acentos
                 def norm(s):
                     import unicodedata
                     s = s.lower().replace("º", "").replace("°", "").replace("ª", "").replace(" ", "").replace("/", "")
                     return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode("ascii")
                 if norm(data.turma) not in norm(bloco_texto or ""):
-                    log.append(f"⏭️ Turma {idx + 1} não é '{data.turma}' — pulando")
+                    log.append(f"⏭️ '{nome_turma}' não é '{data.turma}' — pulando")
                     continue
 
-            log.append(f"➡️ Turma {idx + 1} de {total_turmas}...")
+            log.append(f"➡️ Turma {idx + 1} de {total_turmas}: {nome_turma}")
             try:
                 await preencher_turma(idx)
                 turmas_feitas += 1
