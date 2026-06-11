@@ -1444,8 +1444,16 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                     await botao.click()
                 else:
                     await senha_input.press("Enter")
-                await page.wait_for_timeout(5000)
-            log.append("✅ Login realizado")
+
+                # aguarda o Angular redirecionar para fora do #/login (até 30s)
+                for _ in range(30):
+                    await page.wait_for_timeout(1000)
+                    if "login" not in page.url.lower():
+                        break
+                else:
+                    raise RuntimeError("portal não saiu da tela de login após o clique em Entrar.")
+                await page.wait_for_timeout(3000)
+            log.append("✅ Login realizado — URL: " + page.url)
         except Exception as e:
             log.append(f"❌ ERRO no login: {e}")
             log.append("__ERRO__")
