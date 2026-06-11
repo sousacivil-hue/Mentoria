@@ -21,7 +21,7 @@ from playwright.async_api import async_playwright
 # CONFIGURAÇÕES
 # ─────────────────────────────────────────────────────────────
 
-URL_LOGIN = "https://siga.activesoft.com.br/login/"
+URL_LOGIN = "https://siga01.activesoft.com.br/login/?instituicao=COLEGIOVITA"
 
 MEDIA_MINIMA = 7.0   # média de AV1+AV2 para ganhar a nota alta
 NOTA_ALTA = "5,0"
@@ -157,4 +157,18 @@ async def lancar_notas():
 
 
 if __name__ == "__main__":
-    asyncio.run(lancar_notas())
+    try:
+        asyncio.run(lancar_notas())
+    except Exception:
+        import traceback
+        erro = traceback.format_exc()
+        print("\n" + "=" * 60)
+        print("ERRO INESPERADO:")
+        print(erro)
+        try:
+            with open("erro_notas.log", "w", encoding="utf-8") as f:
+                f.write(erro)
+            print("(erro salvo em erro_notas.log)")
+        except Exception:
+            pass
+        input("\nENTER para fechar...")
