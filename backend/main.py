@@ -1401,6 +1401,139 @@ async def run_sesi(job_id: str, data: SesiFormData):
         await browser.close()
 
 
+class SalesianoFormData(BaseModel):
+    url_plano: str
+    usuario: str
+    senha: str
+    aula_inicio: int = 1
+    duplas: bool = False  # cada tópico vale por 2 aulas (aulas geminadas)
+    topicos: list[str] = []
+
+
+async def run_salesiano(job_id: str, data: SalesianoFormData):
+    from playwright.async_api import async_playwright
+
+    log = jobs[job_id]
+    topicos = [t for t in data.topicos if t.strip()]
+    log.append(f"📊 Tópicos a lançar: {len(topicos)}")
+
+    def topico_da_aula(n_preenchida: int) -> str | None:
+        idx = n_preenchida // 2 if data.duplas else n_preenchida
+        return topicos[idx] if idx < len(topicos) else None
+
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(headless=True)
+        page = await browser.new_page(viewport={"width": 1400, "height": 900})
+
+        log.append("🔐 Fazendo login no Portal do Professor (Totvs RM)...")
+        try:
+            await page.goto(data.url_plano)
+            await page.wait_for_timeout(3000)
+            # Se cair na tela de login, preenche usuário e senha
+            user_input = page.locator(
+                "input[name='user'], input[name='username'], input[id*='user' i], input[type='text']"
+            ).first
+            if await user_input.count() > 0 and await user_input.is_visible():
+                await user_input.fill(data.usuario)
+                await page.locator("input[type='password']").first.fill(data.senha)
+                await page.locator(
+                    "button[type='submit'], button:has-text('Entrar'), button:has-text('Acessar'), input[type='submit']"
+                ).first.click()
+                await page.wait_for_timeout(4000)
+                # Garante que chegou na página do plano de aula
+                if "lessonPlan" not in page.url and "lessonPlan" in data.url_plano:
+                    await page.goto(data.url_plano)
+                    await page.wait_for_timeout(3000)
+            log.append("✅ Login realizado")
+        except Exception as e:
+            log.append(f"❌ ERRO no login: {e}")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        # Aguarda a tabela de aulas do Angular carregar
+        total_linhas = 0
+        for _ in range(20):
+            total_linhas = await page.evaluate(
+                "() => document.querySelectorAll('table tbody tr, po-table tbody tr').length"
+            )
+            if total_linhas > 0:
+                break
+            await page.wait_for_timeout(1000)
+
+        if total_linhas == 0:
+            log.append("❌ ERRO: a tabela de aulas não carregou.")
+            log.append("💡 Confira se o link do plano de aula está certo (copie da barra de endereço com a turma aberta).")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        log.append(f"📚 Aulas encontradas na tabela: {total_linhas}")
+
+        preenchidas = 0
+        for numero_aula in range(data.aula_inicio, total_linhas + 1):
+            conteudo = topico_da_aula(preenchidas)
+            if conteudo is None:
+                log.append("✅ Todos os tópicos foram usados")
+                break
+            try:
+                btn = page.locator("text=Editar").nth(numero_aula - 1)
+                await btn.wait_for(timeout=10000)
+                await btn.scroll_into_view_if_needed()
+                await btn.click()
+                await page.wait_for_timeout(1200)
+
+                textarea = page.locator(
+                    "label:has-text('Conteúdo realizado') + textarea, "
+                    "label:has-text('Conteudo realizado') + textarea, "
+                    "label:has-text('Conteúdo') ~ textarea"
+                ).first
+                fallback = page.locator(
+                    "po-modal textarea, dialog textarea, [role='dialog'] textarea"
+                ).first
+                try:
+                    await textarea.wait_for(timeout=5000)
+                    alvo = textarea
+                except Exception:
+                    await fallback.wait_for(timeout=5000)
+                    alvo = fallback
+
+                await alvo.click()
+                await alvo.fill(conteudo)
+                await alvo.dispatch_event("input")
+                await alvo.dispatch_event("change")
+                await page.wait_for_timeout(400)
+
+                salvar = page.locator(
+                    "po-modal button:has-text('Salvar'), dialog button:has-text('Salvar'), "
+                    "[role='dialog'] button:has-text('Salvar')"
+                ).first
+                await salvar.wait_for(timeout=5000)
+                await salvar.click()
+                await page.wait_for_timeout(1500)
+
+                preenchidas += 1
+                log.append(f"✏️ Aula {numero_aula} — {conteudo[:50]}")
+            except Exception as e:
+                log.append(f"⚠️ Erro na aula {numero_aula}: {e}")
+                break
+
+        log.append(f"📊 {preenchidas} aulas gravadas")
+        log.append("🏁 Automação Salesiano finalizada!")
+        log.append("__CONCLUIDO__")
+        await browser.close()
+
+
+@app.post("/executar-salesiano")
+async def executar_salesiano(data: SalesianoFormData):
+    job_id = str(uuid.uuid4())
+    jobs[job_id] = []
+    asyncio.create_task(run_salesiano(job_id, data))
+    return {"job_id": job_id}
+
+
 @app.post("/executar-sesi")
 async def executar_sesi(data: SesiFormData):
     job_id = str(uuid.uuid4())

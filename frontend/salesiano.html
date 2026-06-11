@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automatizador de Diário — Salesiano</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; }
+  header {
+    background: linear-gradient(135deg, #1565c0, #0d3b7a);
+    color: white; padding: 18px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  header h1 { font-size: 1.4rem; font-weight: 700; }
+  header span { font-size: 0.85rem; opacity: 0.85; }
+
+  .page-wrapper {
+    display: flex; max-width: 1080px; margin: 0 auto; gap: 28px;
+    padding: 32px 16px; align-items: flex-start;
+  }
+  .container { flex: 1; min-width: 0; max-width: 620px; }
+  .sidebar { width: 280px; flex-shrink: 0; }
+  @media (max-width: 860px) {
+    .page-wrapper { flex-direction: column; }
+    .sidebar { width: 100%; }
+  }
+
+  .card {
+    background: white; border-radius: 16px; padding: 28px;
+    margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .card h2 {
+    font-size: 1rem; color: #1565c0; margin-bottom: 18px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .step-badge {
+    background: #1565c0; color: white; border-radius: 50%;
+    width: 24px; height: 24px; display: inline-flex;
+    align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+  }
+  label {
+    display: block; font-size: 0.85rem; font-weight: 600;
+    color: #444; margin-bottom: 6px; margin-top: 14px;
+  }
+  label:first-of-type { margin-top: 0; }
+  input, select, textarea {
+    width: 100%; padding: 11px 14px; border: 1.5px solid #ddd;
+    border-radius: 10px; font-size: 0.95rem; outline: none;
+    transition: border 0.2s; background: #fafafa; font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { border-color: #1565c0; background: white; }
+  textarea { min-height: 140px; resize: vertical; line-height: 1.5; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .btn-add {
+    background: none; border: 1.5px dashed #1565c0; color: #1565c0;
+    padding: 10px; border-radius: 10px; width: 100%; cursor: pointer;
+    font-size: 0.9rem; font-weight: 600; margin-top: 4px;
+  }
+  .btn-add:hover { background: #e3f2fd; }
+  .btn-executar {
+    width: 100%; padding: 16px;
+    background: linear-gradient(135deg, #1565c0, #0d3b7a);
+    color: white; border: none; border-radius: 12px;
+    font-size: 1.05rem; font-weight: 700; cursor: pointer;
+  }
+  .btn-executar:hover { opacity: 0.92; }
+  .aviso {
+    background: #fff8e1; border-left: 4px solid #f9a825;
+    padding: 12px 14px; border-radius: 8px;
+    font-size: 0.82rem; color: #555; margin-top: 14px; line-height: 1.5;
+  }
+  .dica { font-size: 0.78rem; color: #888; margin-top: 6px; line-height: 1.4; }
+
+  #tela-progresso { display: none; }
+  .typing-anim {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; margin: 0 auto 16px; height: 52px;
+  }
+  .typing-anim .robo-cena { display: flex; flex-direction: column; align-items: center; line-height: 1; }
+  .typing-anim .robo { font-size: 2.1rem; animation: robo-digita 0.5s ease-in-out infinite; }
+  .typing-anim .teclado { font-size: 1.3rem; margin-top: -4px; animation: teclado-treme 0.5s ease-in-out infinite; }
+  @keyframes robo-digita {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50%      { transform: translateY(3px) rotate(3deg); }
+  }
+  @keyframes teclado-treme {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-1px); }
+  }
+  .typing-anim .dots { display: flex; gap: 6px; }
+  .typing-anim .dots span {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: rgba(255,255,255,.9);
+    animation: pulinho 1.2s ease-in-out infinite;
+  }
+  .typing-anim .dots span:nth-child(2) { animation-delay: 0.18s; }
+  .typing-anim .dots span:nth-child(3) { animation-delay: 0.36s; }
+  @keyframes pulinho {
+    0%, 60%, 100% { transform: translateY(0); opacity: .5; }
+    30%           { transform: translateY(-7px); opacity: 1; }
+  }
+  .log-box {
+    background: #1a1a2e; color: #a8ffb0;
+    font-family: 'Courier New', monospace; font-size: 0.8rem;
+    padding: 16px; border-radius: 12px; height: 300px;
+    overflow-y: auto; line-height: 1.7;
+  }
+  .log-box .log-erro { color: #ff6b6b; }
+  .log-box .log-ok { color: #69ff8a; }
+  .log-box .log-info { color: #b388ff; }
+
+  #tela-sucesso { display: none; text-align: center; padding: 20px 0; }
+  .sucesso-icone { font-size: 4rem; margin-bottom: 12px; }
+  .sucesso-titulo { font-size: 1.3rem; font-weight: 700; color: #2e7d32; margin-bottom: 8px; }
+  .sucesso-sub { color: #666; font-size: 0.9rem; margin-bottom: 24px; }
+  .btn-novo {
+    background: #2e7d32; color: white; border: none;
+    padding: 13px 32px; border-radius: 10px;
+    font-size: 0.95rem; font-weight: 600; cursor: pointer;
+  }
+
+  .sidebar-card {
+    background: white; border-radius: 16px; padding: 22px;
+    margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .sidebar-card h3 {
+    font-size: 0.95rem; color: #1565c0; margin-bottom: 14px;
+    font-weight: 700; display: flex; align-items: center; gap: 8px;
+  }
+  .step-list { list-style: none; }
+  .step-list li {
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 0.83rem; color: #444; margin-bottom: 12px; line-height: 1.45;
+  }
+  .step-list .num {
+    background: #1565c0; color: white; border-radius: 50%;
+    width: 20px; height: 20px; display: inline-flex;
+    align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+  }
+  .dica-box {
+    background: #e3f2fd; border-radius: 10px; padding: 12px 14px;
+    font-size: 0.82rem; color: #0d3b7a; line-height: 1.5; margin-bottom: 10px;
+  }
+  .dica-box strong { display: block; margin-bottom: 4px; }
+  .btn-whats {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: #25D366; color: white; border: none; border-radius: 12px;
+    padding: 13px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    text-decoration: none; width: 100%;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📘 Automatizador de Diário — Salesiano</h1>
+  <span>Você planeja. Você ensina. A gente só digita.</span>
+</header>
+
+<div class="page-wrapper">
+
+<div class="container">
+
+  <div id="tela-form">
+
+    <!-- 1: Login -->
+    <div class="card">
+      <h2><span class="step-badge">1</span> Acesso ao Portal do Professor</h2>
+      <label>Usuário (login do portal Salesiano)</label>
+      <input type="text" id="usuario" placeholder="Seu login">
+      <label>Senha</label>
+      <input type="password" id="senha" placeholder="Sua senha">
+      <div class="aviso">🔒 Sua senha é usada apenas durante esta automação e não fica armazenada.</div>
+    </div>
+
+    <!-- 2: Link do plano de aula -->
+    <div class="card">
+      <h2><span class="step-badge">2</span> Link do plano de aula da turma</h2>
+      <label>Cole o link completo</label>
+      <input type="text" id="url-plano" placeholder="https://portalprdsalesianos.rm.cloudtotvs.com.br/...lessonPlan/...">
+      <div class="dica">📋 Como pegar: entre no portal normalmente, abra o <strong>plano de aula da turma</strong> que quer preencher e copie o endereço da barra do navegador. Cada turma tem seu próprio link.</div>
+      <div class="row" style="margin-top:14px;">
+        <div>
+          <label>Começar da aula nº</label>
+          <input type="number" id="aula-inicio" value="1" min="1">
+        </div>
+        <div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:30px;">
+            <input type="checkbox" id="duplas" style="width:auto;">
+            Aulas geminadas (cada tópico vale por 2 aulas)
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3: Conteúdos -->
+    <div class="card">
+      <h2><span class="step-badge">3</span> Tópicos do conteúdo</h2>
+      <div class="row">
+        <div>
+          <label>Disciplina</label>
+          <input type="text" id="ia-disciplina" placeholder="Ex: Matemática">
+        </div>
+        <div>
+          <label>Série/Turma</label>
+          <input type="text" id="ia-serie" placeholder="Ex: 2ª Série EM">
+        </div>
+      </div>
+      <label>Assunto principal (opcional)</label>
+      <input type="text" id="ia-assunto" placeholder="Ex: Trigonometria">
+      <button class="btn-add" style="margin-top:12px;" onclick="gerarTopicosIA()" id="btn-gerar-ia">
+        ✨ Gerar tópicos com IA
+      </button>
+      <label style="margin-top:18px;">Tópicos (gerados pela IA ou cole os seus, um por linha)</label>
+      <textarea id="topicos" placeholder="Clique em 'Gerar tópicos com IA' acima, ou cole sua própria lista aqui...
+Introdução à trigonometria: arcos e radianos
+Ciclo trigonométrico
+..."></textarea>
+      <div class="dica">💡 O robô preenche as aulas na ordem da tabela, um tópico por aula (ou por dupla, se marcar aulas geminadas).</div>
+    </div>
+
+    <button class="btn-executar" onclick="executar()">
+      ⚡ Transferir meu planejamento para o diário
+      <span style="display:block;font-size:0.78rem;font-weight:500;font-style:italic;opacity:.75;margin-top:4px;">This is the way.</span>
+    </button>
+
+  </div>
+
+  <!-- PROGRESSO -->
+  <div id="tela-progresso">
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,#1565c0,#0d3b7a);padding:28px 28px 20px;color:white;text-align:center;">
+        <div class="typing-anim">
+          <span class="robo-cena">
+            <span class="robo">🤖</span>
+            <span class="teclado">⌨️</span>
+          </span>
+          <span class="dots"><span></span><span></span><span></span></span>
+        </div>
+        <div class="titulo" style="color:white;font-size:1.15rem;">Preenchendo seu diário...</div>
+        <div class="subtitulo" style="color:rgba(255,255,255,.75);margin-top:6px;">Não feche esta aba. O robô está no comando. <em>This is the way.</em> 🪐</div>
+      </div>
+
+      <div style="padding:14px 22px;background:#f0f7ff;border-bottom:1px solid #d8e6f5;">
+        <span class="status-texto" id="status-atual" style="font-size:0.9rem;color:#1565c0;font-weight:600;">Iniciando...</span>
+      </div>
+
+      <div style="display:flex;border-bottom:1px solid #d8e6f5;text-align:center;">
+        <div style="flex:1;padding:16px 10px;border-right:1px solid #d8e6f5;">
+          <div style="font-size:1.6rem;font-weight:800;color:#1565c0;" id="countdown">--:--</div>
+          <div style="font-size:0.72rem;color:#999;text-transform:uppercase;letter-spacing:.5px;">tempo restante (estimado)</div>
+        </div>
+        <div style="flex:1;padding:16px 10px;">
+          <div style="font-size:1.6rem;font-weight:800;color:#2e7d32;" id="placar">0 / --</div>
+          <div style="font-size:0.72rem;color:#999;text-transform:uppercase;letter-spacing:.5px;">aulas gravadas</div>
+        </div>
+      </div>
+
+      <div id="piada-box" style="padding:18px 22px;min-height:56px;font-size:0.92rem;
+           color:#0d3b7a;line-height:1.55;transition:opacity .4s;background:#f7fbff;
+           border-bottom:1px solid #d8e6f5;text-align:center;">
+        ☕ Enquanto o robô trabalha, um pensamento para você...
+      </div>
+
+      <div style="height:6px;background:#d8e6f5;overflow:hidden;">
+        <div id="prog-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#1565c0,#42a5f5);
+             transition:width .8s ease;"></div>
+      </div>
+
+      <div style="padding:14px 22px;">
+        <details>
+          <summary style="cursor:pointer;font-size:0.8rem;color:#1565c0;font-weight:600;user-select:none;">
+            🖥️ Ver relatório detalhado
+          </summary>
+          <div class="log-box" id="log-box" style="margin-top:10px;"></div>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUCESSO -->
+  <div id="tela-sucesso">
+    <div class="card">
+      <div class="sucesso-icone">🎉</div>
+      <div class="sucesso-titulo">Diário atualizado com sucesso!</div>
+      <div class="sucesso-sub">Todas as aulas foram lançadas.</div>
+      <button class="btn-novo" onclick="reiniciar()">Fazer outra automação</button>
+    </div>
+  </div>
+
+</div><!-- /container -->
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+
+  <div class="sidebar-card">
+    <h3>📋 Como usar</h3>
+    <ol class="step-list">
+      <li><span class="num">1</span> Entre com usuário e senha do Portal do Professor.</li>
+      <li><span class="num">2</span> Cole o link do plano de aula da turma (copie da barra do navegador).</li>
+      <li><span class="num">3</span> Gere os tópicos com IA ou cole os seus.</li>
+      <li><span class="num">4</span> Clique em <strong>Transferir</strong> e aguarde. ☕</li>
+    </ol>
+  </div>
+
+  <div class="sidebar-card">
+    <h3>💡 Dicas rápidas</h3>
+    <div class="dica-box">
+      <strong>Um link por turma</strong>
+      Cada turma tem seu próprio link de plano de aula. Para preencher outra turma, rode de novo com o link dela.
+    </div>
+    <div class="dica-box">
+      <strong>Aulas geminadas</strong>
+      Se você dá aulas duplas, marque a opção — cada tópico será usado em 2 aulas seguidas.
+    </div>
+  </div>
+
+  <div class="sidebar-card">
+    <h3>🆘 Precisa de ajuda?</h3>
+    <p style="font-size:0.82rem;color:#555;margin-bottom:14px;line-height:1.5;">
+      Algum erro? Dúvida? Fale comigo direto no WhatsApp — respondo rápido.
+    </p>
+    <a class="btn-whats" href="https://wa.me/5579991075326" target="_blank">💬 (79) 99107-5326</a>
+  </div>
+
+</aside>
+
+</div><!-- /page-wrapper -->
+
+<script>
+const BACKEND_URL = location.protocol === 'file:' ? 'http://localhost:8000' : '';
+
+async function gerarTopicosIA() {
+  const disciplina = document.getElementById('ia-disciplina').value.trim();
+  const serie = document.getElementById('ia-serie').value.trim();
+  const assunto = document.getElementById('ia-assunto').value.trim();
+  if (!disciplina || !serie) {
+    alert('Preencha a disciplina e a série para gerar os tópicos.');
+    return;
+  }
+  const btn = document.getElementById('btn-gerar-ia');
+  btn.textContent = '⏳ Gerando tópicos...';
+  btn.disabled = true;
+  try {
+    const resp = await fetch(`${BACKEND_URL}/gerar-topicos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ disciplina, serie, assunto, quantidade: 30 })
+    });
+    const dados = await resp.json();
+    if (dados.erro) alert(dados.erro);
+    else document.getElementById('topicos').value = dados.topicos.join('\n');
+  } catch (err) {
+    alert('Erro ao conectar ao servidor: ' + err.message);
+  } finally {
+    btn.textContent = '✨ Gerar tópicos com IA';
+    btn.disabled = false;
+  }
+}
+
+// ---- Contagem regressiva ----
+let cdTotal = 0, cdFeitas = 0, cdPrimeiraAula = 0, cdRestanteSeg = 0, cdTimer = null;
+function cdIniciar(totalAulas) {
+  cdTotal = totalAulas; cdFeitas = 0; cdPrimeiraAula = 0;
+  cdRestanteSeg = 35 + totalAulas * 5;
+  atualizarPlacar();
+  if (cdTimer) clearInterval(cdTimer);
+  cdTimer = setInterval(() => {
+    if (cdRestanteSeg > 0) cdRestanteSeg--;
+    const el = document.getElementById('countdown');
+    if (el) {
+      const m = Math.floor(cdRestanteSeg / 60), s = cdRestanteSeg % 60;
+      el.textContent = `${m}:${String(s).padStart(2, '0')}`;
+    }
+  }, 1000);
+}
+function cdAulaGravada() {
+  cdFeitas++;
+  const agora = Date.now();
+  if (!cdPrimeiraAula) cdPrimeiraAula = agora;
+  const faltam = Math.max(cdTotal - cdFeitas, 0);
+  if (cdFeitas >= 2) {
+    const ritmo = (agora - cdPrimeiraAula) / 1000 / (cdFeitas - 1);
+    cdRestanteSeg = Math.round(faltam * ritmo);
+  } else cdRestanteSeg = faltam * 5;
+  atualizarPlacar();
+}
+function atualizarPlacar() {
+  const placar = document.getElementById('placar');
+  if (placar) placar.textContent = `${cdFeitas} / ${cdTotal || '--'}`;
+  const bar = document.getElementById('prog-bar');
+  if (bar && cdTotal > 0) bar.style.width = `${Math.min(cdFeitas / cdTotal * 100, 100)}%`;
+}
+function cdFinalizar() {
+  if (cdTimer) { clearInterval(cdTimer); cdTimer = null; }
+  const el = document.getElementById('countdown');
+  if (el) el.textContent = '0:00';
+  const bar = document.getElementById('prog-bar');
+  if (bar) bar.style.width = '100%';
+}
+
+function addLog(msg, tipo = '') {
+  const box = document.getElementById('log-box');
+  const linha = document.createElement('div');
+  if (tipo) linha.className = `log-${tipo}`;
+  linha.textContent = msg;
+  box.appendChild(linha);
+  box.scrollTop = box.scrollHeight;
+  if (msg && !msg.startsWith('=')) {
+    document.getElementById('status-atual').textContent = msg.slice(0, 60);
+  }
+}
+
+async function executar() {
+  const usuario = document.getElementById('usuario').value.trim();
+  const senha = document.getElementById('senha').value.trim();
+  const urlPlano = document.getElementById('url-plano').value.trim();
+  const topicos = document.getElementById('topicos').value
+    .split('\n').map(s => s.trim()).filter(s => s);
+
+  if (!usuario || !senha) { alert('Preencha usuário e senha.'); return; }
+  if (!urlPlano || !urlPlano.startsWith('http')) {
+    alert('Cole o link completo do plano de aula da turma.'); return;
+  }
+  if (topicos.length === 0) { alert('Cole seus tópicos de conteúdo.'); return; }
+
+  const duplas = document.getElementById('duplas').checked;
+  const dados = {
+    url_plano: urlPlano,
+    usuario, senha,
+    aula_inicio: parseInt(document.getElementById('aula-inicio').value) || 1,
+    duplas,
+    topicos
+  };
+
+  document.getElementById('tela-form').style.display = 'none';
+  document.getElementById('tela-progresso').style.display = 'block';
+  iniciarPiadas();
+  cdIniciar(duplas ? topicos.length * 2 : topicos.length);
+
+  try {
+    const resp = await fetch(`${BACKEND_URL}/executar-salesiano`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    });
+    const { job_id } = await resp.json();
+    const sse = new EventSource(`${BACKEND_URL}/progresso/${job_id}`);
+    sse.onmessage = (e) => {
+      const msg = e.data;
+      if (msg === '__CONCLUIDO__') { sse.close(); mostrarSucesso(); }
+      else if (msg === '__ERRO__') { sse.close(); mostrarFalha(); }
+      else {
+        if (msg.startsWith('✏️')) cdAulaGravada();
+        const tipo = msg.includes('ERRO') ? 'erro'
+          : (msg.includes('✅') || msg.includes('OK')) ? 'ok' : 'info';
+        addLog(msg, tipo);
+      }
+    };
+    sse.onerror = () => { addLog('⚠️ Conexão instável — reconectando automaticamente...', 'info'); };
+  } catch (err) {
+    addLog(`Erro ao conectar ao servidor: ${err.message}`, 'erro');
+  }
+}
+
+const FRASES_ESPERA = [
+  '😄 Por que o livro de matemática vive triste? Porque tem muitos problemas.',
+  '🏛️ "A felicidade da sua vida depende da qualidade dos seus pensamentos." — Marco Aurélio',
+  '🏛️ "Enquanto adiamos, a vida passa." — Sêneca',
+  '🙏 "Tudo posso naquele que me fortalece." — Filipenses 4:13',
+  '🙏 "O Senhor é o meu pastor; nada me faltará." — Salmos 23:1',
+  '✨ Ensinar é deixar uma marca que o tempo não apaga.',
+  '✨ Seu fim de semana está sendo devolvido neste exato momento. ☕',
+  '🪐 "This is the way." — e o seu diário concorda.',
+];
+let piadaTimer = null;
+let frasesAtivas = [...FRASES_ESPERA];
+async function iniciarPiadas() {
+  const box = document.getElementById('piada-box');
+  if (!box) return;
+  try {
+    const r = await fetch(`${BACKEND_URL}/manchetes`);
+    const j = await r.json();
+    if (j.manchetes && j.manchetes.length) frasesAtivas = [...frasesAtivas, ...j.manchetes];
+  } catch (e) {}
+  let usadas = [];
+  const proxima = () => {
+    if (usadas.length === frasesAtivas.length) usadas = [];
+    let i;
+    do { i = Math.floor(Math.random() * frasesAtivas.length); } while (usadas.includes(i));
+    usadas.push(i);
+    box.style.opacity = 0;
+    setTimeout(() => { box.textContent = frasesAtivas[i]; box.style.opacity = 1; }, 400);
+  };
+  proxima();
+  piadaTimer = setInterval(proxima, 9000);
+}
+function pararPiadas() {
+  if (piadaTimer) { clearInterval(piadaTimer); piadaTimer = null; }
+}
+
+function mostrarFalha() {
+  pararPiadas();
+  cdFinalizar();
+  const anim = document.querySelector('#tela-progresso .typing-anim');
+  if (anim) anim.innerHTML = '<span style="font-size:2.4rem;">😵</span>';
+  document.querySelector('#tela-progresso .titulo').textContent = '❌ A automação falhou';
+  document.querySelector('#tela-progresso .subtitulo').textContent = 'Veja os erros no relatório abaixo e tente novamente';
+  addLog('Automação encerrada com falha.', 'erro');
+}
+
+function mostrarSucesso() {
+  pararPiadas();
+  cdFinalizar();
+  document.querySelector('#tela-progresso .titulo').textContent = 'Automação finalizada';
+  document.querySelector('#tela-progresso .subtitulo').textContent = 'Confira o relatório abaixo';
+  document.getElementById('tela-sucesso').style.display = 'block';
+}
+
+function reiniciar() {
+  document.getElementById('tela-sucesso').style.display = 'none';
+  document.getElementById('tela-form').style.display = 'block';
+  document.getElementById('log-box').innerHTML = '';
+}
+</script>
+</body>
+</html>
