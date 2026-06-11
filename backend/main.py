@@ -581,17 +581,22 @@ async def run_active(job_id: str, data: ActiveFormData):
                 await page.wait_for_timeout(800)
             return None, None
 
-        # ---- 1. Clica em EXIBIR (filtro de período) ----
+        # ---- 1. Clica em EXIBIR (obrigatório: é ele que mostra as turmas) ----
         frame_ex, exibir = await achar(
             "button:has-text('EXIBIR'), input[value*='EXIBIR' i], a:has-text('EXIBIR'), *[onclick]:has-text('EXIBIR')",
-            tentativas=6,
+            tentativas=20,
         )
         if exibir:
             await exibir.click()
             await page.wait_for_timeout(1500)
             log.append("✅ Período exibido")
         else:
-            log.append("⚠️ Botão EXIBIR não encontrado — tentando seguir mesmo assim")
+            log.append("❌ ERRO: botão EXIBIR não apareceu (página demorou demais para carregar).")
+            log.append("💡 Tente novamente — se repetir, me avise.")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
 
         # ---- 2. Descobre as turmas disponíveis (procurando em frames) ----
         url_lista_turmas = page.url
