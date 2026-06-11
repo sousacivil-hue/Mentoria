@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teleprompter — Automatizador de Diário</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:#000; color:#fff; font-family:'Segoe UI', Arial, sans-serif; overflow:hidden; }
+
+  #texto {
+    height:100vh; overflow-y:scroll; padding:45vh 8vw;
+    font-size:42px; line-height:1.7; font-weight:600;
+    scrollbar-width:none;
+  }
+  #texto::-webkit-scrollbar { display:none; }
+
+  .cena {
+    color:#00D4AA; font-size:26px; font-weight:700;
+    text-transform:uppercase; letter-spacing:1px;
+    margin:60px 0 20px; border-left:5px solid #7C5CFF; padding-left:16px;
+  }
+  .pausa { color:#7C5CFF; font-style:italic; font-size:30px; margin:30px 0; }
+  p { margin-bottom:30px; }
+
+  /* linha guia no meio da tela */
+  #guia {
+    position:fixed; top:50%; left:0; right:0; height:0;
+    border-top:2px dashed rgba(0,212,170,.4); pointer-events:none;
+  }
+
+  /* controles */
+  #controles {
+    position:fixed; bottom:0; left:0; right:0;
+    display:flex; gap:10px; justify-content:center; align-items:center;
+    padding:14px; background:rgba(13,17,23,.92);
+  }
+  button {
+    background:#1D2433; color:#fff; border:1.5px solid #2C3548;
+    border-radius:12px; padding:14px 26px; font-size:18px; font-weight:700;
+    cursor:pointer;
+  }
+  #play { background:linear-gradient(90deg,#7C5CFF,#00D4AA); color:#0D1117; padding:14px 40px; }
+  #vel { color:#8B93A7; font-size:16px; min-width:80px; text-align:center; }
+</style>
+</head>
+<body>
+
+<div id="guia"></div>
+
+<div id="texto">
+  <p style="color:#8B93A7; font-size:28px;">Toque em ▶ INICIAR quando começar a gravar. Leia a linha que estiver passando pela linha pontilhada. Ajuste a velocidade com − e +.</p>
+
+  <div class="cena">🎬 Cena 1 — diário vazio na tela</div>
+  <p>Ó, esse aqui é meu diário de classe. Quatrocentas e cinquenta aulas pra registrar esse bimestre.</p>
+  <p>Data por data... conteúdo por conteúdo... chamada por chamada.</p>
+  <p>Isso aqui era o meu domingo inteiro. Às vezes dois.</p>
+
+  <div class="cena">🎬 Cena 2 — formulário do site</div>
+  <p>Aí eu cansei. Olha o que eu faço agora:</p>
+  <p>Marco o início e o fim do bimestre... os dias que eu tenho aula em cada turma... ele já sabe até os feriados e as emendas.</p>
+  <p>Aí eu digo a disciplina, a série e o assunto que eu tô trabalhando... e ele monta a sequência de conteúdos pra mim, uma pra cada aula.</p>
+  <p>Eu leio, ajusto o que eu quiser — o planejamento é meu — e clico aqui.</p>
+
+  <div class="cena">🎬 Cena 3 — log rodando ✅✅✅</div>
+  <p>E agora... olha isso.</p>
+  <p>Tá vendo? Ele tá digitando. Aula por aula. Na data certa.</p>
+  <p>Eu não tô encostando em nada.</p>
+  <div class="pausa">⏸ PAUSA — 5 a 8 segundos em silêncio, só o log rodando</div>
+
+  <div class="cena">🎬 Cena 4 — diário preenchido</div>
+  <p>Pronto. Bimestre inteiro registrado em vinte minutos.</p>
+  <p>Eu revisei cada conteúdo antes... só não precisei digitar nenhum.</p>
+
+  <div class="cena">🎬 Cena 5 — tela final com contato</div>
+  <p>Se você é professor e também tá cansado de perder domingo digitando, testa de graça numa turma.</p>
+  <p>O número tá aí embaixo.</p>
+  <p>Você planeja... você ensina... <b style="color:#00D4AA">a gente só digita.</b></p>
+
+  <p style="height:50vh;"></p>
+</div>
+
+<div id="controles">
+  <button onclick="mudarVel(-1)">−</button>
+  <span id="vel">vel 3</span>
+  <button onclick="mudarVel(1)">+</button>
+  <button id="play" onclick="togglar()">▶ INICIAR</button>
+  <button onclick="reiniciar()">⟲ Voltar ao início</button>
+</div>
+
+<script>
+const texto = document.getElementById('texto');
+let rodando = false, velocidade = 3, timer = null;
+
+function togglar() {
+  rodando = !rodando;
+  document.getElementById('play').textContent = rodando ? '⏸ PAUSAR' : '▶ INICIAR';
+  if (rodando && !timer) {
+    timer = setInterval(() => { if (rodando) texto.scrollBy(0, velocidade * 0.5); }, 16);
+  }
+}
+function mudarVel(d) {
+  velocidade = Math.min(10, Math.max(1, velocidade + d));
+  document.getElementById('vel').textContent = 'vel ' + velocidade;
+}
+function reiniciar() {
+  texto.scrollTo({top:0}); rodando = false;
+  document.getElementById('play').textContent = '▶ INICIAR';
+}
+// toque na tela tbm pausa/inicia (fora dos botões)
+texto.addEventListener('click', togglar);
+</script>
+
+</body>
+</html>
