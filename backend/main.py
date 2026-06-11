@@ -627,9 +627,22 @@ async def run_active(job_id: str, data: ActiveFormData):
             await page.wait_for_timeout(3000)
 
             # Registro de aulas do bimestre (pode abrir em frame ou nova página)
-            fr2, _ = await achar(f"tr:has-text('{data.bimestre}º BIMESTRE')", tentativas=5)
+            # Cada colégio nomeia diferente: "1º BIMESTRE", "1ª UNIDADE", "1ª ETAPA"...
+            rotulos = [
+                f"{data.bimestre}º BIMESTRE", f"{data.bimestre}ª UNIDADE",
+                f"{data.bimestre}º BIM", f"{data.bimestre}ª ETAPA",
+                f"{data.bimestre} UNIDADE", f"{data.bimestre} BIMESTRE",
+            ]
+            fr2 = None
+            rotulo_achado = None
+            for rotulo in rotulos:
+                fr2, _ = await achar(f"tr:has-text('{rotulo}')", tentativas=2)
+                if fr2 is not None:
+                    rotulo_achado = rotulo
+                    break
             if fr2 is not None:
-                linha_bim = fr2.locator(f"tr:has-text('{data.bimestre}º BIMESTRE')").first
+                log.append(f"📑 Fase encontrada: {rotulo_achado}")
+                linha_bim = fr2.locator(f"tr:has-text('{rotulo_achado}')").first
                 reg = linha_bim.locator("a:has-text('Registro de aulas')").first
                 await reg.wait_for(timeout=8000)
                 await reg.click()
