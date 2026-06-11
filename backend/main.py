@@ -752,13 +752,12 @@ async def run_active(job_id: str, data: ActiveFormData):
                     "button:has-text('Gravar'), input[value*='Gravar' i]"
                 ).first
                 await gravar.click()
-                # espera a tabela atualizar (até 8s)
-                for _ in range(8):
-                    await page.wait_for_timeout(1000)
-                    # considera gravado quando o textarea da linha sumiu ou virou texto fixo
-                    ainda_editando = await linha_vazia.locator("textarea").count()
-                    if ainda_editando == 0:
-                        break
+                # espera a página estabilizar após gravar (pode haver reload)
+                try:
+                    await page.wait_for_load_state("networkidle", timeout=8000)
+                except Exception:
+                    pass
+                await page.wait_for_timeout(1000)
 
                 preenchidas += 1
                 log.append(f"✏️ {data_br} — {aula['conteudo'][:50]}")
