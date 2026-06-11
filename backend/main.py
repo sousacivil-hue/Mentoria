@@ -994,6 +994,7 @@ async def gerar_topicos(req: GerarTopicosRequest):
 
 
 class SesiFormData(BaseModel):
+    url_portal: str = ""
     usuario: str
     senha: str
     turma: str = ""
@@ -1036,9 +1037,9 @@ async def run_sesi(job_id: str, data: SesiFormData):
             return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode("ascii")
 
         # ---- 1. Login ----
-        log.append("🔐 Fazendo login no Portal SESI (Corpore.Net)...")
+        log.append("🔐 Fazendo login no Portal Educacional (Totvs/Corpore.Net)...")
         try:
-            await page.goto(URL_SESI)
+            await page.goto(data.url_portal or URL_SESI)
             await page.wait_for_timeout(1500)
             await page.locator("input[type='text']:visible").first.fill(data.usuario)
             await page.locator("input[type='password']:visible").first.fill(data.senha)

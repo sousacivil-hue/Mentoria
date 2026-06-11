@@ -169,7 +169,17 @@
     <!-- 1: Login -->
     <div class="card">
       <h2><span class="step-badge">1</span> Acesso ao Portal Educacional</h2>
-      <label>Usuário (login do portal SESI)</label>
+      <label>Sua instituição</label>
+      <select id="select-portal" onchange="trocarPortal()">
+        <option value="https://portaleducacional.fies.org.br/Corpore.Net/Login.aspx">SESI (Sergipe)</option>
+        <option value="outro">Outra instituição Totvs...</option>
+      </select>
+      <div id="bloco-url-outro" style="display:none;">
+        <label>Link de acesso do portal da sua instituição</label>
+        <input type="text" id="url-portal" placeholder="Cole o endereço da página de login (Corpore.Net)">
+        <div class="dica">É o endereço que você acessa normalmente para entrar no portal educacional.</div>
+      </div>
+      <label>Usuário (login do portal)</label>
       <input type="text" id="usuario" placeholder="Seu login">
       <label>Senha</label>
       <input type="password" id="senha" placeholder="Sua senha">
@@ -367,6 +377,11 @@ const BACKEND_URL = location.protocol === 'file:' ? 'http://localhost:8000' : ''
   }
 })();
 
+function trocarPortal() {
+  const outro = document.getElementById('select-portal').value === 'outro';
+  document.getElementById('bloco-url-outro').style.display = outro ? 'block' : 'none';
+}
+
 function getHorarios() {
   const horarios = {};
   document.querySelectorAll('.chip-aula.ativa').forEach(c => {
@@ -460,6 +475,11 @@ function addLog(msg, tipo = '') {
 }
 
 async function executar() {
+  const selectVal = document.getElementById('select-portal').value;
+  const urlPortal = selectVal === 'outro'
+    ? document.getElementById('url-portal').value.trim()
+    : selectVal;
+  if (!urlPortal) { alert('Selecione sua instituição ou cole o link do portal.'); return; }
   const usuario = document.getElementById('usuario').value.trim();
   const senha = document.getElementById('senha').value.trim();
   const turma = document.getElementById('turma').value.trim();
@@ -477,6 +497,7 @@ async function executar() {
   }
 
   const dados = {
+    url_portal: urlPortal,
     usuario, senha, turma,
     bimestre: document.getElementById('bimestre').value,
     licao_casa: document.getElementById('licao-casa').value.trim(),
