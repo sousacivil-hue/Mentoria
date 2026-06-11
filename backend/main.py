@@ -619,15 +619,19 @@ async def run_active(job_id: str, data: ActiveFormData):
 
             # Registro de aulas do bimestre (pode abrir em frame ou nova página)
             # Cada colégio nomeia diferente: "1º BIMESTRE", "1ª UNIDADE", "1ª ETAPA"...
+            try:
+                bim_num = int(str(data.bimestre).strip())
+            except ValueError:
+                bim_num = 1
             rotulos = [
-                f"{data.bimestre}º BIMESTRE", f"{data.bimestre}ª UNIDADE",
-                f"{data.bimestre}º BIM", f"{data.bimestre}ª ETAPA",
-                f"{data.bimestre} UNIDADE", f"{data.bimestre} BIMESTRE",
+                f"{bim_num}º BIMESTRE", f"{bim_num}ª UNIDADE",
+                f"{bim_num}º BIM", f"{bim_num}ª ETAPA",
+                f"{bim_num} UNIDADE", f"{bim_num} BIMESTRE",
             ]
             fr2 = None
             rotulo_achado = None
             for rotulo in rotulos:
-                fr2, _ = await achar(f"tr:has-text('{rotulo}')", tentativas=2)
+                fr2, _ = await achar(f"tr:has-text('{rotulo}')", tentativas=4)
                 if fr2 is not None:
                     rotulo_achado = rotulo
                     break
@@ -659,9 +663,9 @@ async def run_active(job_id: str, data: ActiveFormData):
                 if fr2b is not None:
                     links_reg = fr2b.locator("a:has-text('Registro de aulas')")
                     qtd = await links_reg.count()
-                    if qtd >= data.bimestre:
-                        log.append(f"ℹ️ Layout alternativo: {qtd} links de registro — abrindo o {data.bimestre}º")
-                        await links_reg.nth(data.bimestre - 1).click()
+                    if qtd >= bim_num:
+                        log.append(f"ℹ️ Layout alternativo: {qtd} links de registro — abrindo o {bim_num}º")
+                        await links_reg.nth(bim_num - 1).click()
                     else:
                         log.append(f"ℹ️ Apenas {qtd} link(s) de registro — abrindo o primeiro")
                         await links_reg.first.click()
