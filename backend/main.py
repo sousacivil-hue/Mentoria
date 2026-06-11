@@ -1402,7 +1402,7 @@ async def run_sesi(job_id: str, data: SesiFormData):
 
 
 class SalesianoFormData(BaseModel):
-    url_portal: str = "https://portalprdsalesianos.rm.cloudtotvs.com.br"
+    url_portal: str = "https://portalprdsalesianos.rm.cloudtotvs.com.br/FrameHTML/web/app/edu/PortalDoProfessor/#/login"
     usuario: str
     senha: str
     turma: str  # código da turma, ex.: GE09EM2A
