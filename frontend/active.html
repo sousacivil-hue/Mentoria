@@ -109,15 +109,24 @@
     display: flex; align-items: center; justify-content: center;
     gap: 10px; margin: 0 auto 16px; height: 52px;
   }
-  .typing-anim .lapis {
-    font-size: 2rem;
-    animation: escrever 1.1s ease-in-out infinite;
+  .typing-anim .robo-cena {
+    display: flex; flex-direction: column; align-items: center; line-height: 1;
   }
-  @keyframes escrever {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    25%      { transform: translate(4px, -3px) rotate(-6deg); }
-    50%      { transform: translate(8px, 0) rotate(0deg); }
-    75%      { transform: translate(4px, -3px) rotate(6deg); }
+  .typing-anim .robo {
+    font-size: 2.1rem;
+    animation: robo-digita 0.5s ease-in-out infinite;
+  }
+  .typing-anim .teclado {
+    font-size: 1.3rem; margin-top: -4px;
+    animation: teclado-treme 0.5s ease-in-out infinite;
+  }
+  @keyframes robo-digita {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50%      { transform: translateY(3px) rotate(3deg); }
+  }
+  @keyframes teclado-treme {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-1px); }
   }
   .typing-anim .dots { display: flex; gap: 6px; }
   .typing-anim .dots span {
@@ -390,11 +399,14 @@ Equações do 2º grau - fórmula de Bhaskara
       <!-- Cabeçalho com animação -->
       <div style="background:linear-gradient(135deg,#7b1fa2,#4a148c);padding:28px 28px 20px;color:white;text-align:center;">
         <div class="typing-anim">
-          <span class="lapis">✍️</span>
+          <span class="robo-cena">
+            <span class="robo">🤖</span>
+            <span class="teclado">⌨️</span>
+          </span>
           <span class="dots"><span></span><span></span><span></span></span>
         </div>
         <div class="titulo" style="color:white;font-size:1.15rem;">Preenchendo seu diário...</div>
-        <div class="subtitulo" style="color:rgba(255,255,255,.75);margin-top:6px;">Não feche esta aba. O robô está trabalhando. ☕</div>
+        <div class="subtitulo" style="color:rgba(255,255,255,.75);margin-top:6px;">Não feche esta aba. O robô está no comando. <em>This is the way.</em> 🪐</div>
       </div>
 
       <!-- Status atual em destaque -->
