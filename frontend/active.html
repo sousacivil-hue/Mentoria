@@ -586,12 +586,8 @@ async function executar() {
 const FRASES_ESPERA = [
   '😄 Se uma centopeia tem cem pés... um piolho tem 3,14 olhos?',
   '😄 Por que o livro de matemática vive triste? Porque tem muitos problemas.',
-  '😄 O professor de geografia foi demitido... ele andava muito por fora.',
-  '😄 Qual o contrário de "professor"? "Contra o sor".',
-  '😄 O aluno disse: "professor, eu não sei nada de raiz quadrada". Resposta: "isso não tem fundamento".',
-  '😄 Por que a aula de história nunca atrasa? Porque ela já passou.',
   '😄 O que o zero disse para o oito? "Que cinto maneiro!"',
-  '😄 Professor de química não morre... ele apenas perde a solução.',
+  '😄 Por que o pontinho laranja parou no alto do morro? Porque era um morango.',
   '🏛️ "Não é o que acontece com você, mas como você reage que importa." — Epicteto',
   '🏛️ "A felicidade da sua vida depende da qualidade dos seus pensamentos." — Marco Aurélio',
   '🏛️ "Nenhum vento sopra a favor de quem não sabe para onde ir." — Sêneca',
@@ -611,17 +607,26 @@ const FRASES_ESPERA = [
   '✨ Daqui a pouco esse diário está pronto — e você não digitou nada.',
 ];
 let piadaTimer = null;
-function iniciarPiadas() {
+let frasesAtivas = [...FRASES_ESPERA];
+async function iniciarPiadas() {
   const box = document.getElementById('piada-box');
   if (!box) return;
+  // Busca manchetes ao vivo e mistura na rotação
+  try {
+    const r = await fetch(`${BACKEND_URL}/manchetes`);
+    const j = await r.json();
+    if (j.manchetes && j.manchetes.length) {
+      frasesAtivas = [...FRASES_ESPERA, ...j.manchetes];
+    }
+  } catch (e) { /* sem internet pros feeds? segue só com as frases */ }
   let usadas = [];
   const proxima = () => {
-    if (usadas.length === FRASES_ESPERA.length) usadas = [];
+    if (usadas.length === frasesAtivas.length) usadas = [];
     let i;
-    do { i = Math.floor(Math.random() * FRASES_ESPERA.length); } while (usadas.includes(i));
+    do { i = Math.floor(Math.random() * frasesAtivas.length); } while (usadas.includes(i));
     usadas.push(i);
     box.style.opacity = 0;
-    setTimeout(() => { box.textContent = FRASES_ESPERA[i]; box.style.opacity = 1; }, 400);
+    setTimeout(() => { box.textContent = frasesAtivas[i]; box.style.opacity = 1; }, 400);
   };
   proxima();
   piadaTimer = setInterval(proxima, 9000);

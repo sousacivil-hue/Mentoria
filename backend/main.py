@@ -802,6 +802,50 @@ async def run_active(job_id: str, data: ActiveFormData):
         await browser.close()
 
 
+# ---- Manchetes ao vivo (RSS do G1) para a tela de espera ----
+_manchetes_cache: dict = {"quando": 0.0, "itens": []}
+
+FEEDS_RSS = [
+    ("📰", "https://g1.globo.com/rss/g1/"),
+    ("⚽", "https://ge.globo.com/rss/ge/"),
+    ("🏛️", "https://g1.globo.com/rss/g1/politica/"),
+    ("🎓", "https://g1.globo.com/rss/g1/educacao/"),
+]
+
+
+def _buscar_manchetes() -> list[str]:
+    import urllib.request
+    import time as _t
+    itens = []
+    for emoji, url in FEEDS_RSS:
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                xml = resp.read().decode("utf-8", errors="ignore")
+            titulos = re.findall(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", xml)
+            # pula o 1º título (nome do feed) e pega os 5 seguintes
+            for t in titulos[1:6]:
+                t = t.strip()
+                if t and len(t) < 160:
+                    itens.append(f"{emoji} {t}")
+        except Exception:
+            continue
+    return itens
+
+
+@app.get("/manchetes")
+async def manchetes():
+    import time as _t
+    agora = _t.time()
+    # cache de 10 minutos para não martelar os feeds
+    if agora - _manchetes_cache["quando"] > 600 or not _manchetes_cache["itens"]:
+        itens = await asyncio.to_thread(_buscar_manchetes)
+        if itens:
+            _manchetes_cache["itens"] = itens
+            _manchetes_cache["quando"] = agora
+    return {"manchetes": _manchetes_cache["itens"]}
+
+
 class GerarTopicosRequest(BaseModel):
     disciplina: str
     serie: str
