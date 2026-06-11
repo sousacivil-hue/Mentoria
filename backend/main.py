@@ -1457,16 +1457,26 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
         log.append("📋 Abrindo o plano de aula...")
         try:
             await page.goto(data.url_plano)
-            await page.wait_for_timeout(4000)
-            # aguarda a tabela Angular carregar
-            for _ in range(20):
+            await page.wait_for_timeout(6000)
+            # se caiu no login de novo, aguarda redirecionar e tenta de novo
+            if "login" in page.url.lower():
+                log.append("🔄 Aguardando redirecionamento do portal...")
+                await page.wait_for_timeout(5000)
+                await page.goto(data.url_plano)
+                await page.wait_for_timeout(6000)
+            log.append(f"🧭 URL atual: {page.url}")
+            # aguarda a tabela Angular carregar (até 40s)
+            total = 0
+            for _ in range(40):
                 total = await page.evaluate(
                     "() => document.querySelectorAll('table tbody tr, po-table tbody tr').length"
                 )
                 if total > 0:
                     break
                 await page.wait_for_timeout(1000)
-            else:
+            if total == 0:
+                corpo = await page.evaluate("() => document.body.innerText.trim().slice(0, 300)")
+                log.append(f"🧭 Conteúdo da página: {corpo}")
                 raise RuntimeError("a tabela de aulas não carregou — confira o link do plano de aula.")
             log.append(f"📚 {total} aulas encontradas")
         except Exception as e:
