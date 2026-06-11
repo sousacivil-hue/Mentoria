@@ -74,7 +74,13 @@ async def lancar_notas():
         print("3. Com a lista de alunos na tela, aperte ENTER aqui")
         print("=" * 60)
 
-        await page.goto(URL_LOGIN)
+        # Internet lenta: até 2 min para abrir, sem esperar carregar 100%
+        page.set_default_timeout(60000)
+        try:
+            await page.goto(URL_LOGIN, timeout=120000, wait_until="domcontentloaded")
+        except Exception as e:
+            print(f"\n⚠️ A página demorou para abrir ({e})")
+            print("Se o site apareceu no Chrome, siga normalmente.")
         if LOGIN:
             try:
                 await page.wait_for_timeout(2000)
