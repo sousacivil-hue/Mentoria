@@ -1446,10 +1446,10 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
         browser = await pw.chromium.launch(headless=True)
         page = await browser.new_page(viewport={"width": 1400, "height": 900})
 
-        # ---- Login + ir direto para o plano de aula ----
+        # ---- Login direto na URL do plano (sem segundo goto) ----
         log.append("🔐 Fazendo login no Portal do Professor...")
         try:
-            await page.goto(data.url_plano)
+            await page.goto(data.url_portal)
             await page.wait_for_timeout(3000)
             senha_input = page.locator("input[type='password']").first
             if await senha_input.count() > 0 and await senha_input.is_visible():
@@ -1462,14 +1462,18 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                     await botao.click()
                 else:
                     await senha_input.press("Enter")
-                # aguarda o Angular processar o login e montar o menu (até 30s)
+                # aguarda o menu aparecer (token salvo no Angular)
                 for _ in range(30):
                     await page.wait_for_timeout(1000)
                     if await page.locator("po-menu, .po-menu-item").count() > 0:
                         break
-                await page.wait_for_timeout(2000)
-                # agora navega para o plano — o token já está salvo no Angular
-                await page.goto(data.url_plano)
+                await page.wait_for_timeout(1000)
+                # navega para o plano via JS sem recarregar o app Angular
+                hash_part = data.url_plano.split('#')[-1] if '#' in data.url_plano else ''
+                if hash_part:
+                    await page.evaluate(f"() => {{ window.location.hash = '{hash_part}'; }}")
+                else:
+                    await page.goto(data.url_plano)
             log.append("✅ Login realizado")
         except Exception as e:
             log.append(f"❌ ERRO no login: {e}")
