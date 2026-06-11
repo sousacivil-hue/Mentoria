@@ -179,17 +179,9 @@
     <!-- 2: Turma e período -->
     <div class="card">
       <h2><span class="step-badge">2</span> Turma e período</h2>
-      <div class="row">
-        <div>
-          <label>Código da turma</label>
-          <input type="text" id="turma" placeholder="Ex: GE09EM2A" style="text-transform:uppercase;">
-        </div>
-        <div>
-          <label>Etapa</label>
-          <input type="text" id="etapa" placeholder="Ex: Janeiro">
-        </div>
-      </div>
-      <div class="dica">📋 O código da turma aparece na coluna <strong>Cód. Turma</strong> do Diário de Classe do portal. A etapa é a mesma que você seleciona no filtro do plano de aula.</div>
+      <label>Código da turma</label>
+      <input type="text" id="turma" placeholder="Ex: GE09EM2A" style="text-transform:uppercase;">
+      <div class="dica">📋 O código da turma aparece na coluna <strong>Cód. Turma</strong> do Diário de Classe do portal (a letra no final diferencia o A do B).</div>
       <div class="row" style="margin-top:14px;">
         <div>
           <label>Data inicial</label>
@@ -200,6 +192,7 @@
           <input type="date" id="data-fim">
         </div>
       </div>
+      <div class="dica">📅 São as aulas dentro desse intervalo que serão preenchidas.</div>
       <div class="row" style="margin-top:14px;">
         <div>
           <label>Começar da aula nº</label>
@@ -436,7 +429,6 @@ async function executar() {
   const usuario = document.getElementById('usuario').value.trim();
   const senha = document.getElementById('senha').value.trim();
   const turma = document.getElementById('turma').value.trim().toUpperCase();
-  const etapa = document.getElementById('etapa').value.trim();
   const dataInicio = document.getElementById('data-inicio').value;
   const dataFim = document.getElementById('data-fim').value;
   const topicos = document.getElementById('topicos').value
@@ -444,7 +436,6 @@ async function executar() {
 
   if (!usuario || !senha) { alert('Preencha usuário e senha.'); return; }
   if (!turma) { alert('Informe o código da turma (ex.: GE09EM2A).'); return; }
-  if (!etapa) { alert('Informe a etapa (ex.: Janeiro).'); return; }
   if (!dataInicio || !dataFim) { alert('Informe as datas inicial e final.'); return; }
   if (topicos.length === 0) { alert('Cole seus tópicos de conteúdo.'); return; }
 
@@ -452,7 +443,7 @@ async function executar() {
 
   const duplas = document.getElementById('duplas').checked;
   const dados = {
-    turma, etapa,
+    turma,
     data_inicio: br(dataInicio),
     data_fim: br(dataFim),
     usuario, senha,

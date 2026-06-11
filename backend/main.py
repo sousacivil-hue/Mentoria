@@ -1406,7 +1406,7 @@ class SalesianoFormData(BaseModel):
     usuario: str
     senha: str
     turma: str  # código da turma, ex.: GE09EM2A
-    etapa: str  # ex.: Janeiro, 1ª Etapa...
+    etapa: str = "Janeiro"  # a etapa é fixa; o que filtra as aulas é o intervalo de datas
     data_inicio: str  # dd/mm/aaaa
     data_fim: str  # dd/mm/aaaa
     aula_inicio: int = 1
