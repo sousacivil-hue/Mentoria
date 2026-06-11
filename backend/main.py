@@ -1438,62 +1438,50 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                 pass
             await page.wait_for_timeout(2000)
 
-            senha_input = page.locator("input[type='password']").first
+            senha_input = page.locator("input[type='password'], input[name='password']").first
             if await senha_input.count() > 0 and await senha_input.is_visible():
-                # usuário: o campo de texto visível mais próximo da senha
+                # usuário: campo de login do po-page-login (Totvs) ou genérico
                 user_input = page.locator(
+                    "input[name='login'], po-login input, "
+                    "input[name='user' i], input[name='username' i], "
                     "form:has(input[type='password']) input[type='text'], "
-                    "input[name='user' i], input[name='username' i], input[name='login' i], "
                     "input[id*='user' i], input[type='text']"
                 ).first
                 await user_input.click()
                 await user_input.fill(data.usuario)
+                await user_input.dispatch_event("input")
                 await senha_input.click()
                 await senha_input.fill(data.senha)
-                await page.wait_for_timeout(500)
+                await senha_input.dispatch_event("input")
+                await page.wait_for_timeout(800)
 
                 botao = page.locator(
-                    "button[type='submit'], button:has-text('Entrar'), button:has-text('Acessar'), "
-                    "button:has-text('Login'), input[type='submit'], .po-button"
+                    "button:has-text('Entrar'), button[type='submit'], button:has-text('Acessar'), "
+                    "button:has-text('Login'), input[type='submit']"
                 ).first
                 if await botao.count() > 0:
                     await botao.click()
                 else:
                     await senha_input.press("Enter")
 
-                # espera a tela de login sair (até 30s)
-                saiu = False
-                for _ in range(30):
+                # sucesso = menu lateral apareceu (até 40s)
+                logado = False
+                for _ in range(40):
                     await page.wait_for_timeout(1000)
-                    ainda_login = page.locator("input[type='password']").first
-                    if await ainda_login.count() == 0 or not await ainda_login.is_visible():
-                        saiu = True
+                    if await page.locator(".po-menu-item, po-menu").count() > 0:
+                        logado = True
                         break
-                if not saiu:
-                    # tenta Enter como último recurso
-                    await page.locator("input[type='password']").first.press("Enter")
-                    for _ in range(10):
-                        await page.wait_for_timeout(1000)
-                        ainda_login = page.locator("input[type='password']").first
-                        if await ainda_login.count() == 0 or not await ainda_login.is_visible():
-                            saiu = True
-                            break
-                if not saiu:
-                    # diagnóstico: mostra o que a página de login está exibindo
-                    log.append("🧭 Página: " + page.url)
+                if not logado:
                     avisos = await page.evaluate(
-                        """() => Array.from(document.querySelectorAll('po-toaster, .po-toaster, [class*=error i], [class*=invalid i], [role=alert]'))
+                        """() => Array.from(document.querySelectorAll('po-toaster, .po-toaster, [class*=error i], [class*=invalid i], [role=alert], .po-field-container-bottom-text-error'))
                             .map(e => e.innerText.trim()).filter(t => t).slice(0, 5)"""
                     )
                     for a in avisos:
                         log.append("🧭 aviso do portal: " + a)
-                    campos = await page.evaluate(
-                        """() => Array.from(document.querySelectorAll('input')).map(i =>
-                            i.type + '|' + (i.name || i.id || '?')).slice(0, 10)"""
-                    )
-                    log.append("🧭 campos: " + ", ".join(campos))
-                    raise RuntimeError("a tela de login não saiu — veja as linhas 🧭 acima.")
-                await page.wait_for_timeout(3000)
+                    corpo = await page.evaluate("() => document.body.innerText.trim().slice(0, 300)")
+                    log.append("🧭 texto da página: " + corpo)
+                    raise RuntimeError("o portal não abriu após o login — veja as linhas 🧭 acima.")
+                await page.wait_for_timeout(2000)
             log.append("✅ Login realizado")
         except Exception as e:
             log.append(f"❌ ERRO no login: {e}")
