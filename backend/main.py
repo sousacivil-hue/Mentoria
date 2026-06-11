@@ -767,11 +767,17 @@ async def run_active(job_id: str, data: ActiveFormData):
 
             # Identifica o nome da turma (para o log e para o filtro)
             bloco_texto = await fr_check.locator("a:has-text('Diário de classe')").nth(idx).evaluate(
-                "el => { let q = el, melhor = ''; "
-                "for (let i = 0; i < 10 && q; i++) { "
-                "const t = q.innerText || ''; "
-                "if (t.length > melhor.length && t.length < 2000) melhor = t; "
-                "q = q.parentElement; } return melhor.slice(0, 500); }"
+                "el => {"
+                "  const tr = el.closest('tr');"  # linha de tabela = bloco da turma
+                "  if (tr && tr.innerText.trim().length > 10) return tr.innerText.slice(0, 500);"
+                "  let q = el.parentElement;"
+                "  for (let i = 0; i < 8 && q; i++) {"  # senão: menor ancestral com texto razoável
+                "    const t = (q.innerText || '').trim();"
+                "    if (t.length >= 15 && t.length <= 600) return t.slice(0, 500);"
+                "    q = q.parentElement;"
+                "  }"
+                "  return el.innerText || '';"
+                "}"
             )
             nome_turma = " ".join((bloco_texto or "").split())[:80] or f"Turma {idx + 1}"
 
