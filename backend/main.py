@@ -758,12 +758,12 @@ async def run_active(job_id: str, data: ActiveFormData):
                     "button:has-text('Gravar'), input[value*='Gravar' i]"
                 ).first
                 await gravar.click()
-                # espera a página estabilizar
+                # espera a página estabilizar após o reload do portal
                 try:
-                    await page.wait_for_load_state("networkidle", timeout=10000)
+                    await page.wait_for_load_state("networkidle", timeout=12000)
                 except Exception:
                     pass
-                await page.wait_for_timeout(1500)
+                await page.wait_for_timeout(5000)
 
                 preenchidas += 1
                 log.append(f"✏️ {data_br} — {aula['conteudo'][:50]}")
