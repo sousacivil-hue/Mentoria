@@ -1578,7 +1578,7 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                     await filtros.click()
                     await page.wait_for_timeout(800)
 
-            combo = page.locator("po-combo input, po-select select, po-lookup input").first
+            combo = page.locator("input[name='stepCode'], po-combo input, po-select select, po-lookup input").first
             await combo.wait_for(timeout=8000)
             await combo.click()
             await combo.fill(data.etapa)
