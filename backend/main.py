@@ -1443,9 +1443,15 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                 else:
                     await senha_input.press("Enter")
                 await page.wait_for_timeout(6000)
-                # após login, o Angular pode redirecionar — volta para a URL do plano
-                if data.url_plano not in page.url:
+                # após login, navega para o plano via hash routing (sem recarregar a página)
+                # extrai só o hash da URL do plano (ex: #/portal/class/lessonPlan/3/627185?...)
+                hash_plano = data.url_plano.split('#')[1] if '#' in data.url_plano else ''
+                if hash_plano:
+                    await page.evaluate(f"window.location.hash = '{hash_plano}'")
+                    await page.wait_for_timeout(8000)
+                else:
                     await page.goto(data.url_plano)
+                    await page.wait_for_timeout(8000)
             log.append("✅ Login realizado")
         except Exception as e:
             log.append(f"❌ ERRO no login: {e}")
