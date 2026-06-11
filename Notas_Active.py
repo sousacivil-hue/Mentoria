@@ -23,6 +23,10 @@ from playwright.async_api import async_playwright
 
 URL_LOGIN = "https://siga01.activesoft.com.br/login/?instituicao=COLEGIOVITA"
 
+# Login automático (deixe em branco "" para logar manualmente)
+LOGIN = "Luth5824"
+SENHA = "Luth1801@"
+
 MEDIA_MINIMA = 7.0   # média de AV1+AV2 para ganhar a nota alta
 NOTA_ALTA = "5,0"
 NOTA_BAIXA = "4,0"
@@ -71,6 +75,16 @@ async def lancar_notas():
         print("=" * 60)
 
         await page.goto(URL_LOGIN)
+        if LOGIN:
+            try:
+                await page.wait_for_timeout(2000)
+                await page.fill("input[name='login'], input[type='text']", LOGIN)
+                await page.fill("input[name='senha'], input[type='password']", SENHA)
+                await page.keyboard.press("Enter")
+                await page.wait_for_timeout(3000)
+                print("\n✅ Login feito automaticamente!")
+            except Exception as e:
+                print(f"\n⚠️ Login automático falhou ({e}) — faça o login manualmente.")
         input("\n>>> ENTER quando a lista de alunos estiver na tela: ")
         await page.wait_for_timeout(2000)
 
