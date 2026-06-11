@@ -1588,14 +1588,25 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
             await opcao.click()
             await page.wait_for_timeout(800)
 
-            # preenche o intervalo de datas
+            # preenche o intervalo de datas (Material date range picker)
             log.append(f"📅 Definindo o período {data.data_inicio} a {data.data_fim}...")
-            campo_data = page.locator("po-datepicker-range input, input[name*='date' i]").first
-            await campo_data.wait_for(timeout=8000)
-            await campo_data.click()
-            await page.keyboard.press("Control+a")
-            digitos = re.sub(r"\D", "", data.data_inicio) + re.sub(r"\D", "", data.data_fim)
-            await page.keyboard.type(digitos, delay=60)
+            inicio = page.locator("input.mat-start-date, mat-date-range-input input >> nth=0").first
+            fim = page.locator("input.mat-end-date, mat-date-range-input input >> nth=1").first
+            if await inicio.count() > 0:
+                await inicio.click()
+                await page.keyboard.press("Control+a")
+                await page.keyboard.type(data.data_inicio, delay=50)
+                await fim.click()
+                await page.keyboard.press("Control+a")
+                await page.keyboard.type(data.data_fim, delay=50)
+            else:
+                campo_data = page.locator("po-datepicker-range input, input[name*='date' i]").first
+                await campo_data.wait_for(timeout=8000)
+                await campo_data.click()
+                await page.keyboard.press("Control+a")
+                digitos = re.sub(r"\D", "", data.data_inicio) + re.sub(r"\D", "", data.data_fim)
+                await page.keyboard.type(digitos, delay=60)
+            await page.keyboard.press("Escape")
             await page.keyboard.press("Tab")
             await page.wait_for_timeout(600)
 
