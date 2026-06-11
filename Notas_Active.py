@@ -1,14 +1,17 @@
 """
-Lançamento automático de NOTAS - ActiveSoft (SIGA)
+Lançamento automático de NOTAS (AV3) - ActiveSoft (SIGA)
 Uso: dois cliques ou `python Notas_Active.py`
 
-Como funciona:
+Regra aplicada:
+- Média de AV1 e AV2 >= MEDIA_MINIMA  -> AV3 = NOTA_ALTA
+- Média abaixo                        -> AV3 = NOTA_BAIXA
+- Aluno cujo nome contém um dos EXCECOES -> AV3 = NOTA_EXCECAO
+
+Como usar:
 1. Abre o Chrome no site do colégio
-2. Você faz o login e navega até: Digitação de notas → escolhe a
-   turma/fase/unidade → clica em Consultar (a lista de alunos com o
-   campo NOTA deve estar visível na tela)
-3. Volta aqui no terminal e aperta ENTER
-4. Ele preenche a nota de todos os alunos (salvamento é automático)
+2. Você faz login e navega até: Digitação de notas → turma/fase →
+   Consultar (a lista de alunos com AV1, AV2 e AV3 deve estar na tela)
+3. Volta ao terminal e aperta ENTER
 """
 
 import asyncio
@@ -18,16 +21,37 @@ from playwright.async_api import async_playwright
 # CONFIGURAÇÕES
 # ─────────────────────────────────────────────────────────────
 
-# URL de login do colégio (ActiveSoft)
 URL_LOGIN = "https://siga.activesoft.com.br/login/"
 
-# Nota a lançar para TODOS os alunos (use ponto ou vírgula conforme o site)
-NOTA = "10"
+MEDIA_MINIMA = 7.0   # média de AV1+AV2 para ganhar a nota alta
+NOTA_ALTA = "5,0"
+NOTA_BAIXA = "4,0"
+NOTA_EXCECAO = "3,0"
 
-# Se True, pula alunos que já têm nota digitada (não sobrescreve)
+# Alunos (trecho do nome, sem acento, minúsculo) que recebem NOTA_EXCECAO
+EXCECOES = ["davi", "icaro", "vinicius oliveira", "murilo"]
+
+# Coluna a preencher: 3 = AV3 (1=AV1, 2=AV2)
+COLUNA_AV = 3
+
+# Se True, não mexe em quem já tem AV3 digitada
 PULAR_PREENCHIDAS = True
 
 # ─────────────────────────────────────────────────────────────
+
+
+def sem_acento(s: str) -> str:
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFD", s)
+                   if unicodedata.category(c) != "Mn").lower()
+
+
+def para_num(txt: str):
+    txt = (txt or "").strip().replace(",", ".")
+    try:
+        return float(txt)
+    except ValueError:
+        return None
 
 
 async def lancar_notas():
@@ -37,70 +61,95 @@ async def lancar_notas():
         page = await context.new_page()
 
         print("=" * 60)
-        print("LANÇAMENTO AUTOMÁTICO DE NOTAS - ACTIVESOFT")
+        print("LANÇAMENTO AUTOMÁTICO DE AV3 - ACTIVESOFT")
+        print(f"Regra: média >= {MEDIA_MINIMA} -> {NOTA_ALTA} | abaixo -> {NOTA_BAIXA}")
+        print(f"Exceções ({NOTA_EXCECAO}): {', '.join(EXCECOES)}")
         print("=" * 60)
-        print("1. Faça o LOGIN no navegador que abriu")
-        print("2. Vá em: Digitação de notas")
-        print("3. Selecione a turma, a fase/unidade e clique em CONSULTAR")
-        print("4. Quando a lista de alunos com o campo NOTA aparecer,")
-        print("   volte aqui e pressione ENTER")
+        print("1. Faça o LOGIN no navegador")
+        print("2. Vá em Digitação de notas → turma/fase → Consultar")
+        print("3. Com a lista de alunos na tela, aperte ENTER aqui")
         print("=" * 60)
 
         await page.goto(URL_LOGIN)
-        input("\n>>> Pressione ENTER quando a lista de alunos estiver na tela: ")
+        input("\n>>> ENTER quando a lista de alunos estiver na tela: ")
         await page.wait_for_timeout(2000)
 
-        # Procura os campos de nota na página e em todos os frames
+        # Acha o frame com a tabela de alunos (linhas com inputs editáveis)
         frame_notas = None
-        campos = None
         for frame in page.frames:
             try:
-                loc = frame.locator(
-                    "table input[type='text']:not([readonly]):not([disabled]), "
-                    "table input[type='number']:not([readonly]):not([disabled])"
-                )
-                if await loc.count() > 0:
+                if await frame.locator(
+                    "table tr:has(input[type='text']:not([readonly]):not([disabled]))"
+                ).count() > 0:
                     frame_notas = frame
-                    campos = loc
                     break
             except Exception:
                 continue
 
         if frame_notas is None:
-            print("\nERRO: nenhum campo de nota encontrado.")
-            print("Verifique se a lista de alunos está visível na tela.")
+            print("\nERRO: tabela de notas não encontrada. A lista está na tela?")
             input("ENTER para fechar...")
             await browser.close()
             return
 
-        total = await campos.count()
-        print(f"\nCampos de nota encontrados: {total}")
-        print(f"Lançando nota {NOTA} para todos...\n")
+        linhas = frame_notas.locator(
+            "table tr:has(input[type='text']:not([readonly]):not([disabled]))"
+        )
+        total = await linhas.count()
+        print(f"\nAlunos encontrados: {total}\n")
 
         preenchidos = 0
         pulados = 0
         for i in range(total):
-            campo = campos.nth(i)
+            linha = linhas.nth(i)
             try:
-                atual = (await campo.input_value()).strip()
+                texto = sem_acento(await linha.inner_text())
+                inputs = linha.locator(
+                    "input[type='text']:not([readonly]):not([disabled])"
+                )
+                n_inputs = await inputs.count()
+                if n_inputs < COLUNA_AV:
+                    continue  # linha sem a coluna AV3 (cabeçalho etc.)
+
+                campo_av3 = inputs.nth(COLUNA_AV - 1)
+                atual = (await campo_av3.input_value()).strip()
                 if PULAR_PREENCHIDAS and atual:
                     pulados += 1
                     continue
-                await campo.scroll_into_view_if_needed()
-                await campo.click()
-                await campo.fill(NOTA)
-                # Tab dispara o salvamento automático do ActiveSoft
-                await campo.press("Tab")
+
+                # Decide a nota
+                if any(exc in texto for exc in EXCECOES):
+                    nota = NOTA_EXCECAO
+                    motivo = "exceção"
+                else:
+                    av1 = para_num(await inputs.nth(0).input_value())
+                    av2 = para_num(await inputs.nth(1).input_value())
+                    if av1 is None or av2 is None:
+                        nota = NOTA_BAIXA
+                        motivo = "AV1/AV2 em branco -> nota baixa"
+                    else:
+                        media = (av1 + av2) / 2
+                        if media >= MEDIA_MINIMA:
+                            nota = NOTA_ALTA
+                        else:
+                            nota = NOTA_BAIXA
+                        motivo = f"média {media:.2f}".replace(".", ",")
+
+                await campo_av3.scroll_into_view_if_needed()
+                await campo_av3.click()
+                await campo_av3.fill(nota)
+                await campo_av3.press("Tab")  # dispara o salvamento automático
                 await page.wait_for_timeout(800)
                 preenchidos += 1
-                print(f"  [{i + 1}/{total}] nota {NOTA} lançada")
+                nome = " ".join(texto.split()[1:4]).title()
+                print(f"  [{i + 1}/{total}] {nome}: AV3 = {nota} ({motivo})")
             except Exception as e:
                 print(f"  [{i + 1}/{total}] ERRO: {e}")
 
         print("\n" + "=" * 60)
         print(f"✅ CONCLUÍDO! Notas lançadas: {preenchidos}")
         if pulados:
-            print(f"   Alunos já com nota (pulados): {pulados}")
+            print(f"   Já tinham AV3 (pulados): {pulados}")
         print("   Confira na tela antes de fechar.")
         print("=" * 60)
         input("\nENTER para fechar o navegador...")
