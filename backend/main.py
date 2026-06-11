@@ -1472,17 +1472,17 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
 
         log.append("📋 Abrindo o plano de aula...")
         try:
-            await page.wait_for_timeout(12000)
-            log.append(f"🧭 URL atual: {page.url}")
-            # aguarda a tabela Angular carregar (até 40s)
+            # espera o Angular montar a tabela (tenta a cada segundo por até 60s)
+            log.append("⏳ Aguardando tabela carregar...")
             total = 0
-            for _ in range(40):
+            for _ in range(60):
+                await page.wait_for_timeout(1000)
                 total = await page.evaluate(
                     "() => document.querySelectorAll('table tbody tr, po-table tbody tr').length"
                 )
                 if total > 0:
                     break
-                await page.wait_for_timeout(1000)
+            log.append(f"🧭 URL atual: {page.url}")
             if total == 0:
                 corpo = await page.evaluate("() => document.body.innerText.trim().slice(0, 300)")
                 log.append(f"🧭 Conteúdo da página: {corpo}")
