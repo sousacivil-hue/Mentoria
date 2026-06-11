@@ -176,23 +176,12 @@
       <div class="aviso">🔒 Sua senha é usada apenas durante esta automação e não fica armazenada.</div>
     </div>
 
-    <!-- 2: Turma e período -->
+    <!-- 2: Link do plano de aula -->
     <div class="card">
-      <h2><span class="step-badge">2</span> Turma e período</h2>
-      <label>Código da(s) turma(s)</label>
-      <input type="text" id="turma" placeholder="Ex: 2ª A  (ou GE09EM2A, 2B...)" style="text-transform:uppercase;">
-      <div class="dica">📋 Pode usar o formato simples (<strong>1A</strong>, <strong>2ª B</strong>) ou o código completo da coluna Cód. Turma. Para várias turmas com o mesmo conteúdo, separe por vírgula: <strong>1A, 1B</strong>.</div>
-      <div class="row" style="margin-top:14px;">
-        <div>
-          <label>Data inicial</label>
-          <input type="date" id="data-inicio">
-        </div>
-        <div>
-          <label>Data final</label>
-          <input type="date" id="data-fim">
-        </div>
-      </div>
-      <div class="dica">📅 São as aulas dentro desse intervalo que serão preenchidas.</div>
+      <h2><span class="step-badge">2</span> Link do plano de aula da turma</h2>
+      <label>Cole o link completo</label>
+      <input type="text" id="url-plano" placeholder="https://portalprdsalesianos.rm.cloudtotvs.com.br/...lessonPlan/...">
+      <div class="dica">📋 Como pegar: entre no portal, abra o Diário de Classe, clique nos <strong>...</strong> da turma → <strong>Plano de aula</strong> e copie o endereço da barra do navegador. Cada turma tem seu próprio link.</div>
       <div class="row" style="margin-top:14px;">
         <div>
           <label>Começar da aula nº</label>
@@ -428,24 +417,17 @@ function addLog(msg, tipo = '') {
 async function executar() {
   const usuario = document.getElementById('usuario').value.trim();
   const senha = document.getElementById('senha').value.trim();
-  const turma = document.getElementById('turma').value.trim().toUpperCase();
-  const dataInicio = document.getElementById('data-inicio').value;
-  const dataFim = document.getElementById('data-fim').value;
+  const urlPlano = document.getElementById('url-plano').value.trim();
   const topicos = document.getElementById('topicos').value
     .split('\n').map(s => s.trim()).filter(s => s);
 
   if (!usuario || !senha) { alert('Preencha usuário e senha.'); return; }
-  if (!turma) { alert('Informe o código da turma (ex.: GE09EM2A).'); return; }
-  if (!dataInicio || !dataFim) { alert('Informe as datas inicial e final.'); return; }
+  if (!urlPlano) { alert('Cole o link do plano de aula da turma.'); return; }
   if (topicos.length === 0) { alert('Cole seus tópicos de conteúdo.'); return; }
-
-  const br = (iso) => { const [a, m, d] = iso.split('-'); return `${d}/${m}/${a}`; };
 
   const duplas = document.getElementById('duplas').checked;
   const dados = {
-    turma,
-    data_inicio: br(dataInicio),
-    data_fim: br(dataFim),
+    url_plano: urlPlano,
     usuario, senha,
     aula_inicio: parseInt(document.getElementById('aula-inicio').value) || 1,
     duplas,
@@ -457,7 +439,7 @@ async function executar() {
   document.getElementById('tela-form').style.display = 'none';
   document.getElementById('tela-progresso').style.display = 'block';
   iniciarPiadas();
-  const numTurmas = turma.split(/[,;]+/).filter(t => t.trim()).length || 1;
+  const numTurmas = 1;
   cdIniciar((duplas ? topicos.length * 2 : topicos.length) * numTurmas);
 
   try {
@@ -549,7 +531,7 @@ function voltarAoFormulario() {
 }
 
 // ---- Persistência do formulário (a senha nunca é salva) ----
-const CAMPOS_SALVOS = ['usuario','turma','data-inicio','data-fim','aula-inicio','ia-disciplina','ia-serie','ia-assunto','topicos'];
+const CAMPOS_SALVOS = ['usuario','url-plano','aula-inicio','ia-disciplina','ia-serie','ia-assunto','topicos'];
 function salvarFormulario() {
   const d = {};
   CAMPOS_SALVOS.forEach(id => { const el = document.getElementById(id); if (el) d[id] = el.value; });

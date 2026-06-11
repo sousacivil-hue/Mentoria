@@ -1403,14 +1403,11 @@ async def run_sesi(job_id: str, data: SesiFormData):
 
 class SalesianoFormData(BaseModel):
     url_portal: str = "https://portalprdsalesianos.rm.cloudtotvs.com.br/FrameHTML/web/app/edu/PortalDoProfessor/#/login"
+    url_plano: str  # URL direta do plano de aula da turma
     usuario: str
     senha: str
-    turma: str  # código da turma, ex.: GE09EM2A
-    etapa: str = "Janeiro"  # a etapa é fixa; o que filtra as aulas é o intervalo de datas
-    data_inicio: str  # dd/mm/aaaa
-    data_fim: str  # dd/mm/aaaa
     aula_inicio: int = 1
-    duplas: bool = False  # cada tópico vale por 2 aulas (aulas geminadas)
+    duplas: bool = False
     topicos: list[str] = []
 
 
@@ -1421,13 +1418,108 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
     topicos = [t for t in data.topicos if t.strip()]
     log.append(f"📊 Tópicos a lançar: {len(topicos)}")
 
-    def topico_da_aula(n_preenchida: int) -> str | None:
-        idx = n_preenchida // 2 if data.duplas else n_preenchida
+    def topico_da_aula(n: int) -> str | None:
+        idx = n // 2 if data.duplas else n
         return topicos[idx] if idx < len(topicos) else None
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
         page = await browser.new_page(viewport={"width": 1400, "height": 900})
+
+        # ---- Login ----
+        log.append("🔐 Fazendo login no Portal do Professor...")
+        try:
+            await page.goto(data.url_portal)
+            await page.wait_for_timeout(3000)
+            senha_input = page.locator("input[type='password']").first
+            if await senha_input.count() > 0 and await senha_input.is_visible():
+                user_input = page.locator("input[type='text'], input[name='login']").first
+                await user_input.click()
+                await user_input.type(data.usuario, delay=80)
+                await senha_input.click()
+                await senha_input.type(data.senha, delay=80)
+                await page.wait_for_timeout(500)
+                botao = page.locator("button:has-text('Entrar'), button[type='submit']").first
+                if await botao.count() > 0:
+                    await botao.click()
+                else:
+                    await senha_input.press("Enter")
+                await page.wait_for_timeout(5000)
+            log.append("✅ Login realizado")
+        except Exception as e:
+            log.append(f"❌ ERRO no login: {e}")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        # ---- Vai direto para a URL do plano de aula ----
+        log.append("📋 Abrindo o plano de aula...")
+        try:
+            await page.goto(data.url_plano)
+            await page.wait_for_timeout(4000)
+            # aguarda a tabela Angular carregar
+            for _ in range(20):
+                total = await page.evaluate(
+                    "() => document.querySelectorAll('table tbody tr, po-table tbody tr').length"
+                )
+                if total > 0:
+                    break
+                await page.wait_for_timeout(1000)
+            else:
+                raise RuntimeError("a tabela de aulas não carregou — confira o link do plano de aula.")
+            log.append(f"📚 {total} aulas encontradas")
+        except Exception as e:
+            log.append(f"❌ ERRO ao abrir o plano de aula: {e}")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        # ---- Preenche cada aula vazia ----
+        preenchidas = 0
+        for i in range(total):
+            numero_aula = i + 1
+            if numero_aula < data.aula_inicio:
+                continue
+            conteudo = topico_da_aula(preenchidas)
+            if conteudo is None:
+                log.append("✅ Todos os tópicos foram usados")
+                break
+            try:
+                btn = page.locator("table tbody tr").nth(i).locator("text=Editar")
+                if await btn.count() == 0:
+                    log.append(f"⏭️ Aula {numero_aula} sem botão Editar — pulando")
+                    continue
+                await btn.scroll_into_view_if_needed()
+                await btn.click()
+                await page.wait_for_timeout(1200)
+
+                alvo = page.locator("po-modal textarea, [role='dialog'] textarea, dialog textarea").first
+                await alvo.wait_for(timeout=8000)
+                await alvo.click()
+                await alvo.fill(conteudo)
+                await alvo.dispatch_event("input")
+                await alvo.dispatch_event("change")
+                await page.wait_for_timeout(400)
+
+                salvar = page.locator(
+                    "po-modal button:has-text('Salvar'), [role='dialog'] button:has-text('Salvar')"
+                ).first
+                await salvar.wait_for(timeout=5000)
+                await salvar.click()
+                await page.wait_for_timeout(1500)
+
+                preenchidas += 1
+                log.append(f"✏️ Aula {numero_aula} — {conteudo[:50]}")
+            except Exception as e:
+                log.append(f"⚠️ Erro na aula {numero_aula}: {e}")
+                break
+
+        log.append(f"📊 {preenchidas} aulas gravadas")
+        log.append("🏁 Automação Salesiano finalizada!")
+        log.append("__CONCLUIDO__")
+        await browser.close()
 
         log.append("🔐 Fazendo login no Portal do Professor (Totvs RM)...")
         try:
