@@ -180,8 +180,8 @@
     <div class="card">
       <h2><span class="step-badge">2</span> Turma e período</h2>
       <label>Código da(s) turma(s)</label>
-      <input type="text" id="turma" placeholder="Ex: GE09EM2A, GE09EM2B" style="text-transform:uppercase;">
-      <div class="dica">📋 O código aparece na coluna <strong>Cód. Turma</strong> do Diário de Classe do portal. Para preencher o mesmo conteúdo em várias turmas, separe os códigos por vírgula.</div>
+      <input type="text" id="turma" placeholder="Ex: 2ª A  (ou GE09EM2A, 2B...)" style="text-transform:uppercase;">
+      <div class="dica">📋 Pode usar o formato simples (<strong>1A</strong>, <strong>2ª B</strong>) ou o código completo da coluna Cód. Turma. Para várias turmas com o mesmo conteúdo, separe por vírgula: <strong>1A, 1B</strong>.</div>
       <div class="row" style="margin-top:14px;">
         <div>
           <label>Data inicial</label>
@@ -455,7 +455,7 @@ async function executar() {
   document.getElementById('tela-form').style.display = 'none';
   document.getElementById('tela-progresso').style.display = 'block';
   iniciarPiadas();
-  const numTurmas = turma.split(/[,;\s]+/).filter(t => t).length || 1;
+  const numTurmas = turma.split(/[,;]+/).filter(t => t.trim()).length || 1;
   cdIniciar((duplas ? topicos.length * 2 : topicos.length) * numTurmas);
 
   try {

@@ -1468,20 +1468,47 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
 
         async def abrir_plano_da_turma(turma: str):
             log.append(f"🔎 Procurando a turma {turma}...")
+
+            # Aceita "GE09EM1A", "1A", "1º A", "1ª A", "primeiro a"...
+            t = turma.upper().strip()
+            ordinais = {"PRIMEIRO": "1", "SEGUNDO": "2", "TERCEIRO": "3",
+                        "PRIMEIRA": "1", "SEGUNDA": "2", "TERCEIRA": "3"}
+            for nome, num in ordinais.items():
+                t = t.replace(nome, num)
+            m = re.match(r"^(\d)\s*[ºª°]?\s*(?:ANO|SERIE|SÉRIE)?\s*([A-Z])$", t)
+            serie_num, letra = (m.group(1), m.group(2)) if m else (None, None)
+
+            async def achar_linha():
+                # 1) busca pelo código exato
+                linha = page.locator("table tbody tr", has_text=turma).first
+                if await linha.count() > 0:
+                    return linha
+                # 2) busca por série + letra final do código (ex.: "2ª SÉRIE" + código terminando em A)
+                if serie_num:
+                    todas = page.locator("table tbody tr")
+                    for j in range(await todas.count()):
+                        cand = todas.nth(j)
+                        texto = (await cand.inner_text()).upper()
+                        if f"{serie_num}ª SÉRIE" in texto or f"{serie_num}º ANO" in texto:
+                            cod = re.search(r"\b[A-Z]{2}\d{2}[A-Z]+\d[A-Z]\b", texto)
+                            if cod and cod.group(0).endswith(letra):
+                                return cand
+                return None
+
             linha_turma = None
             for tentativa in range(10):
-                linha_turma = page.locator("table tbody tr", has_text=turma).first
-                if await linha_turma.count() > 0:
+                linha_turma = await achar_linha()
+                if linha_turma is not None:
                     break
                 # tenta carregar mais resultados, se existir
                 mais = page.locator("text=Carregar mais resultados").first
                 if await mais.count() > 0 and await mais.is_visible():
                     await mais.click()
                 await page.wait_for_timeout(1500)
-            if linha_turma is None or await linha_turma.count() == 0:
+            if linha_turma is None:
                 raise RuntimeError(
                     f"Turma {turma} não encontrada no Diário de Classe. "
-                    "Confira o código (ex.: GE09EM2A) na coluna 'Cód. Turma' do portal."
+                    "Use o código da coluna 'Cód. Turma' (ex.: GE09EM2A) ou o formato '2A' / '2ª A'."
                 )
 
             # clica nos "..." da linha
@@ -1611,7 +1638,7 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
             return preenchidas
 
         # ---- Processa cada turma informada (mesmos tópicos para todas) ----
-        turmas = [t.strip().upper() for t in re.split(r"[,;\s]+", data.turma) if t.strip()]
+        turmas = [t.strip().upper() for t in re.split(r"[,;]+", data.turma) if t.strip()]
         total_geral = 0
         turmas_ok = 0
         for turma in turmas:
