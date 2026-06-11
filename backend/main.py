@@ -728,10 +728,11 @@ async def run_active(job_id: str, data: ActiveFormData):
                     "if (t.length > melhor.length && t.length < 2000) melhor = t; "
                     "q = q.parentElement; } return melhor.slice(0, 500); }"
                 )
-                # Normaliza: minúsculas, sem º/°/ª, sem espaços
+                # Normaliza: minúsculas, sem º/°/ª, sem espaços, sem acentos
                 def norm(s):
-                    return (s.lower().replace("º", "").replace("°", "").replace("ª", "")
-                            .replace(" ", "").replace("/", ""))
+                    import unicodedata
+                    s = s.lower().replace("º", "").replace("°", "").replace("ª", "").replace(" ", "").replace("/", "")
+                    return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode("ascii")
                 if norm(data.turma) not in norm(bloco_texto or ""):
                     log.append(f"⏭️ Turma {idx + 1} não é '{data.turma}' — pulando")
                     continue
