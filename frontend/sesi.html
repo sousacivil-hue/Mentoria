@@ -194,9 +194,40 @@
       <div class="dica">Esse texto entra no campo "Lição de Casa" de todas as aulas. Deixe vazio para não preencher.</div>
     </div>
 
+    <!-- 2b: Horários das aulas -->
+    <div class="card">
+      <h2><span class="step-badge">3</span> Em quais aulas do dia você dá aula nessa turma?</h2>
+      <div class="dica" style="margin-bottom:12px;">O portal exige escolher o horário de cada aula. Informe o número da aula no dia (1ª a 6ª). Se tiver mais de uma no mesmo dia, separe por vírgula (ex: 2,3).</div>
+      <div class="row">
+        <div>
+          <label>Segunda</label>
+          <input type="text" id="hor-1" placeholder="Ex: 2,3">
+        </div>
+        <div>
+          <label>Terça</label>
+          <input type="text" id="hor-2" placeholder="">
+        </div>
+        <div>
+          <label>Quarta</label>
+          <input type="text" id="hor-3" placeholder="">
+        </div>
+      </div>
+      <div class="row" style="margin-top:12px;">
+        <div>
+          <label>Quinta</label>
+          <input type="text" id="hor-4" placeholder="">
+        </div>
+        <div>
+          <label>Sexta</label>
+          <input type="text" id="hor-5" placeholder="">
+        </div>
+        <div></div>
+      </div>
+    </div>
+
     <!-- 3: Conteúdos -->
     <div class="card">
-      <h2><span class="step-badge">3</span> Tópicos do conteúdo</h2>
+      <h2><span class="step-badge">4</span> Tópicos do conteúdo</h2>
       <div class="row">
         <div>
           <label>Disciplina</label>
@@ -424,10 +455,20 @@ async function executar() {
   if (!turma) { alert('Informe a turma (no SESI é obrigatório).'); return; }
   if (topicos.length === 0) { alert('Cole seus tópicos de conteúdo.'); return; }
 
+  // horários por dia da semana: {1: [2,3], 3: [1], ...}
+  const horarios = {};
+  for (let d = 1; d <= 5; d++) {
+    const val = document.getElementById(`hor-${d}`).value.trim();
+    if (val) {
+      horarios[d] = val.split(',').map(s => parseInt(s.trim())).filter(n => n >= 1 && n <= 6);
+    }
+  }
+
   const dados = {
     usuario, senha, turma,
     bimestre: document.getElementById('bimestre').value,
     licao_casa: document.getElementById('licao-casa').value.trim(),
+    horarios,
     topicos
   };
 

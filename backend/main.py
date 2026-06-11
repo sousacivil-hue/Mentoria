@@ -999,6 +999,8 @@ class SesiFormData(BaseModel):
     turma: str = ""
     bimestre: str = "1"
     licao_casa: str = ""
+    # horários por dia da semana: {"1": [2,3]} = segunda, 2ª e 3ª aulas
+    horarios: dict[str, list[int]] = {}
     topicos: list[str] = []
 
 
@@ -1224,6 +1226,22 @@ async def run_sesi(job_id: str, data: SesiFormData):
             await page.wait_for_timeout(1500)
 
         # ---- 7. Preenche as aulas vazias ----
+        from datetime import datetime as _dt
+
+        def periodo_da_aula(data_br: str, ja_usadas_na_data: int):
+            """Retorna o nº da aula (1-6) que o professor dá nesse dia da semana.
+            Se ele tem 2 aulas no dia, a 1ª linha vazia usa a primeira, a 2ª usa a segunda."""
+            try:
+                dt = _dt.strptime(data_br.strip()[:10], "%d/%m/%Y")
+            except ValueError:
+                return None
+            dia_semana = str(dt.isoweekday())  # 1=segunda ... 5=sexta
+            lista = data.horarios.get(dia_semana) or []
+            if not lista:
+                return None
+            return lista[min(ja_usadas_na_data, len(lista) - 1)]
+
+        usos_por_data: dict[str, int] = {}
         preenchidas = 0
         idx_topico = 0
         while idx_topico < len(topicos):
@@ -1306,38 +1324,61 @@ async def run_sesi(job_id: str, data: SesiFormData):
                 idx_conteudo = 2 if qtd_areas >= 4 else max(qtd_areas - 2, 0)
                 await areas.nth(idx_conteudo).fill(topicos[idx_topico])
 
-                # Seleciona o horário da aula (o popup não vem preenchido):
-                # usa o horário de início que está na própria linha da tabela
+                # Seleciona o horário da aula:
+                # 1º tenta o horário que o professor informou para esse dia da semana;
+                # 2º (fallback) usa o horário de início da própria linha, se existir
+                data_linha = (alvo_info.get("data") or "").strip()
+                periodo = periodo_da_aula(data_linha, usos_por_data.get(data_linha, 0))
                 hora_ini = (alvo_info.get("inicio") or "").strip()
-                if hora_ini:
-                    horario_ok = False
-                    try:
-                        sels = fr_pop.locator("select")
-                        for i_s in range(await sels.count()):
-                            s = sels.nth(i_s)
-                            opcoes = await s.evaluate("el => Array.from(el.options).map(o => o.text)")
+                horario_ok = False
+                try:
+                    sels = fr_pop.locator("select")
+                    for i_s in range(await sels.count()):
+                        s = sels.nth(i_s)
+                        opcoes = await s.evaluate("el => Array.from(el.options).map(o => o.text)")
+                        if not opcoes or len(opcoes) < 2:
+                            continue
+                        alvo_op = None
+                        if periodo is not None:
+                            # opções no formato "VESPERTINO - 2 - 13:50/14:40"
+                            alvo_op = next(
+                                (o for o in opcoes if f"- {periodo} -" in (o or "") or f"-{periodo}-" in (o or "").replace(" ", "")),
+                                None,
+                            )
+                        if alvo_op is None and hora_ini:
                             alvo_op = next((o for o in opcoes if hora_ini in (o or "")), None)
-                            if alvo_op:
-                                await s.select_option(label=alvo_op)
+                        if alvo_op:
+                            await s.select_option(label=alvo_op)
+                            horario_ok = True
+                            break
+                except Exception:
+                    pass
+                if not horario_ok and (periodo is not None or hora_ini):
+                    # Combo em grade da Totvs: abre e clica na linha correspondente
+                    try:
+                        _, combo_h = await achar("input[id*='Horario' i], [id*='horario' i]", tentativas=2)
+                        if combo_h:
+                            await combo_h.click()
+                            await page.wait_for_timeout(600)
+                            linha_h = None
+                            if hora_ini:
+                                _, linha_h = await achar(f"tr:has-text('{hora_ini}')", tentativas=2)
+                            if linha_h is None and periodo is not None:
+                                # coluna "Dia"/posição: clica na linha cujo nº da aula bate
+                                fr_g, grade = await achar("tr:has(td)", tentativas=2)
+                                if fr_g:
+                                    linhas_g = fr_g.locator("tr:has(td)")
+                                    if await linhas_g.count() >= periodo:
+                                        linha_h = linhas_g.nth(periodo - 1)
+                            if linha_h:
+                                await linha_h.click()
                                 horario_ok = True
-                                break
                     except Exception:
                         pass
-                    if not horario_ok:
-                        # Combo em grade da Totvs: abre e clica na linha com o horário
-                        try:
-                            _, combo_h = await achar("input[id*='Horario' i], [id*='horario' i]", tentativas=2)
-                            if combo_h:
-                                await combo_h.click()
-                                await page.wait_for_timeout(600)
-                                _, linha_h = await achar(f"tr:has-text('{hora_ini}')", tentativas=3)
-                                if linha_h:
-                                    await linha_h.click()
-                                    horario_ok = True
-                        except Exception:
-                            pass
-                    if not horario_ok:
-                        log.append(f"⚠️ Horário {hora_ini} não selecionado automaticamente")
+                if not horario_ok:
+                    log.append("⚠️ Horário não selecionado automaticamente — confira essa aula depois")
+                if data_linha:
+                    usos_por_data[data_linha] = usos_por_data.get(data_linha, 0) + 1
                 if data.licao_casa and qtd_areas > idx_conteudo + 1:
                     await areas.nth(idx_conteudo + 1).fill(data.licao_casa)
                 _, salvar = await achar("input[value='Salvar'], button:has-text('Salvar')", tentativas=5)
