@@ -864,8 +864,21 @@ function ativarModoMando() {
   });
   const sub = document.querySelector('#tela-progresso .subtitulo');
   if (sub) sub.innerHTML = 'Missão aceita. O caçador está digitando. <em>This is the way.</em> 🪐';
+  // Troca o 🤖 pelo capacete do Din Djarin (visor em T)
   const robo = document.querySelector('#tela-progresso .robo');
-  if (robo) robo.textContent = '🫡';
+  if (robo) robo.innerHTML =
+    '<svg width="38" height="38" viewBox="0 0 64 64" style="display:block;">' +
+    // calota do capacete
+    '<path d="M32 4 C16 4 10 16 10 28 L10 44 C10 50 14 56 20 58 L44 58 C50 56 54 50 54 44 L54 28 C54 16 48 4 32 4 Z" fill="#9aa5b1"/>' +
+    // sombra lateral
+    '<path d="M32 4 C16 4 10 16 10 28 L10 44 C10 50 14 56 20 58 L24 58 C18 52 16 44 16 36 L16 24 C16 14 22 6 32 4 Z" fill="#7d8894"/>' +
+    // faixa do visor
+    '<rect x="13" y="24" width="38" height="14" rx="4" fill="#3d4654"/>' +
+    // visor em T
+    '<path d="M20 26 L44 26 C46 26 47 27 47 29 L47 33 C47 35 46 36 44 36 L36 36 L36 50 C36 52 35 53 33 53 L31 53 C29 53 28 52 28 50 L28 36 L20 36 C18 36 17 35 17 33 L17 29 C17 27 18 26 20 26 Z" fill="#0d1117"/>' +
+    // brilho do visor
+    '<path d="M21 28 L42 28 C43 28 44 28.5 44 30 L44 31 L21 31 Z" fill="#2b6cb0" opacity="0.55"/>' +
+    '</svg>';
   // Mistura as frases do Mando na rotação (com prioridade)
   frasesAtivas = [...FRASES_MANDO, ...FRASES_MANDO, ...FRASES_ESPERA];
 }
