@@ -452,6 +452,8 @@ async function executar() {
     topicos
   };
 
+  salvarFormulario();
+
   document.getElementById('tela-form').style.display = 'none';
   document.getElementById('tela-progresso').style.display = 'block';
   iniciarPiadas();
@@ -527,7 +529,41 @@ function mostrarFalha() {
   document.querySelector('#tela-progresso .titulo').textContent = '❌ A automação falhou';
   document.querySelector('#tela-progresso .subtitulo').textContent = 'Veja os erros no relatório abaixo e tente novamente';
   addLog('Automação encerrada com falha.', 'erro');
+  if (!document.getElementById('btn-voltar-falha')) {
+    const b = document.createElement('button');
+    b.id = 'btn-voltar-falha';
+    b.className = 'btn-executar';
+    b.style.marginTop = '18px';
+    b.textContent = '← Voltar (seus dados continuam preenchidos)';
+    b.onclick = voltarAoFormulario;
+    document.getElementById('tela-progresso').appendChild(b);
+  }
 }
+
+function voltarAoFormulario() {
+  const b = document.getElementById('btn-voltar-falha');
+  if (b) b.remove();
+  document.getElementById('tela-progresso').style.display = 'none';
+  document.getElementById('tela-form').style.display = 'block';
+  document.getElementById('log-box').innerHTML = '';
+}
+
+// ---- Persistência do formulário (a senha nunca é salva) ----
+const CAMPOS_SALVOS = ['usuario','turma','data-inicio','data-fim','aula-inicio','ia-disciplina','ia-serie','ia-assunto','topicos'];
+function salvarFormulario() {
+  const d = {};
+  CAMPOS_SALVOS.forEach(id => { const el = document.getElementById(id); if (el) d[id] = el.value; });
+  d['duplas'] = document.getElementById('duplas').checked;
+  localStorage.setItem('salesiano_form', JSON.stringify(d));
+}
+function restaurarFormulario() {
+  try {
+    const d = JSON.parse(localStorage.getItem('salesiano_form') || '{}');
+    CAMPOS_SALVOS.forEach(id => { const el = document.getElementById(id); if (el && d[id]) el.value = d[id]; });
+    if (d['duplas']) document.getElementById('duplas').checked = true;
+  } catch (e) {}
+}
+document.addEventListener('DOMContentLoaded', restaurarFormulario);
 
 function mostrarSucesso() {
   pararPiadas();
