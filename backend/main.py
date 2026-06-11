@@ -1452,8 +1452,7 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
             await browser.close()
             return
 
-        # ---- Menu lateral: Diário de classe ----
-        try:
+        async def abrir_diario():
             log.append("📒 Abrindo o Diário de Classe...")
             menu = page.locator(
                 "a:has-text('Diário de classe'), [aria-label*='Diário' i], "
@@ -1466,16 +1465,8 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                 # fallback: segundo item do menu lateral
                 await page.locator("po-menu .po-menu-item, po-menu a").nth(1).click()
             await page.wait_for_timeout(3000)
-        except Exception as e:
-            log.append(f"❌ ERRO ao abrir o Diário de Classe: {e}")
-            log.append("__ERRO__")
-            log.append("__CONCLUIDO__")
-            await browser.close()
-            return
 
-        # ---- Localiza a linha da turma e abre o Plano de aula ----
-        turma = data.turma.strip().upper()
-        try:
+        async def abrir_plano_da_turma(turma: str):
             log.append(f"🔎 Procurando a turma {turma}...")
             linha_turma = None
             for tentativa in range(10):
@@ -1488,12 +1479,10 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                     await mais.click()
                 await page.wait_for_timeout(1500)
             if linha_turma is None or await linha_turma.count() == 0:
-                log.append(f"❌ Turma {turma} não encontrada no Diário de Classe.")
-                log.append("💡 Confira o código da turma (ex.: GE09EM2A) — ele aparece na coluna 'Cód. Turma' do portal.")
-                log.append("__ERRO__")
-                log.append("__CONCLUIDO__")
-                await browser.close()
-                return
+                raise RuntimeError(
+                    f"Turma {turma} não encontrada no Diário de Classe. "
+                    "Confira o código (ex.: GE09EM2A) na coluna 'Cód. Turma' do portal."
+                )
 
             # clica nos "..." da linha
             mais_acoes = linha_turma.locator(
@@ -1508,15 +1497,8 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
             await plano.click()
             await page.wait_for_timeout(3000)
             log.append("✅ Plano de aula aberto")
-        except Exception as e:
-            log.append(f"❌ ERRO ao abrir o plano de aula da turma: {e}")
-            log.append("__ERRO__")
-            log.append("__CONCLUIDO__")
-            await browser.close()
-            return
 
-        # ---- Seleciona a Etapa e pesquisa ----
-        try:
+        async def filtrar_e_pesquisar():
             log.append(f"🗓️ Selecionando a etapa '{data.etapa}'...")
             # abre os filtros se estiverem recolhidos
             filtros = page.locator("text=Filtros").first
@@ -1549,97 +1531,106 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
 
             await page.locator("button:has-text('Pesquisar'), po-button:has-text('Pesquisar')").first.click()
             await page.wait_for_timeout(3000)
-        except Exception as e:
-            log.append(f"❌ ERRO ao selecionar a etapa: {e}")
-            log.append("💡 Confira se o nome da etapa está igual ao que aparece no portal (ex.: Janeiro).")
-            log.append("__ERRO__")
-            log.append("__CONCLUIDO__")
-            await browser.close()
-            return
 
-        # ---- Aguarda a tabela de aulas carregar ----
-        total_linhas = 0
-        for _ in range(20):
-            total_linhas = await page.evaluate(
-                "() => document.querySelectorAll('table tbody tr, po-table tbody tr').length"
+        async def preencher_aulas() -> int:
+            total_linhas = 0
+            for _ in range(20):
+                total_linhas = await page.evaluate(
+                    "() => document.querySelectorAll('table tbody tr, po-table tbody tr').length"
+                )
+                if total_linhas > 0:
+                    break
+                await page.wait_for_timeout(1000)
+
+            if total_linhas == 0:
+                raise RuntimeError("a tabela de aulas não carregou.")
+
+            log.append(f"📚 Aulas encontradas na tabela: {total_linhas}")
+
+            # Mapeia quais linhas já têm conteúdo realizado (linha vazia tem só o link 'Editar')
+            info_linhas = await page.evaluate(
+                """() => Array.from(document.querySelectorAll('table tbody tr')).map(tr => ({
+                    links: tr.querySelectorAll('a').length,
+                    texto: tr.innerText.trim().slice(0, 60)
+                }))"""
             )
-            if total_linhas > 0:
-                break
-            await page.wait_for_timeout(1000)
 
-        if total_linhas == 0:
-            log.append("❌ ERRO: a tabela de aulas não carregou.")
-            log.append("__ERRO__")
-            log.append("__CONCLUIDO__")
-            await browser.close()
-            return
-
-        log.append(f"📚 Aulas encontradas na tabela: {total_linhas}")
-
-        # Mapeia quais linhas já têm conteúdo realizado (linha vazia tem só o link 'Editar')
-        info_linhas = await page.evaluate(
-            """() => Array.from(document.querySelectorAll('table tbody tr')).map(tr => ({
-                links: tr.querySelectorAll('a').length,
-                texto: tr.innerText.trim().slice(0, 60)
-            }))"""
-        )
-
-        preenchidas = 0
-        for i in range(total_linhas):
-            numero_aula = i + 1
-            if numero_aula < data.aula_inicio:
-                continue
-            if info_linhas[i]["links"] >= 2:
-                log.append(f"⏭️ Aula {numero_aula} já tem conteúdo — pulando")
-                continue
-            conteudo = topico_da_aula(preenchidas)
-            if conteudo is None:
-                log.append("✅ Todos os tópicos foram usados")
-                break
-            try:
-                btn = page.locator("table tbody tr").nth(i).locator("text=Editar")
-                await btn.wait_for(timeout=10000)
-                await btn.scroll_into_view_if_needed()
-                await btn.click()
-                await page.wait_for_timeout(1200)
-
-                textarea = page.locator(
-                    "label:has-text('Conteúdo realizado') + textarea, "
-                    "label:has-text('Conteudo realizado') + textarea, "
-                    "label:has-text('Conteúdo') ~ textarea"
-                ).first
-                fallback = page.locator(
-                    "po-modal textarea, dialog textarea, [role='dialog'] textarea"
-                ).first
+            preenchidas = 0
+            for i in range(total_linhas):
+                numero_aula = i + 1
+                if numero_aula < data.aula_inicio:
+                    continue
+                if info_linhas[i]["links"] >= 2:
+                    log.append(f"⏭️ Aula {numero_aula} já tem conteúdo — pulando")
+                    continue
+                conteudo = topico_da_aula(preenchidas)
+                if conteudo is None:
+                    log.append("✅ Todos os tópicos foram usados")
+                    break
                 try:
-                    await textarea.wait_for(timeout=5000)
-                    alvo = textarea
-                except Exception:
-                    await fallback.wait_for(timeout=5000)
-                    alvo = fallback
+                    btn = page.locator("table tbody tr").nth(i).locator("text=Editar")
+                    await btn.wait_for(timeout=10000)
+                    await btn.scroll_into_view_if_needed()
+                    await btn.click()
+                    await page.wait_for_timeout(1200)
 
-                await alvo.click()
-                await alvo.fill(conteudo)
-                await alvo.dispatch_event("input")
-                await alvo.dispatch_event("change")
-                await page.wait_for_timeout(400)
+                    textarea = page.locator(
+                        "label:has-text('Conteúdo realizado') + textarea, "
+                        "label:has-text('Conteudo realizado') + textarea, "
+                        "label:has-text('Conteúdo') ~ textarea"
+                    ).first
+                    fallback = page.locator(
+                        "po-modal textarea, dialog textarea, [role='dialog'] textarea"
+                    ).first
+                    try:
+                        await textarea.wait_for(timeout=5000)
+                        alvo = textarea
+                    except Exception:
+                        await fallback.wait_for(timeout=5000)
+                        alvo = fallback
 
-                salvar = page.locator(
-                    "po-modal button:has-text('Salvar'), dialog button:has-text('Salvar'), "
-                    "[role='dialog'] button:has-text('Salvar')"
-                ).first
-                await salvar.wait_for(timeout=5000)
-                await salvar.click()
-                await page.wait_for_timeout(1500)
+                    await alvo.click()
+                    await alvo.fill(conteudo)
+                    await alvo.dispatch_event("input")
+                    await alvo.dispatch_event("change")
+                    await page.wait_for_timeout(400)
 
-                preenchidas += 1
-                log.append(f"✏️ Aula {numero_aula} — {conteudo[:50]}")
+                    salvar = page.locator(
+                        "po-modal button:has-text('Salvar'), dialog button:has-text('Salvar'), "
+                        "[role='dialog'] button:has-text('Salvar')"
+                    ).first
+                    await salvar.wait_for(timeout=5000)
+                    await salvar.click()
+                    await page.wait_for_timeout(1500)
+
+                    preenchidas += 1
+                    log.append(f"✏️ Aula {numero_aula} — {conteudo[:50]}")
+                except Exception as e:
+                    log.append(f"⚠️ Erro na aula {numero_aula}: {e}")
+                    break
+            return preenchidas
+
+        # ---- Processa cada turma informada (mesmos tópicos para todas) ----
+        turmas = [t.strip().upper() for t in re.split(r"[,;\s]+", data.turma) if t.strip()]
+        total_geral = 0
+        turmas_ok = 0
+        for turma in turmas:
+            log.append(f"━━━ Turma {turma} ━━━")
+            try:
+                await abrir_diario()
+                await abrir_plano_da_turma(turma)
+                await filtrar_e_pesquisar()
+                gravadas = await preencher_aulas()
+                total_geral += gravadas
+                turmas_ok += 1
+                log.append(f"📊 Turma {turma}: {gravadas} aulas gravadas")
             except Exception as e:
-                log.append(f"⚠️ Erro na aula {numero_aula}: {e}")
-                break
+                log.append(f"❌ ERRO na turma {turma}: {e}")
 
-        log.append(f"📊 {preenchidas} aulas gravadas")
+        log.append(f"📊 Total: {total_geral} aulas gravadas em {turmas_ok} de {len(turmas)} turma(s)")
         log.append("🏁 Automação Salesiano finalizada!")
+        if turmas_ok == 0:
+            log.append("__ERRO__")
         log.append("__CONCLUIDO__")
         await browser.close()
 

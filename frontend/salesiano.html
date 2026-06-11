@@ -179,9 +179,9 @@
     <!-- 2: Turma e período -->
     <div class="card">
       <h2><span class="step-badge">2</span> Turma e período</h2>
-      <label>Código da turma</label>
-      <input type="text" id="turma" placeholder="Ex: GE09EM2A" style="text-transform:uppercase;">
-      <div class="dica">📋 O código da turma aparece na coluna <strong>Cód. Turma</strong> do Diário de Classe do portal (a letra no final diferencia o A do B).</div>
+      <label>Código da(s) turma(s)</label>
+      <input type="text" id="turma" placeholder="Ex: GE09EM2A, GE09EM2B" style="text-transform:uppercase;">
+      <div class="dica">📋 O código aparece na coluna <strong>Cód. Turma</strong> do Diário de Classe do portal. Para preencher o mesmo conteúdo em várias turmas, separe os códigos por vírgula.</div>
       <div class="row" style="margin-top:14px;">
         <div>
           <label>Data inicial</label>
@@ -455,7 +455,8 @@ async function executar() {
   document.getElementById('tela-form').style.display = 'none';
   document.getElementById('tela-progresso').style.display = 'block';
   iniciarPiadas();
-  cdIniciar(duplas ? topicos.length * 2 : topicos.length);
+  const numTurmas = turma.split(/[,;\s]+/).filter(t => t).length || 1;
+  cdIniciar((duplas ? topicos.length * 2 : topicos.length) * numTurmas);
 
   try {
     const resp = await fetch(`${BACKEND_URL}/executar-salesiano`, {
