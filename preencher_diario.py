@@ -155,7 +155,6 @@ async def _preencher_aula(page, numero_aula: int, conteudo: str):
 
     # ── PASSO 4: Limpa e preenche ──
     await alvo.click()
-    await alvo.select_all()
     await alvo.fill(conteudo)
 
     # Dispara evento input/change para o Angular detectar a mudança
