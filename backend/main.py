@@ -534,11 +534,11 @@ async def run_active(job_id: str, data: ActiveFormData):
                 "button[type='submit'], input[type='submit'], button:has-text('Entrar'), button:has-text('Acessar')"
             ).first.click()
 
-            # Aguarda sair da página de login (até 15s)
-            for _ in range(10):
-                await page.wait_for_timeout(1500)
-                if "/login" not in page.url:
-                    break
+            # Aguarda sair da página de login (até 15s) — reage imediatamente quando a URL muda
+            try:
+                await page.wait_for_url(lambda url: "/login" not in url, timeout=15000)
+            except Exception:
+                pass  # timeout — verificamos a URL logo abaixo
 
             if "/login" in page.url:
                 # Login não avançou — captura a mensagem de erro do site
@@ -588,7 +588,7 @@ async def run_active(job_id: str, data: ActiveFormData):
         )
         if exibir:
             await exibir.click()
-            await page.wait_for_timeout(1500)
+            await page.wait_for_timeout(800)
             log.append("✅ Período exibido")
         else:
             log.append("❌ ERRO: botão EXIBIR não apareceu (página demorou demais para carregar).")
@@ -615,7 +615,7 @@ async def run_active(job_id: str, data: ActiveFormData):
             fr, _ = await achar("a:has-text('Diário de classe')")
             links = fr.locator("a:has-text('Diário de classe')")
             await links.nth(indice_link).click()
-            await page.wait_for_timeout(1500)
+            await page.wait_for_timeout(800)
 
             # Registro de aulas do bimestre (pode abrir em frame ou nova página)
             # Cada colégio nomeia diferente: "1º BIMESTRE", "1ª UNIDADE", "1ª ETAPA"...
@@ -656,6 +656,7 @@ async def run_active(job_id: str, data: ActiveFormData):
                 reg = linha_bim.locator("a:has-text('Registro de aulas')").first
                 await reg.wait_for(timeout=8000)
                 await reg.click()
+            # sem wait fixo aqui — achar() já aguarda a tabela de aulas aparecer
             else:
                 # Plano B: procura os links "Registro de aulas" diretamente
                 # (alguns colégios mostram um link por bimestre, na ordem)
@@ -689,7 +690,6 @@ async def run_active(job_id: str, data: ActiveFormData):
                             except Exception:
                                 continue
                         raise RuntimeError("Tabela de bimestres não encontrada")
-            await page.wait_for_timeout(1500)
             log.append(f"✅ Registro de aulas aberto")
 
             # Localiza o frame onde está a tabela de aulas
@@ -748,7 +748,7 @@ async def run_active(job_id: str, data: ActiveFormData):
                     "button:has-text('Gravar'), input[value*='Gravar' i]"
                 ).first
                 await gravar.click()
-                await page.wait_for_timeout(1200)
+                await page.wait_for_timeout(700)
 
                 preenchidas += 1
                 log.append(f"✏️ {data_br} — {aula['conteudo'][:50]}")
@@ -761,13 +761,13 @@ async def run_active(job_id: str, data: ActiveFormData):
         for idx in range(total_turmas):
             # Volta para a lista de turmas
             await page.goto(url_lista_turmas)
-            await page.wait_for_timeout(1200)
+            await page.wait_for_timeout(800)
             fr_check, _ = await achar("a:has-text('Diário de classe')")
             if fr_check is None:
                 _, exibir2 = await achar("button:has-text('EXIBIR'), input[value*='EXIBIR' i]")
                 if exibir2:
                     await exibir2.click()
-                    await page.wait_for_timeout(1500)
+                    await page.wait_for_timeout(800)
                 fr_check, _ = await achar("a:has-text('Diário de classe')")
             if fr_check is None:
                 log.append(f"⚠️ Não consegui voltar à lista de turmas")

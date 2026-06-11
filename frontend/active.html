@@ -149,6 +149,70 @@
     margin-top: 14px; font-size: 0.88rem; color: #4a148c; font-weight: 600;
     text-align: center;
   }
+
+  /* ---- Layout de duas colunas ---- */
+  .page-wrapper {
+    display: flex;
+    max-width: 1080px;
+    margin: 0 auto;
+    gap: 28px;
+    padding: 32px 16px;
+    align-items: flex-start;
+  }
+  .container {
+    flex: 1;
+    min-width: 0;
+    max-width: 620px;
+    margin: 0;
+    padding: 0;
+  }
+  .sidebar {
+    width: 280px;
+    flex-shrink: 0;
+  }
+  @media (max-width: 860px) {
+    .page-wrapper { flex-direction: column; }
+    .sidebar { width: 100%; }
+  }
+
+  .sidebar-card {
+    background: white; border-radius: 16px; padding: 22px;
+    margin-bottom: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .sidebar-card h3 {
+    font-size: 0.95rem; color: #7b1fa2; margin-bottom: 14px;
+    font-weight: 700; display: flex; align-items: center; gap: 8px;
+  }
+  .step-list { list-style: none; }
+  .step-list li {
+    display: flex; gap: 10px; align-items: flex-start;
+    font-size: 0.83rem; color: #444; margin-bottom: 12px; line-height: 1.45;
+  }
+  .step-list .num {
+    background: #7b1fa2; color: white; border-radius: 50%;
+    width: 20px; height: 20px; display: inline-flex;
+    align-items: center; justify-content: center;
+    font-size: 0.7rem; font-weight: 700; flex-shrink: 0; margin-top: 1px;
+  }
+  .dica-box {
+    background: #f3e5f5; border-radius: 10px; padding: 12px 14px;
+    font-size: 0.82rem; color: #4a148c; line-height: 1.5; margin-bottom: 10px;
+  }
+  .dica-box strong { display: block; margin-bottom: 4px; }
+  .btn-whats {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    background: #25D366; color: white; border: none; border-radius: 12px;
+    padding: 13px; font-size: 0.9rem; font-weight: 700; cursor: pointer;
+    text-decoration: none; width: 100%;
+  }
+  .btn-whats:hover { opacity: 0.9; }
+  .sistemas-list { list-style: none; }
+  .sistemas-list li {
+    font-size: 0.82rem; color: #555; padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 8px;
+  }
+  .sistemas-list li:last-child { border-bottom: none; }
+  .badge-ok { color: #2e7d32; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -157,6 +221,8 @@
   <h1>📓 Automatizador de Diário</h1>
   <span>Você planeja. Você ensina. A gente só digita.</span>
 </header>
+
+<div class="page-wrapper">
 
 <div class="container">
 
@@ -299,19 +365,47 @@ Equações do 2º grau - fórmula de Bhaskara
 
   <!-- PROGRESSO -->
   <div id="tela-progresso">
-    <div class="card">
-      <div class="progress-header">
-        <div class="spinner"></div>
-        <div class="titulo">Preenchendo seu diário...</div>
-        <div class="subtitulo">Acompanhe abaixo. Não feche esta janela.</div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <!-- Cabeçalho com animação -->
+      <div style="background:linear-gradient(135deg,#7b1fa2,#4a148c);padding:28px 28px 20px;color:white;text-align:center;">
+        <div class="spinner" style="border-color:rgba(255,255,255,.3);border-top-color:white;"></div>
+        <div class="titulo" style="color:white;font-size:1.15rem;">Preenchendo seu diário...</div>
+        <div class="subtitulo" style="color:rgba(255,255,255,.75);margin-top:6px;">Não feche esta aba. O robô está trabalhando. ☕</div>
       </div>
-      <div class="status-bar"><span class="status-texto" id="status-atual">Iniciando...</span></div>
-      <div id="piada-box" style="background:#fff8e1; border:1px dashed #e0c060; border-radius:12px;
-           padding:14px 18px; margin:14px 0; font-size:0.9rem; color:#7a6520; text-align:center;
-           min-height:48px; transition:opacity .4s;">
-        ☕ Enquanto isso, um cafezinho de humor...
+
+      <!-- Status atual em destaque -->
+      <div style="padding:14px 22px;background:#f8f4ff;border-bottom:1px solid #ede7f6;">
+        <span class="status-texto" id="status-atual" style="font-size:0.9rem;">Iniciando...</span>
       </div>
-      <div class="log-box" id="log-box"></div>
+
+      <!-- Frase de espera -->
+      <div id="piada-box" style="padding:18px 22px;min-height:56px;font-size:0.92rem;
+           color:#5c3d99;line-height:1.55;transition:opacity .4s;background:#fdf6ff;
+           border-bottom:1px solid #ede7f6;text-align:center;">
+        ☕ Enquanto o robô trabalha, um pensamento para você...
+      </div>
+
+      <!-- Mini barra de progresso animada -->
+      <div style="height:3px;background:#ede7f6;overflow:hidden;">
+        <div id="prog-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#7b1fa2,#e040fb);
+             transition:width 1.5s ease;animation:progresso-indeterminado 2s ease-in-out infinite alternate;"></div>
+      </div>
+      <style>
+        @keyframes progresso-indeterminado {
+          0%   { margin-left:0%;   width:30%; }
+          100% { margin-left:70%;  width:30%; }
+        }
+      </style>
+
+      <!-- Log técnico colapsável -->
+      <div style="padding:14px 22px;">
+        <details>
+          <summary style="cursor:pointer;font-size:0.8rem;color:#7b1fa2;font-weight:600;user-select:none;">
+            🖥️ Ver relatório detalhado
+          </summary>
+          <div class="log-box" id="log-box" style="margin-top:10px;"></div>
+        </details>
+      </div>
     </div>
   </div>
 
@@ -325,14 +419,64 @@ Equações do 2º grau - fórmula de Bhaskara
     </div>
   </div>
 
-<!-- Espaço para anúncio (AdSense ou banner direto) -->
-<div id="anuncio" style="max-width:720px;margin:24px auto;text-align:center;min-height:90px;
-     border:1px dashed rgba(255,255,255,.15);border-radius:12px;display:flex;
-     align-items:center;justify-content:center;color:rgba(255,255,255,.3);font-size:13px;">
-  Espaço publicitário
-</div>
+</div><!-- /container -->
 
-</div>
+<!-- SIDEBAR -->
+<aside class="sidebar">
+
+  <div class="sidebar-card">
+    <h3>📋 Como usar</h3>
+    <ol class="step-list">
+      <li><span class="num">1</span> Escolha seu colégio e entre com usuário e senha do ActiveSoft.</li>
+      <li><span class="num">2</span> Informe a turma (ex: <strong>3ºA</strong>) e o bimestre.</li>
+      <li><span class="num">3</span> Defina o período de início e fim do bimestre.</li>
+      <li><span class="num">4</span> Marque quantas aulas você tem por dia.</li>
+      <li><span class="num">5</span> Gere os tópicos com IA ou cole os seus.</li>
+      <li><span class="num">6</span> Clique em <strong>Transferir</strong> e aguarde. ☕</li>
+    </ol>
+  </div>
+
+  <div class="sidebar-card">
+    <h3>💡 Dicas rápidas</h3>
+    <div class="dica-box">
+      <strong>Turma em branco = todas</strong>
+      Se deixar o campo turma vazio, o robô preenche todas as suas turmas em sequência.
+    </div>
+    <div class="dica-box">
+      <strong>Bimestre vs. período</strong>
+      O bimestre identifica qual aba abrir no diário. O período (datas) define quais aulas entram no calendário.
+    </div>
+    <div class="dica-box">
+      <strong>Já tem aulas preenchidas?</strong>
+      Sem problema — o robô detecta as aulas existentes e continua de onde parou.
+    </div>
+  </div>
+
+  <div class="sidebar-card">
+    <h3>🏫 Colégios suportados</h3>
+    <ul class="sistemas-list">
+      <li><span class="badge-ok">✓</span> Vita</li>
+      <li><span class="badge-ok">✓</span> Jardins</li>
+      <li><span class="badge-ok">✓</span> COESI</li>
+      <li><span class="badge-ok">✓</span> Futuro Feliz</li>
+      <li>⊕ Outro ActiveSoft (URL manual)</li>
+    </ul>
+  </div>
+
+  <div class="sidebar-card">
+    <h3>🆘 Precisa de ajuda?</h3>
+    <p style="font-size:0.82rem;color:#555;margin-bottom:14px;line-height:1.5;">
+      Algum erro? Colégio não listado? Fale comigo direto no WhatsApp — respondo rápido.
+    </p>
+    <a class="btn-whats" href="https://wa.me/5579990175326" target="_blank">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.553 4.116 1.522 5.845L0 24l6.336-1.495A11.955 11.955 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-4.964-1.344l-.356-.211-3.762.887.936-3.668-.232-.376A9.818 9.818 0 1112 21.818z"/></svg>
+      (79) 99017-5326
+    </a>
+  </div>
+
+</aside>
+
+</div><!-- /page-wrapper -->
 
 <script>
 const BACKEND_URL = location.protocol === 'file:' ? 'http://localhost:8000' : '';
