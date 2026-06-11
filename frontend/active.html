@@ -250,6 +250,7 @@
 <header>
   <h1>📓 Automatizador de Diário</h1>
   <span>Você planeja. Você ensina. A gente só digita.</span>
+  <span id="versao-tag" style="font-size:11px;opacity:.5;margin-left:12px;"></span>
 </header>
 
 <div class="page-wrapper">
@@ -525,6 +526,10 @@ Equações do 2º grau - fórmula de Bhaskara
 
 <script>
 const BACKEND_URL = location.protocol === 'file:' ? 'http://localhost:8000' : '';
+fetch(`${BACKEND_URL}/versao`).then(r=>r.json()).then(j=>{
+  const el = document.getElementById('versao-tag');
+  if(el) el.textContent = 'v' + j.versao;
+}).catch(()=>{});
 let eventoCount = 0;
 
 function marcarDia(input) {
@@ -803,6 +808,7 @@ async function executar() {
     topicos: topicos
   };
 
+  salvarFormulario();
   document.getElementById('tela-form').style.display = 'none';
   document.getElementById('tela-progresso').style.display = 'block';
   resetFrases();
@@ -818,10 +824,21 @@ async function executar() {
     const { job_id } = await resp.json();
 
     const sse = new EventSource(`${BACKEND_URL}/progresso/${job_id}`);
+    let semSinalTimer = null;
+    const resetarTimer = () => {
+      clearTimeout(semSinalTimer);
+      semSinalTimer = setTimeout(() => {
+        sse.close();
+        addLog('⚠️ Conexão perdida por 60s — verifique o portal e tente de novo.', 'erro');
+        voltarAoFormulario();
+      }, 60000);
+    };
+    resetarTimer();
     sse.onmessage = (e) => {
+      resetarTimer();
       const msg = e.data;
-      if (msg === '__CONCLUIDO__') { sse.close(); mostrarSucesso(); }
-      else if (msg === '__ERRO__') { sse.close(); mostrarFalha(); }
+      if (msg === '__CONCLUIDO__') { clearTimeout(semSinalTimer); sse.close(); mostrarSucesso(); }
+      else if (msg === '__ERRO__') { clearTimeout(semSinalTimer); sse.close(); mostrarFalha(); }
       else {
         if (msg.startsWith('✏️')) cdAulaGravada();
         const mEx = msg.match(/Já existem (\d+) aulas/);
@@ -965,6 +982,23 @@ function mostrarFalha() {
     ? 'Mas mandalorianos sempre voltam. Veja o relatório e tente de novo.'
     : 'Veja os erros no relatório abaixo e tente novamente';
   addLog('Automação encerrada com falha.', 'erro');
+  if (!document.getElementById('btn-voltar-falha')) {
+    const b = document.createElement('button');
+    b.id = 'btn-voltar-falha';
+    b.className = 'btn-executar';
+    b.style.marginTop = '18px';
+    b.textContent = '← Voltar (seus dados continuam preenchidos)';
+    b.onclick = voltarAoFormulario;
+    document.getElementById('tela-progresso').appendChild(b);
+  }
+}
+
+function voltarAoFormulario() {
+  const b = document.getElementById('btn-voltar-falha');
+  if (b) b.remove();
+  document.getElementById('tela-progresso').style.display = 'none';
+  document.getElementById('tela-form').style.display = 'block';
+  document.getElementById('log-box').innerHTML = '';
 }
 
 function mostrarSucesso() {
@@ -982,6 +1016,24 @@ function reiniciar() {
   document.getElementById('tela-form').style.display = 'block';
   document.getElementById('log-box').innerHTML = '';
 }
+
+const CAMPOS_SALVOS_ACTIVE = ['usuario','turma','data-inicio','data-fim','bimestre','topicos','url-colegio'];
+function salvarFormulario() {
+  const d = {};
+  CAMPOS_SALVOS_ACTIVE.forEach(id => { const el = document.getElementById(id); if (el) d[id] = el.value; });
+  d['select-colegio'] = document.getElementById('select-colegio')?.value;
+  d['emendas'] = document.getElementById('emendas')?.checked;
+  localStorage.setItem('active_form', JSON.stringify(d));
+}
+function restaurarFormulario() {
+  try {
+    const d = JSON.parse(localStorage.getItem('active_form') || '{}');
+    CAMPOS_SALVOS_ACTIVE.forEach(id => { const el = document.getElementById(id); if (el && d[id]) el.value = d[id]; });
+    if (d['select-colegio']) { const s = document.getElementById('select-colegio'); if(s) { s.value = d['select-colegio']; trocarColegio(); } }
+    if (d['emendas']) document.getElementById('emendas').checked = true;
+  } catch (e) {}
+}
+document.addEventListener('DOMContentLoaded', restaurarFormulario);
 </script>
 </body>
 </html>

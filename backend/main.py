@@ -874,6 +874,11 @@ def _buscar_manchetes() -> list[str]:
     return itens
 
 
+@app.get("/versao")
+async def versao():
+    return {"versao": "2026-06-11.10"}
+
+
 @app.get("/manchetes")
 async def manchetes():
     import time as _t
