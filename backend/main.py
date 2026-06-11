@@ -1444,6 +1444,10 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                     "button[type='submit'], button:has-text('Entrar'), button:has-text('Acessar'), input[type='submit']"
                 ).first.click()
                 await page.wait_for_timeout(5000)
+                # se a senha ainda está na tela, o login falhou
+                ainda_login = page.locator("input[type='password']").first
+                if await ainda_login.count() > 0 and await ainda_login.is_visible():
+                    raise RuntimeError("usuário ou senha incorretos (a tela de login não saiu).")
             log.append("✅ Login realizado")
         except Exception as e:
             log.append(f"❌ ERRO no login: {e}")
@@ -1454,17 +1458,52 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
 
         async def abrir_diario():
             log.append("📒 Abrindo o Diário de Classe...")
-            menu = page.locator(
-                "a:has-text('Diário de classe'), [aria-label*='Diário' i], "
-                "[p-tooltip*='Diário' i], [title*='Diário' i], [ng-reflect-tooltip*='Diário' i]"
-            ).first
             try:
-                await menu.wait_for(timeout=8000)
-                await menu.click()
+                await page.wait_for_load_state("networkidle", timeout=15000)
             except Exception:
-                # fallback: segundo item do menu lateral
-                await page.locator("po-menu .po-menu-item, po-menu a").nth(1).click()
-            await page.wait_for_timeout(3000)
+                pass
+
+            candidatos = [
+                "a:has-text('Diário de classe')",
+                "[aria-label*='Diário' i]",
+                "[title*='Diário' i]",
+                "a[href*='diary' i]",
+                "a[href*='diario' i]",
+                "a[href*='classdiary' i]",
+                "a[href*='teacherdiary' i]",
+            ]
+            for sel in candidatos:
+                loc = page.locator(sel).first
+                if await loc.count() > 0:
+                    try:
+                        await loc.click(timeout=5000)
+                        await page.wait_for_timeout(3000)
+                        return
+                    except Exception:
+                        continue
+
+            # fallback: 2º ícone do menu lateral (home é o 1º)
+            for sel in ["po-menu a", ".po-menu-item", "nav a", "aside a"]:
+                icones = page.locator(sel)
+                if await icones.count() >= 2:
+                    try:
+                        await icones.nth(1).click(timeout=5000)
+                        await page.wait_for_timeout(3000)
+                        return
+                    except Exception:
+                        continue
+
+            # diagnóstico: mostra os links da página para calibrar o seletor
+            links = await page.evaluate(
+                """() => Array.from(document.querySelectorAll('a')).slice(0, 30).map(a =>
+                    (a.getAttribute('href') || '?') + ' | ' +
+                    (a.title || a.getAttribute('aria-label') || a.innerText || '').trim().slice(0, 40)
+                )"""
+            )
+            log.append("🧭 Página atual: " + page.url)
+            for l in links:
+                log.append("🧭 link: " + l)
+            raise RuntimeError("não encontrei o menu 'Diário de classe' — me envie as linhas 🧭 do log")
 
         async def abrir_plano_da_turma(turma: str):
             log.append(f"🔎 Procurando a turma {turma}...")
