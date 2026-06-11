@@ -627,15 +627,47 @@ async def run_active(job_id: str, data: ActiveFormData):
             await page.wait_for_timeout(3000)
 
             # Registro de aulas do bimestre (pode abrir em frame ou nova página)
-            fr2, _ = await achar(f"tr:has-text('{data.bimestre}º BIMESTRE')")
-            if fr2 is None:
-                raise RuntimeError(f"Tabela de bimestres não encontrada")
-            linha_bim = fr2.locator(f"tr:has-text('{data.bimestre}º BIMESTRE')").first
-            reg = linha_bim.locator("a:has-text('Registro de aulas')").first
-            await reg.wait_for(timeout=8000)
-            await reg.click()
+            fr2, _ = await achar(f"tr:has-text('{data.bimestre}º BIMESTRE')", tentativas=5)
+            if fr2 is not None:
+                linha_bim = fr2.locator(f"tr:has-text('{data.bimestre}º BIMESTRE')").first
+                reg = linha_bim.locator("a:has-text('Registro de aulas')").first
+                await reg.wait_for(timeout=8000)
+                await reg.click()
+            else:
+                # Plano B: procura os links "Registro de aulas" diretamente
+                # (alguns colégios mostram um link por bimestre, na ordem)
+                fr2b, _ = await achar("a:has-text('Registro de aulas')", tentativas=5)
+                if fr2b is not None:
+                    links_reg = fr2b.locator("a:has-text('Registro de aulas')")
+                    qtd = await links_reg.count()
+                    if qtd >= data.bimestre:
+                        log.append(f"ℹ️ Layout alternativo: {qtd} links de registro — abrindo o {data.bimestre}º")
+                        await links_reg.nth(data.bimestre - 1).click()
+                    else:
+                        log.append(f"ℹ️ Apenas {qtd} link(s) de registro — abrindo o primeiro")
+                        await links_reg.first.click()
+                else:
+                    # Plano C: alguns colégios caem direto na tabela de aulas,
+                    # sem seleção de bimestre (o bimestre fica nas datas digitadas)
+                    fr_direto, _ = await achar("table tr:has(textarea)", tentativas=3)
+                    if fr_direto is not None:
+                        log.append("ℹ️ Sem tabela de bimestres — registro de aulas direto (bimestre definido pelas datas)")
+                    else:
+                        # Diagnóstico: mostra o que existe na página para ajustarmos
+                        for fi, frame in enumerate(page.frames):
+                            try:
+                                textos = await frame.evaluate(
+                                    "() => Array.from(document.querySelectorAll('a, button, td, th'))"
+                                    ".map(e => (e.innerText || '').trim()).filter(t => t && t.length < 60)"
+                                    ".slice(0, 40)"
+                                )
+                                if textos:
+                                    log.append(f"🔍 Frame {fi}: {textos}")
+                            except Exception:
+                                continue
+                        raise RuntimeError("Tabela de bimestres não encontrada")
             await page.wait_for_timeout(3000)
-            log.append(f"✅ Registro de aulas do {data.bimestre}º bimestre aberto")
+            log.append(f"✅ Registro de aulas aberto")
 
             # Localiza o frame onde está a tabela de aulas
             fr3, _ = await achar("table tr:has(textarea)")

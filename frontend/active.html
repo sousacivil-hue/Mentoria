@@ -306,6 +306,11 @@ Equações do 2º grau - fórmula de Bhaskara
         <div class="subtitulo">Acompanhe abaixo. Não feche esta janela.</div>
       </div>
       <div class="status-bar"><span class="status-texto" id="status-atual">Iniciando...</span></div>
+      <div id="piada-box" style="background:#fff8e1; border:1px dashed #e0c060; border-radius:12px;
+           padding:14px 18px; margin:14px 0; font-size:0.9rem; color:#7a6520; text-align:center;
+           min-height:48px; transition:opacity .4s;">
+        ☕ Enquanto isso, um cafezinho de humor...
+      </div>
       <div class="log-box" id="log-box"></div>
     </div>
   </div>
@@ -550,6 +555,7 @@ async function executar() {
 
   document.getElementById('tela-form').style.display = 'none';
   document.getElementById('tela-progresso').style.display = 'block';
+  iniciarPiadas();
 
   try {
     const resp = await fetch(`${BACKEND_URL}/executar-active`, {
@@ -576,7 +582,58 @@ async function executar() {
   }
 }
 
+// ---- Entretenimento da sala de espera ----
+const FRASES_ESPERA = [
+  '😄 Se uma centopeia tem cem pés... um piolho tem 3,14 olhos?',
+  '😄 Por que o livro de matemática vive triste? Porque tem muitos problemas.',
+  '😄 O professor de geografia foi demitido... ele andava muito por fora.',
+  '😄 Qual o contrário de "professor"? "Contra o sor".',
+  '😄 O aluno disse: "professor, eu não sei nada de raiz quadrada". Resposta: "isso não tem fundamento".',
+  '😄 Por que a aula de história nunca atrasa? Porque ela já passou.',
+  '😄 O que o zero disse para o oito? "Que cinto maneiro!"',
+  '😄 Professor de química não morre... ele apenas perde a solução.',
+  '🏛️ "Não é o que acontece com você, mas como você reage que importa." — Epicteto',
+  '🏛️ "A felicidade da sua vida depende da qualidade dos seus pensamentos." — Marco Aurélio',
+  '🏛️ "Nenhum vento sopra a favor de quem não sabe para onde ir." — Sêneca',
+  '🏛️ "Enquanto adiamos, a vida passa." — Sêneca',
+  '🏛️ "O obstáculo é o caminho." — Marco Aurélio',
+  '🙏 "Tudo posso naquele que me fortalece." — Filipenses 4:13',
+  '🙏 "O Senhor é o meu pastor; nada me faltará." — Salmos 23:1',
+  '🙏 "Entrega o teu caminho ao Senhor; confia nele, e ele tudo fará." — Salmos 37:5',
+  '🙏 "Ensina a criança no caminho em que deve andar, e até quando envelhecer não se desviará dele." — Provérbios 22:6',
+  '🙏 "Não to mandei eu? Esforça-te e tem bom ânimo." — Josué 1:9',
+  '🙏 "O que as suas mãos tiverem que fazer, que o façam com toda a sua força." — Eclesiastes 9:10',
+  '🙏 "A sabedoria é a coisa principal; adquire pois a sabedoria." — Provérbios 4:7',
+  '✨ Ensinar é deixar uma marca que o tempo não apaga.',
+  '✨ Você já fez a diferença na vida de algum aluno hoje — mesmo sem saber.',
+  '✨ Educar é plantar sementes que florescem longe dos nossos olhos.',
+  '✨ Seu domingo está sendo devolvido neste exato momento. ☕',
+  '✨ Daqui a pouco esse diário está pronto — e você não digitou nada.',
+];
+let piadaTimer = null;
+function iniciarPiadas() {
+  const box = document.getElementById('piada-box');
+  if (!box) return;
+  let usadas = [];
+  const proxima = () => {
+    if (usadas.length === FRASES_ESPERA.length) usadas = [];
+    let i;
+    do { i = Math.floor(Math.random() * FRASES_ESPERA.length); } while (usadas.includes(i));
+    usadas.push(i);
+    box.style.opacity = 0;
+    setTimeout(() => { box.textContent = FRASES_ESPERA[i]; box.style.opacity = 1; }, 400);
+  };
+  proxima();
+  piadaTimer = setInterval(proxima, 9000);
+}
+function pararPiadas() {
+  if (piadaTimer) { clearInterval(piadaTimer); piadaTimer = null; }
+  const box = document.getElementById('piada-box');
+  if (box) box.style.display = 'none';
+}
+
 function mostrarFalha() {
+  pararPiadas();
   document.querySelector('#tela-progresso .spinner').style.display = 'none';
   document.querySelector('#tela-progresso .titulo').textContent = '❌ A automação falhou';
   document.querySelector('#tela-progresso .subtitulo').textContent = 'Veja os erros no relatório abaixo e tente novamente';
@@ -584,6 +641,7 @@ function mostrarFalha() {
 }
 
 function mostrarSucesso() {
+  pararPiadas();
   // Mantém o log visível e mostra o sucesso acima dele
   document.querySelector('#tela-progresso .spinner').style.display = 'none';
   document.querySelector('#tela-progresso .titulo').textContent = 'Automação finalizada';
