@@ -1554,7 +1554,7 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
 
             # clica nos "..." da linha
             mais_acoes = linha_turma.locator(
-                ".po-icon-more, [class*='more'], po-icon, span:has-text('...')"
+                "i.an-dots-three, .po-icon-more, [class*='more'], po-icon, span:has-text('...')"
             ).last
             await mais_acoes.scroll_into_view_if_needed()
             await mais_acoes.click()
