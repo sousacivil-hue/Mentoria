@@ -1402,9 +1402,13 @@ async def run_sesi(job_id: str, data: SesiFormData):
 
 
 class SalesianoFormData(BaseModel):
-    url_plano: str
+    url_portal: str = "https://portalprdsalesianos.rm.cloudtotvs.com.br"
     usuario: str
     senha: str
+    turma: str  # código da turma, ex.: GE09EM2A
+    etapa: str  # ex.: Janeiro, 1ª Etapa...
+    data_inicio: str  # dd/mm/aaaa
+    data_fim: str  # dd/mm/aaaa
     aula_inicio: int = 1
     duplas: bool = False  # cada tópico vale por 2 aulas (aulas geminadas)
     topicos: list[str] = []
@@ -1427,7 +1431,7 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
 
         log.append("🔐 Fazendo login no Portal do Professor (Totvs RM)...")
         try:
-            await page.goto(data.url_plano)
+            await page.goto(data.url_portal)
             await page.wait_for_timeout(3000)
             # Se cair na tela de login, preenche usuário e senha
             user_input = page.locator(
@@ -1439,11 +1443,7 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                 await page.locator(
                     "button[type='submit'], button:has-text('Entrar'), button:has-text('Acessar'), input[type='submit']"
                 ).first.click()
-                await page.wait_for_timeout(4000)
-                # Garante que chegou na página do plano de aula
-                if "lessonPlan" not in page.url and "lessonPlan" in data.url_plano:
-                    await page.goto(data.url_plano)
-                    await page.wait_for_timeout(3000)
+                await page.wait_for_timeout(5000)
             log.append("✅ Login realizado")
         except Exception as e:
             log.append(f"❌ ERRO no login: {e}")
@@ -1452,7 +1452,112 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
             await browser.close()
             return
 
-        # Aguarda a tabela de aulas do Angular carregar
+        # ---- Menu lateral: Diário de classe ----
+        try:
+            log.append("📒 Abrindo o Diário de Classe...")
+            menu = page.locator(
+                "a:has-text('Diário de classe'), [aria-label*='Diário' i], "
+                "[p-tooltip*='Diário' i], [title*='Diário' i], [ng-reflect-tooltip*='Diário' i]"
+            ).first
+            try:
+                await menu.wait_for(timeout=8000)
+                await menu.click()
+            except Exception:
+                # fallback: segundo item do menu lateral
+                await page.locator("po-menu .po-menu-item, po-menu a").nth(1).click()
+            await page.wait_for_timeout(3000)
+        except Exception as e:
+            log.append(f"❌ ERRO ao abrir o Diário de Classe: {e}")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        # ---- Localiza a linha da turma e abre o Plano de aula ----
+        turma = data.turma.strip().upper()
+        try:
+            log.append(f"🔎 Procurando a turma {turma}...")
+            linha_turma = None
+            for tentativa in range(10):
+                linha_turma = page.locator("table tbody tr", has_text=turma).first
+                if await linha_turma.count() > 0:
+                    break
+                # tenta carregar mais resultados, se existir
+                mais = page.locator("text=Carregar mais resultados").first
+                if await mais.count() > 0 and await mais.is_visible():
+                    await mais.click()
+                await page.wait_for_timeout(1500)
+            if linha_turma is None or await linha_turma.count() == 0:
+                log.append(f"❌ Turma {turma} não encontrada no Diário de Classe.")
+                log.append("💡 Confira o código da turma (ex.: GE09EM2A) — ele aparece na coluna 'Cód. Turma' do portal.")
+                log.append("__ERRO__")
+                log.append("__CONCLUIDO__")
+                await browser.close()
+                return
+
+            # clica nos "..." da linha
+            mais_acoes = linha_turma.locator(
+                ".po-icon-more, [class*='more'], po-icon, span:has-text('...')"
+            ).last
+            await mais_acoes.scroll_into_view_if_needed()
+            await mais_acoes.click()
+            await page.wait_for_timeout(800)
+
+            plano = page.locator("text=Plano de aula").first
+            await plano.wait_for(timeout=8000)
+            await plano.click()
+            await page.wait_for_timeout(3000)
+            log.append("✅ Plano de aula aberto")
+        except Exception as e:
+            log.append(f"❌ ERRO ao abrir o plano de aula da turma: {e}")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        # ---- Seleciona a Etapa e pesquisa ----
+        try:
+            log.append(f"🗓️ Selecionando a etapa '{data.etapa}'...")
+            # abre os filtros se estiverem recolhidos
+            filtros = page.locator("text=Filtros").first
+            if await filtros.count() > 0:
+                combo_visivel = await page.locator("po-combo input, po-select select").first.is_visible()
+                if not combo_visivel:
+                    await filtros.click()
+                    await page.wait_for_timeout(800)
+
+            combo = page.locator("po-combo input, po-select select, po-lookup input").first
+            await combo.wait_for(timeout=8000)
+            await combo.click()
+            await combo.fill(data.etapa)
+            await page.wait_for_timeout(1200)
+            opcao = page.locator(f"po-combo li:has-text('{data.etapa}'), .po-combo-item:has-text('{data.etapa}'), li:has-text('{data.etapa}')").first
+            await opcao.wait_for(timeout=6000)
+            await opcao.click()
+            await page.wait_for_timeout(800)
+
+            # preenche o intervalo de datas
+            log.append(f"📅 Definindo o período {data.data_inicio} a {data.data_fim}...")
+            campo_data = page.locator("po-datepicker-range input, input[name*='date' i]").first
+            await campo_data.wait_for(timeout=8000)
+            await campo_data.click()
+            await page.keyboard.press("Control+a")
+            digitos = re.sub(r"\D", "", data.data_inicio) + re.sub(r"\D", "", data.data_fim)
+            await page.keyboard.type(digitos, delay=60)
+            await page.keyboard.press("Tab")
+            await page.wait_for_timeout(600)
+
+            await page.locator("button:has-text('Pesquisar'), po-button:has-text('Pesquisar')").first.click()
+            await page.wait_for_timeout(3000)
+        except Exception as e:
+            log.append(f"❌ ERRO ao selecionar a etapa: {e}")
+            log.append("💡 Confira se o nome da etapa está igual ao que aparece no portal (ex.: Janeiro).")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        # ---- Aguarda a tabela de aulas carregar ----
         total_linhas = 0
         for _ in range(20):
             total_linhas = await page.evaluate(
@@ -1464,7 +1569,6 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
 
         if total_linhas == 0:
             log.append("❌ ERRO: a tabela de aulas não carregou.")
-            log.append("💡 Confira se o link do plano de aula está certo (copie da barra de endereço com a turma aberta).")
             log.append("__ERRO__")
             log.append("__CONCLUIDO__")
             await browser.close()
@@ -1472,14 +1576,28 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
 
         log.append(f"📚 Aulas encontradas na tabela: {total_linhas}")
 
+        # Mapeia quais linhas já têm conteúdo realizado (linha vazia tem só o link 'Editar')
+        info_linhas = await page.evaluate(
+            """() => Array.from(document.querySelectorAll('table tbody tr')).map(tr => ({
+                links: tr.querySelectorAll('a').length,
+                texto: tr.innerText.trim().slice(0, 60)
+            }))"""
+        )
+
         preenchidas = 0
-        for numero_aula in range(data.aula_inicio, total_linhas + 1):
+        for i in range(total_linhas):
+            numero_aula = i + 1
+            if numero_aula < data.aula_inicio:
+                continue
+            if info_linhas[i]["links"] >= 2:
+                log.append(f"⏭️ Aula {numero_aula} já tem conteúdo — pulando")
+                continue
             conteudo = topico_da_aula(preenchidas)
             if conteudo is None:
                 log.append("✅ Todos os tópicos foram usados")
                 break
             try:
-                btn = page.locator("text=Editar").nth(numero_aula - 1)
+                btn = page.locator("table tbody tr").nth(i).locator("text=Editar")
                 await btn.wait_for(timeout=10000)
                 await btn.scroll_into_view_if_needed()
                 await btn.click()
