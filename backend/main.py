@@ -767,16 +767,26 @@ async def run_active(job_id: str, data: ActiveFormData):
 
             # Identifica o nome da turma (para o log e para o filtro)
             bloco_texto = await fr_check.locator("a:has-text('Diário de classe')").nth(idx).evaluate(
+                # Sobe do link até o primeiro bloco que tenha MAIS texto que o
+                # próprio link (ou seja, que inclua o título da turma: "3ª série..."),
+                # mas para antes de abraçar a página inteira (vários links de diário).
                 "el => {"
-                "  const tr = el.closest('tr');"  # linha de tabela = bloco da turma
-                "  if (tr && tr.innerText.trim().length > 10) return tr.innerText.slice(0, 500);"
                 "  let q = el.parentElement;"
-                "  for (let i = 0; i < 8 && q; i++) {"  # senão: menor ancestral com texto razoável
+                "  for (let i = 0; i < 10 && q; i++) {"
                 "    const t = (q.innerText || '').trim();"
-                "    if (t.length >= 15 && t.length <= 600) return t.slice(0, 500);"
+                "    const qtdLinks = q.querySelectorAll ? q.querySelectorAll('a').length : 99;"
+                "    const temMais = t.replace(/\\s+/g,' ').length > 30;"
+                "    const soUmaTurma = (t.match(/Diário de classe/g) || []).length <= 1;"
+                "    if (temMais && soUmaTurma) {"
+                "      const proximo = q.parentElement;"
+                "      const tProx = proximo ? (proximo.innerText || '') : '';"
+                "      if ((tProx.match(/Diário de classe/g) || []).length > 1 || !proximo) {"
+                "        return t.slice(0, 500);"
+                "      }"
+                "    }"
                 "    q = q.parentElement;"
                 "  }"
-                "  return el.innerText || '';"
+                "  return (el.closest('tr')?.innerText || el.innerText || '').slice(0, 500);"
                 "}"
             )
             nome_turma = " ".join((bloco_texto or "").split())[:80] or f"Turma {idx + 1}"
