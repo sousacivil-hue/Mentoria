@@ -138,22 +138,28 @@ async def _preencher_aula(page, numero_aula: int, conteudo: str):
     # ── PASSO 2: Aguarda o modal abrir ──
     await page.wait_for_timeout(1500)
 
-    # ── PASSO 3: Localiza o textarea de "Conteúdo realizado" ──
-    # Tenta pelo label primeiro
-    textarea = page.locator("label:has-text('Conteúdo realizado') + textarea, "
-                            "label:has-text('Conteudo realizado') + textarea, "
-                            "label:has-text('Conteúdo') ~ textarea").first
-
-    fallback = page.locator("po-modal textarea, dialog textarea, [role='dialog'] textarea").first
-
+    # ── PASSO 2b: Clica em Editar dentro do modal para habilitar os campos ──
+    editar_modal = page.locator(
+        "po-modal button:has-text('Editar'), "
+        "dialog button:has-text('Editar'), "
+        "[role='dialog'] button:has-text('Editar')"
+    ).first
     try:
-        await textarea.wait_for(timeout=5000)
-        alvo = textarea
+        await editar_modal.wait_for(timeout=5000)
+        await editar_modal.click()
+        await page.wait_for_timeout(1000)
     except Exception:
-        await fallback.wait_for(timeout=5000)
-        alvo = fallback
+        pass  # se nao houver botao Editar no modal, continua mesmo assim
 
-    # ── PASSO 4: Limpa e preenche ──
+    # ── PASSO 3: Localiza o textarea habilitado ──
+    alvo = page.locator(
+        "po-modal textarea:not([disabled]), "
+        "dialog textarea:not([disabled]), "
+        "[role='dialog'] textarea:not([disabled])"
+    ).first
+    await alvo.wait_for(timeout=8000)
+
+    # ── PASSO 4: Preenche ──
     await alvo.click()
     await alvo.fill(conteudo)
 
