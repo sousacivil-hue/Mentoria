@@ -716,12 +716,16 @@ async def run_active(job_id: str, data: ActiveFormData):
                 partes = aula["data"].split("-")
                 data_br = f"{partes[2]}/{partes[1]}/{partes[0]}"
 
-                # Acha a linha em branco (textarea de conteúdo vazio)
+                # Acha a primeira linha em branco (reavalia após cada gravação)
                 linha_vazia = None
+                # scroll para o topo da tabela para garantir visibilidade
+                await fr3.locator("table").first.evaluate("el => el.scrollIntoView()")
+                await page.wait_for_timeout(300)
                 linhas = fr3.locator("table tr:has(textarea)")
                 total_linhas = await linhas.count()
                 for i in range(total_linhas):
                     linha = linhas.nth(i)
+                    await linha.scroll_into_view_if_needed()
                     txt = (await linha.locator("textarea").first.input_value()).strip()
                     if not txt:
                         linha_vazia = linha
