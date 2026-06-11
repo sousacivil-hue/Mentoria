@@ -450,10 +450,21 @@ async function executar() {
     });
     const { job_id } = await resp.json();
     const sse = new EventSource(`${BACKEND_URL}/progresso/${job_id}`);
+    let semSinalTimer = null;
+    const resetarTimer = () => {
+      clearTimeout(semSinalTimer);
+      semSinalTimer = setTimeout(() => {
+        sse.close();
+        addLog('⚠️ Conexão perdida por 60s — a automação pode ter continuado no servidor. Verifique o portal.', 'erro');
+        voltarAoFormulario();
+      }, 60000);
+    };
+    resetarTimer();
     sse.onmessage = (e) => {
+      resetarTimer();
       const msg = e.data;
-      if (msg === '__CONCLUIDO__') { sse.close(); mostrarSucesso(); }
-      else if (msg === '__ERRO__') { sse.close(); mostrarFalha(); }
+      if (msg === '__CONCLUIDO__') { clearTimeout(semSinalTimer); sse.close(); mostrarSucesso(); }
+      else if (msg === '__ERRO__') { clearTimeout(semSinalTimer); sse.close(); mostrarFalha(); }
       else {
         if (msg.startsWith('✏️')) cdAulaGravada();
         const tipo = msg.includes('ERRO') ? 'erro'
