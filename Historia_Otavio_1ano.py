@@ -111,6 +111,19 @@ async def preencher_diario():
                 print(f"  ✓ Aula {numero_aula} salva.")
             except Exception as e:
                 print(f"  ✗ ERRO na aula {numero_aula}: {e}")
+                # Fecha modal que possa ter ficado aberto travando as próximas
+                try:
+                    cancelar = page.locator(
+                        "po-modal button:has-text('Cancelar'), "
+                        "[role='dialog'] button:has-text('Cancelar')"
+                    ).first
+                    if await cancelar.count() > 0 and await cancelar.is_visible():
+                        await cancelar.click()
+                    else:
+                        await page.keyboard.press("Escape")
+                    await page.wait_for_timeout(1000)
+                except Exception:
+                    pass
                 resposta = input("  Continuar mesmo assim? (s/n): ").strip().lower()
                 if resposta != "s":
                     break
@@ -144,20 +157,24 @@ async def _preencher_aula(page, numero_aula: int, conteudo: str):
         "dialog button:has-text('Editar'), "
         "[role='dialog'] button:has-text('Editar')"
     ).first
-    try:
-        await editar_modal.wait_for(timeout=5000)
-        await editar_modal.click()
-        await page.wait_for_timeout(1000)
-    except Exception:
-        pass  # se nao houver botao Editar no modal, continua mesmo assim
-
-    # ── PASSO 3: Localiza o textarea habilitado ──
     alvo = page.locator(
         "po-modal textarea:not([disabled]), "
         "dialog textarea:not([disabled]), "
         "[role='dialog'] textarea:not([disabled])"
     ).first
-    await alvo.wait_for(timeout=8000)
+
+    # Tenta até 3 vezes: clica em Editar e espera o textarea habilitar
+    for tentativa in range(3):
+        try:
+            if await editar_modal.count() > 0 and await editar_modal.is_visible():
+                await editar_modal.click()
+            await page.wait_for_timeout(1500)
+            await alvo.wait_for(timeout=6000)
+            break
+        except Exception:
+            if tentativa == 2:
+                raise
+            await page.wait_for_timeout(1500)
 
     # ── PASSO 4: Preenche ──
     await alvo.click()
