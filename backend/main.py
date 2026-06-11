@@ -830,17 +830,20 @@ FEEDS_RSS = [
 
 def _buscar_manchetes() -> list[str]:
     import urllib.request
-    import time as _t
+    import html as _html
     itens = []
     for emoji, url in FEEDS_RSS:
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=8) as resp:
                 xml = resp.read().decode("utf-8", errors="ignore")
-            titulos = re.findall(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", xml)
-            # pula o 1º título (nome do feed) e pega os 5 seguintes
-            for t in titulos[1:6]:
-                t = t.strip()
+            # Pega só títulos de DENTRO dos <item> (notícias), nunca o nome do canal
+            blocos = re.findall(r"<item>(.*?)</item>", xml, re.DOTALL)
+            for bloco in blocos[:5]:
+                m = re.search(r"<title>(?:<!\[CDATA\[)?(.*?)(?:\]\]>)?</title>", bloco, re.DOTALL)
+                if not m:
+                    continue
+                t = _html.unescape(m.group(1)).strip()
                 if t and len(t) < 160:
                     itens.append(f"{emoji} {t}")
         except Exception:
