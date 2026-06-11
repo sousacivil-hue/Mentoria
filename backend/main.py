@@ -1452,16 +1452,14 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                     await botao.click()
                 else:
                     await senha_input.press("Enter")
-                await page.wait_for_timeout(6000)
-                # após login, navega para o plano via hash routing (sem recarregar a página)
-                # extrai só o hash da URL do plano (ex: #/portal/class/lessonPlan/3/627185?...)
-                hash_plano = data.url_plano.split('#')[1] if '#' in data.url_plano else ''
-                if hash_plano:
-                    await page.evaluate(f"window.location.hash = '{hash_plano}'")
-                    await page.wait_for_timeout(8000)
-                else:
-                    await page.goto(data.url_plano)
-                    await page.wait_for_timeout(8000)
+                # aguarda o Angular processar o login e montar o menu (até 30s)
+                for _ in range(30):
+                    await page.wait_for_timeout(1000)
+                    if await page.locator("po-menu, .po-menu-item").count() > 0:
+                        break
+                await page.wait_for_timeout(2000)
+                # agora navega para o plano — o token já está salvo no Angular
+                await page.goto(data.url_plano)
             log.append("✅ Login realizado")
         except Exception as e:
             log.append(f"❌ ERRO no login: {e}")
