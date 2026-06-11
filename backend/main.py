@@ -1457,13 +1457,13 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
         log.append("📋 Abrindo o plano de aula...")
         try:
             await page.goto(data.url_plano)
-            await page.wait_for_timeout(6000)
+            await page.wait_for_timeout(12000)
             # se caiu no login de novo, aguarda redirecionar e tenta de novo
             if "login" in page.url.lower():
                 log.append("🔄 Aguardando redirecionamento do portal...")
-                await page.wait_for_timeout(5000)
+                await page.wait_for_timeout(8000)
                 await page.goto(data.url_plano)
-                await page.wait_for_timeout(6000)
+                await page.wait_for_timeout(12000)
             log.append(f"🧭 URL atual: {page.url}")
             # aguarda a tabela Angular carregar (até 40s)
             total = 0
