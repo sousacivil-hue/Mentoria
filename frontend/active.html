@@ -389,12 +389,10 @@ Equações do 2º grau - fórmula de Bhaskara
       <div class="dica">💡 Você pode editar a lista gerada antes de iniciar — remova ou troque o que quiser. O robô distribui os tópicos em sequência nas datas de aula.</div>
     </div>
 
-    <label id="mando-toggle" style="display:flex;align-items:center;justify-content:center;gap:8px;
-           cursor:pointer;margin-bottom:12px;font-size:0.88rem;color:#555;user-select:none;">
-      <input type="checkbox" id="modo-mando" style="width:auto;">
-      🪐 Rodar em <strong>Modo Mandaloriano</strong> <span style="opacity:.6;">(this is the way)</span>
-    </label>
-    <button class="btn-executar" onclick="executar()">⚡ Transferir meu planejamento para o diário</button>
+    <button class="btn-executar" onclick="executar()">
+      ⚡ Transferir meu planejamento para o diário
+      <span style="display:block;font-size:0.78rem;font-weight:500;font-style:italic;opacity:.75;margin-top:4px;">This is the way.</span>
+    </button>
 
   </div>
 
@@ -808,8 +806,6 @@ async function executar() {
   document.getElementById('tela-form').style.display = 'none';
   document.getElementById('tela-progresso').style.display = 'block';
   resetFrases();
-  modoMandoAtivo = false;
-  if (document.getElementById('modo-mando').checked) ativarModoMando();
   iniciarPiadas();
   cdIniciar(totalAulasCalculado || topicos.length);
 
