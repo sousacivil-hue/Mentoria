@@ -389,6 +389,11 @@ Equações do 2º grau - fórmula de Bhaskara
       <div class="dica">💡 Você pode editar a lista gerada antes de iniciar — remova ou troque o que quiser. O robô distribui os tópicos em sequência nas datas de aula.</div>
     </div>
 
+    <label id="mando-toggle" style="display:flex;align-items:center;justify-content:center;gap:8px;
+           cursor:pointer;margin-bottom:12px;font-size:0.88rem;color:#555;user-select:none;">
+      <input type="checkbox" id="modo-mando" style="width:auto;">
+      🪐 Rodar em <strong>Modo Mandaloriano</strong> <span style="opacity:.6;">(this is the way)</span>
+    </label>
     <button class="btn-executar" onclick="executar()">⚡ Transferir meu planejamento para o diário</button>
 
   </div>
@@ -802,6 +807,8 @@ async function executar() {
 
   document.getElementById('tela-form').style.display = 'none';
   document.getElementById('tela-progresso').style.display = 'block';
+  resetFrases();
+  if (document.getElementById('modo-mando').checked) ativarModoMando();
   iniciarPiadas();
   cdIniciar(totalAulasCalculado || topicos.length);
 
@@ -833,6 +840,36 @@ async function executar() {
   }
 }
 
+// ---- Modo Mandaloriano ----
+const FRASES_MANDO = [
+  '🪐 "This is the way." — e o seu diário concorda.',
+  '🪐 "Eu tenho falado." — Kuiil, sobre nunca mais digitar aula na mão.',
+  '🪐 O robô aceitou a missão: 40 aulas, recompensa em dia livre.',
+  '🪐 "Onde quer que eu vá, ele vai." — você e o Automatizador de Diário.',
+  '🪐 Baby Yoda usaria o Automatizador. Sabedoria de 50 anos não erra.',
+  '🪐 Beskar é forte, mas não preenche diário. O robô sim.',
+  '🪐 "Posso trazê-lo aquecido… ou posso trazê-lo preenchido."',
+  '🪐 Capítulo de hoje: O Professor Que Recuperou Seu Domingo.',
+];
+function ativarModoMando() {
+  // Tema espacial na tela de progresso
+  const card = document.querySelector('#tela-progresso .card');
+  if (card) card.style.background = '#0d1117';
+  const header = card.querySelector('div'); // cabeçalho gradiente
+  if (header) header.style.background = 'linear-gradient(135deg,#1a1a2e,#3d2c5a)';
+  document.querySelectorAll('#tela-progresso [style*="f8f4ff"], #tela-progresso [style*="fdf6ff"]').forEach(el => {
+    el.style.background = '#161b27';
+    el.style.borderColor = '#2a3040';
+    el.style.color = '#c9b8ff';
+  });
+  const sub = document.querySelector('#tela-progresso .subtitulo');
+  if (sub) sub.innerHTML = 'Missão aceita. O caçador está digitando. <em>This is the way.</em> 🪐';
+  const robo = document.querySelector('#tela-progresso .robo');
+  if (robo) robo.textContent = '🫡';
+  // Mistura as frases do Mando na rotação (com prioridade)
+  frasesAtivas = [...FRASES_MANDO, ...FRASES_MANDO, ...FRASES_ESPERA];
+}
+
 // ---- Entretenimento da sala de espera ----
 const FRASES_ESPERA = [
   '😄 Se uma centopeia tem cem pés... um piolho tem 3,14 olhos?',
@@ -859,6 +896,8 @@ const FRASES_ESPERA = [
 ];
 let piadaTimer = null;
 let frasesAtivas = [...FRASES_ESPERA];
+// reinicia a rotação a cada execução (modo normal por padrão)
+function resetFrases() { frasesAtivas = [...FRASES_ESPERA]; }
 async function iniciarPiadas() {
   const box = document.getElementById('piada-box');
   if (!box) return;
@@ -867,7 +906,7 @@ async function iniciarPiadas() {
     const r = await fetch(`${BACKEND_URL}/manchetes`);
     const j = await r.json();
     if (j.manchetes && j.manchetes.length) {
-      frasesAtivas = [...FRASES_ESPERA, ...j.manchetes];
+      frasesAtivas = [...frasesAtivas, ...j.manchetes];
     }
   } catch (e) { /* sem internet pros feeds? segue só com as frases */ }
   let usadas = [];
