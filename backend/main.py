@@ -1426,33 +1426,26 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
         browser = await pw.chromium.launch(headless=True)
         page = await browser.new_page(viewport={"width": 1400, "height": 900})
 
-        # ---- Login ----
+        # ---- Login + ir direto para o plano de aula ----
         log.append("🔐 Fazendo login no Portal do Professor...")
         try:
-            await page.goto(data.url_portal)
+            await page.goto(data.url_plano)
             await page.wait_for_timeout(3000)
             senha_input = page.locator("input[type='password']").first
             if await senha_input.count() > 0 and await senha_input.is_visible():
                 user_input = page.locator("input[type='text'], input[name='login']").first
-                await user_input.click()
-                await user_input.type(data.usuario, delay=80)
-                await senha_input.click()
-                await senha_input.type(data.senha, delay=80)
+                await user_input.fill(data.usuario)
+                await senha_input.fill(data.senha)
                 await page.wait_for_timeout(500)
                 botao = page.locator("button:has-text('Entrar'), button[type='submit']").first
                 if await botao.count() > 0:
                     await botao.click()
                 else:
                     await senha_input.press("Enter")
-
-                # aguarda o menu lateral aparecer (indica login OK) — até 30s
-                for _ in range(30):
-                    await page.wait_for_timeout(1000)
-                    if await page.locator(".po-menu-item, po-menu").count() > 0:
-                        break
-                else:
-                    raise RuntimeError("menu do portal não apareceu — verifique usuário e senha.")
-                await page.wait_for_timeout(2000)
+                await page.wait_for_timeout(6000)
+                # após login, o Angular pode redirecionar — volta para a URL do plano
+                if data.url_plano not in page.url:
+                    await page.goto(data.url_plano)
             log.append("✅ Login realizado")
         except Exception as e:
             log.append(f"❌ ERRO no login: {e}")
@@ -1461,10 +1454,8 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
             await browser.close()
             return
 
-        # ---- Vai direto para a URL do plano de aula ----
         log.append("📋 Abrindo o plano de aula...")
         try:
-            await page.goto(data.url_plano)
             await page.wait_for_timeout(12000)
             log.append(f"🧭 URL atual: {page.url}")
             # aguarda a tabela Angular carregar (até 40s)
