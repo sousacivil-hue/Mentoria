@@ -1447,12 +1447,28 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                     "form:has(input[type='password']) input[type='text'], "
                     "input[id*='user' i], input[type='text']"
                 ).first
+                # preenche via JS para garantir que o Angular registra o valor
+                await page.evaluate("""([sel_user, sel_pass, usuario, senha]) => {
+                    const setVal = (sel, val) => {
+                        const el = document.querySelector(sel);
+                        if (!el) return;
+                        const nativeSet = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+                        nativeSet.call(el, val);
+                        el.dispatchEvent(new Event('input', {bubbles: true}));
+                        el.dispatchEvent(new Event('change', {bubbles: true}));
+                    };
+                    setVal(sel_user, usuario);
+                    setVal(sel_pass, senha);
+                }""", [
+                    await user_input.evaluate("el => el.tagName.toLowerCase() + (el.name ? '[name=' + el.name + ']' : '') || 'input'"),
+                    "input[type='password']",
+                    data.usuario,
+                    data.senha
+                ])
                 await user_input.click()
-                await user_input.fill(data.usuario)
-                await user_input.dispatch_event("input")
+                await user_input.type(data.usuario, delay=80)
                 await senha_input.click()
-                await senha_input.fill(data.senha)
-                await senha_input.dispatch_event("input")
+                await senha_input.type(data.senha, delay=80)
                 await page.wait_for_timeout(800)
 
                 botao = page.locator(
@@ -1464,11 +1480,13 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                 else:
                     await senha_input.press("Enter")
 
-                # sucesso = menu lateral apareceu (até 40s)
+                # sucesso = menu lateral apareceu E URL saiu do login (até 40s)
                 logado = False
                 for _ in range(40):
                     await page.wait_for_timeout(1000)
-                    if await page.locator(".po-menu-item, po-menu").count() > 0:
+                    url_atual = page.url
+                    tem_menu = await page.locator(".po-menu-item, po-menu").count() > 0
+                    if tem_menu and "login" not in url_atual.lower():
                         logado = True
                         break
                 if not logado:
