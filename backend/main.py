@@ -1464,6 +1464,8 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                 pass
 
             candidatos = [
+                "div.po-menu-item[aria-label='Diário de classe']",
+                ".po-menu-item:has(.an-book-bookmark)",
                 "a:has-text('Diário de classe')",
                 "[aria-label*='Diário' i]",
                 "[title*='Diário' i]",
