@@ -576,7 +576,7 @@ async function executar() {
         addLog(msg, tipo);
       }
     };
-    sse.onerror = () => { addLog('Conexão perdida com o servidor.', 'erro'); sse.close(); };
+    sse.onerror = () => { addLog('⚠️ Conexão instável — reconectando automaticamente...', 'info'); };
   } catch (err) {
     addLog(`Erro ao conectar ao servidor: ${err.message}`, 'erro');
   }

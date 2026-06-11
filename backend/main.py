@@ -5,7 +5,7 @@ import re
 import uuid
 from typing import AsyncGenerator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -991,18 +991,32 @@ async def executar(data: FormData):
 
 
 @app.get("/progresso/{job_id}")
-async def progresso(job_id: str):
+async def progresso(job_id: str, request: Request):
+    # Se o navegador reconectar, continua de onde parou (Last-Event-ID)
+    try:
+        inicio = int(request.headers.get("last-event-id", "0"))
+    except ValueError:
+        inicio = 0
+
     async def stream() -> AsyncGenerator[str, None]:
-        enviado = 0
+        enviado = inicio
+        silencio = 0.0
         while True:
             logs = jobs.get(job_id, [])
             while enviado < len(logs):
                 msg = logs[enviado]
-                yield f"data: {msg}\n\n"
                 enviado += 1
+                yield f"id: {enviado}\ndata: {msg}\n\n"
+                silencio = 0.0
                 if msg == "__CONCLUIDO__":
                     return
             await asyncio.sleep(0.5)
+            silencio += 0.5
+            # keepalive: comentário SSE invisível para o navegador,
+            # impede que proxies derrubem a conexão por inatividade
+            if silencio >= 10:
+                yield ": ping\n\n"
+                silencio = 0.0
 
     return StreamingResponse(stream(), media_type="text/event-stream")
 
