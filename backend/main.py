@@ -993,6 +993,380 @@ async def gerar_topicos(req: GerarTopicosRequest):
         return {"erro": f"Falha ao gerar tópicos: {e}"}
 
 
+class SesiFormData(BaseModel):
+    usuario: str
+    senha: str
+    turma: str = ""
+    bimestre: str = "1"
+    licao_casa: str = ""
+    topicos: list[str] = []
+
+
+URL_SESI = "https://portaleducacional.fies.org.br/Corpore.Net/Login.aspx"
+
+
+async def run_sesi(job_id: str, data: SesiFormData):
+    from playwright.async_api import async_playwright
+
+    log = jobs[job_id]
+    topicos = [t for t in data.topicos if t.strip()]
+    log.append(f"📊 Tópicos a lançar: {len(topicos)}")
+
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(headless=True)
+        page = await browser.new_page(viewport={"width": 1400, "height": 900})
+
+        async def achar(seletor, tentativas=10):
+            for _ in range(tentativas):
+                for frame in page.frames:
+                    try:
+                        loc = frame.locator(seletor)
+                        if await loc.count() > 0:
+                            return frame, loc.first
+                    except Exception:
+                        continue
+                await page.wait_for_timeout(800)
+            return None, None
+
+        def norm(s):
+            import unicodedata
+            s = (s or "").lower().replace("º", "").replace("°", "").replace("ª", "").replace(" ", "").replace("/", "")
+            return unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode("ascii")
+
+        # ---- 1. Login ----
+        log.append("🔐 Fazendo login no Portal SESI (Corpore.Net)...")
+        try:
+            await page.goto(URL_SESI)
+            await page.wait_for_timeout(1500)
+            await page.locator("input[type='text']:visible").first.fill(data.usuario)
+            await page.locator("input[type='password']:visible").first.fill(data.senha)
+            await page.locator(
+                "input[type='submit'], button[type='submit'], input[value*='Acessar' i], button:has-text('Acessar')"
+            ).first.click()
+            try:
+                await page.wait_for_url(lambda url: "login" not in url.lower(), timeout=15000)
+            except Exception:
+                pass
+            if "login" in page.url.lower():
+                msg_erro = ""
+                try:
+                    msg_erro = await page.evaluate(
+                        "() => Array.from(document.querySelectorAll('.alert, [class*=error], [id*=lblMsg], span[style*=red]'))"
+                        ".map(e => e.innerText.trim()).filter(t => t).join(' | ')"
+                    )
+                except Exception:
+                    pass
+                log.append("❌ ERRO: o login não foi aceito.")
+                if msg_erro:
+                    log.append(f"📢 Mensagem do site: {msg_erro}")
+                log.append("__ERRO__")
+                log.append("__CONCLUIDO__")
+                await browser.close()
+                return
+            log.append("✅ Login realizado")
+        except Exception as e:
+            log.append(f"❌ ERRO no login: {e}")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        # ---- 2. Diário de classe ----
+        fr_d, diario = await achar("a:has-text('Diário de classe')", tentativas=15)
+        if not diario:
+            log.append("❌ ERRO: link 'Diário de classe' não encontrado após o login")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+        await diario.click()
+        log.append("📋 Abrindo Diário de classe...")
+
+        # ---- 3. Seleciona a turma (radio) ----
+        # Os grupos podem precisar ser expandidos antes de mostrar as turmas
+        fr_t, _ = await achar("input[type='radio']", tentativas=15)
+        if fr_t is None:
+            log.append("❌ ERRO: lista de turmas não apareceu")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        async def selecionar_turma():
+            """Procura o radio cuja linha contenha o texto da turma."""
+            for frame in page.frames:
+                try:
+                    radios = frame.locator("input[type='radio']")
+                    qtd = await radios.count()
+                    for i in range(qtd):
+                        r = radios.nth(i)
+                        texto = await r.evaluate(
+                            "el => (el.closest('tr')?.innerText || el.parentElement?.innerText || '')"
+                        )
+                        if norm(data.turma) in norm(texto):
+                            await r.click()
+                            return texto.strip()[:80]
+                except Exception:
+                    continue
+            return None
+
+        achou = await selecionar_turma()
+        if not achou and data.turma:
+            # Tenta expandir os grupos (cabeçalhos com o ano letivo) e procurar de novo
+            log.append("🔍 Expandindo grupos de turmas...")
+            for frame in page.frames:
+                try:
+                    grupos = frame.locator("tr:has-text('2026'), div:has-text('2026'), td:has-text('ENSINO')")
+                    qtd = min(await grupos.count(), 10)
+                    for i in range(qtd):
+                        try:
+                            await grupos.nth(i).click()
+                            await page.wait_for_timeout(500)
+                        except Exception:
+                            continue
+                except Exception:
+                    continue
+            achou = await selecionar_turma()
+
+        if not achou:
+            if data.turma:
+                log.append(f"❌ ERRO: turma '{data.turma}' não encontrada na lista")
+            else:
+                log.append("❌ ERRO: informe a turma (ex: 6C) — o SESI exige escolher uma")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+        log.append(f"✅ Turma selecionada: {achou}")
+        await page.wait_for_timeout(800)
+
+        # ---- 4. Plano de aula ----
+        _, plano = await achar(
+            "input[value*='Plano de aula' i], button:has-text('Plano de aula'), a:has-text('Plano de aula')",
+            tentativas=10,
+        )
+        if not plano:
+            log.append("❌ ERRO: botão 'Plano de aula' não encontrado")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+        await plano.click()
+        log.append("📑 Abrindo Plano de aula...")
+        await page.wait_for_timeout(1500)
+
+        # ---- 5. Seleciona a etapa (bimestre) ----
+        try:
+            bim_num = int(str(data.bimestre).strip())
+        except ValueError:
+            bim_num = 1
+
+        etapa_ok = False
+        # Tenta primeiro um <select> nativo com as etapas
+        for frame in page.frames:
+            try:
+                selects = frame.locator("select")
+                qtd = await selects.count()
+                for i in range(qtd):
+                    sel = selects.nth(i)
+                    opcoes = await sel.evaluate(
+                        "el => Array.from(el.options).map(o => o.text)"
+                    )
+                    if not any("bimestre" in (o or "").lower() for o in opcoes):
+                        continue
+                    # Acha a opção do bimestre pedido (1º Bimestre, ou a 2ª da lista...)
+                    alvo = None
+                    for o in opcoes:
+                        if f"{bim_num}º" in o or f"{bim_num}°" in o:
+                            alvo = o
+                            break
+                    if alvo is None:
+                        # rótulos sem número (ex: "Faltas do Bimestre" = 2º): usa a posição
+                        bims = [o for o in opcoes if "bimestre" in (o or "").lower()]
+                        if len(bims) >= bim_num:
+                            alvo = bims[bim_num - 1]
+                    if alvo:
+                        await sel.select_option(label=alvo)
+                        log.append(f"📑 Etapa selecionada: {alvo}")
+                        etapa_ok = True
+                        break
+                if etapa_ok:
+                    break
+            except Exception:
+                continue
+
+        if not etapa_ok:
+            # Combo da Totvs que abre uma gradezinha: clica e escolhe a linha
+            fr_c, combo = await achar("input[id*='Etapa' i], select[id*='Etapa' i], [id*='etapa' i]", tentativas=5)
+            if combo:
+                try:
+                    await combo.click()
+                    await page.wait_for_timeout(800)
+                    fr_l, linha = await achar(f"tr:has-text('{bim_num}º Bimestre')", tentativas=3)
+                    if linha is None and bim_num == 2:
+                        fr_l, linha = await achar("tr:has-text('Faltas do Bimestre')", tentativas=3)
+                    if linha:
+                        await linha.click()
+                        log.append(f"📑 Etapa do {bim_num}º bimestre selecionada")
+                        etapa_ok = True
+                except Exception:
+                    pass
+        if not etapa_ok:
+            log.append("⚠️ Não consegui selecionar a etapa — tentando seguir com a etapa padrão")
+
+        # ---- 6. Botão Selecionar ----
+        _, btn_sel = await achar(
+            "input[value='Selecionar'], button:has-text('Selecionar')", tentativas=8
+        )
+        if btn_sel:
+            await btn_sel.click()
+            log.append("✅ Lista de aulas carregada")
+            await page.wait_for_timeout(1500)
+
+        # ---- 7. Preenche as aulas vazias ----
+        preenchidas = 0
+        idx_topico = 0
+        while idx_topico < len(topicos):
+            # Localiza o frame da tabela de aulas e a primeira linha sem conteúdo realizado
+            alvo_info = None
+            fr_tab = None
+            for frame in page.frames:
+                try:
+                    info = await frame.evaluate(
+                        """() => {
+                            const tabelas = document.querySelectorAll('table');
+                            for (const t of tabelas) {
+                                const ths = Array.from(t.querySelectorAll('th, td'))
+                                    .map(c => (c.innerText || '').trim());
+                                if (!ths.some(x => x.includes('Conteúdo realizado'))) continue;
+                                // achou a tabela de aulas
+                                const linhas = Array.from(t.querySelectorAll('tr'));
+                                // identifica o índice da coluna pelo cabeçalho
+                                let header = null;
+                                for (const tr of linhas) {
+                                    const cels = Array.from(tr.children).map(c => (c.innerText || '').trim());
+                                    if (cels.some(x => x === 'Conteúdo realizado')) { header = cels; break; }
+                                }
+                                if (!header) continue;
+                                const colReal = header.indexOf('Conteúdo realizado');
+                                const colData = header.indexOf('Data');
+                                const colIni = header.indexOf('Início');
+                                let i = -1;
+                                for (const tr of linhas) {
+                                    i++;
+                                    const btn = tr.querySelector("input[value='Editar'], button");
+                                    if (!btn) continue;
+                                    const cels = Array.from(tr.children).map(c => (c.innerText || '').trim());
+                                    if (cels.length <= colReal) continue;
+                                    if ((cels[colReal] || '').trim() === '') {
+                                        return {
+                                            linha: i,
+                                            data: colData >= 0 ? cels[colData] : '',
+                                            inicio: colIni >= 0 ? cels[colIni] : ''
+                                        };
+                                    }
+                                }
+                                return { linha: -1 };
+                            }
+                            return null;
+                        }"""
+                    )
+                    if info is not None:
+                        fr_tab = frame
+                        alvo_info = info
+                        break
+                except Exception:
+                    continue
+
+            if fr_tab is None:
+                log.append("❌ ERRO: tabela de aulas não encontrada")
+                break
+            if alvo_info["linha"] < 0:
+                log.append("✅ Nenhuma aula em branco restante — tudo preenchido!")
+                break
+
+            # Clica no Editar da linha vazia
+            try:
+                linha_loc = fr_tab.locator("table tr").nth(alvo_info["linha"])
+                await linha_loc.locator("input[value='Editar'], button:has-text('Editar')").first.click()
+            except Exception as e:
+                log.append(f"⚠️ Erro ao abrir a aula: {e}")
+                break
+
+            # Popup Incluir/Editar registro: Conteúdo (3º textarea) + Lição de Casa (4º)
+            fr_pop, _ = await achar("textarea", tentativas=10)
+            if fr_pop is None:
+                log.append("⚠️ Popup de edição não abriu")
+                break
+            await page.wait_for_timeout(500)
+            try:
+                areas = fr_pop.locator("textarea")
+                qtd_areas = await areas.count()
+                # Ordem observada: Conteúdo Previsto, Aula Online, Conteúdo, Lição de Casa, Observação
+                idx_conteudo = 2 if qtd_areas >= 4 else max(qtd_areas - 2, 0)
+                await areas.nth(idx_conteudo).fill(topicos[idx_topico])
+
+                # Seleciona o horário da aula (o popup não vem preenchido):
+                # usa o horário de início que está na própria linha da tabela
+                hora_ini = (alvo_info.get("inicio") or "").strip()
+                if hora_ini:
+                    horario_ok = False
+                    try:
+                        sels = fr_pop.locator("select")
+                        for i_s in range(await sels.count()):
+                            s = sels.nth(i_s)
+                            opcoes = await s.evaluate("el => Array.from(el.options).map(o => o.text)")
+                            alvo_op = next((o for o in opcoes if hora_ini in (o or "")), None)
+                            if alvo_op:
+                                await s.select_option(label=alvo_op)
+                                horario_ok = True
+                                break
+                    except Exception:
+                        pass
+                    if not horario_ok:
+                        # Combo em grade da Totvs: abre e clica na linha com o horário
+                        try:
+                            _, combo_h = await achar("input[id*='Horario' i], [id*='horario' i]", tentativas=2)
+                            if combo_h:
+                                await combo_h.click()
+                                await page.wait_for_timeout(600)
+                                _, linha_h = await achar(f"tr:has-text('{hora_ini}')", tentativas=3)
+                                if linha_h:
+                                    await linha_h.click()
+                                    horario_ok = True
+                        except Exception:
+                            pass
+                    if not horario_ok:
+                        log.append(f"⚠️ Horário {hora_ini} não selecionado automaticamente")
+                if data.licao_casa and qtd_areas > idx_conteudo + 1:
+                    await areas.nth(idx_conteudo + 1).fill(data.licao_casa)
+                _, salvar = await achar("input[value='Salvar'], button:has-text('Salvar')", tentativas=5)
+                if salvar:
+                    await salvar.click()
+                else:
+                    raise RuntimeError("botão Salvar não encontrado no popup")
+                await page.wait_for_timeout(1200)
+                preenchidas += 1
+                log.append(f"✏️ {alvo_info.get('data', '')} — {topicos[idx_topico][:50]}")
+                idx_topico += 1
+            except Exception as e:
+                log.append(f"⚠️ Erro ao preencher: {e}")
+                break
+
+        log.append(f"📊 {preenchidas} aulas gravadas")
+        log.append("🏁 Automação SESI finalizada!")
+        log.append("__CONCLUIDO__")
+        await browser.close()
+
+
+@app.post("/executar-sesi")
+async def executar_sesi(data: SesiFormData):
+    job_id = str(uuid.uuid4())
+    jobs[job_id] = []
+    asyncio.create_task(run_sesi(job_id, data))
+    return {"job_id": job_id}
+
+
 @app.post("/executar-active")
 async def executar_active(data: ActiveFormData):
     job_id = str(uuid.uuid4())
