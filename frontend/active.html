@@ -402,6 +402,18 @@ Equações do 2º grau - fórmula de Bhaskara
         <span class="status-texto" id="status-atual" style="font-size:0.9rem;">Iniciando...</span>
       </div>
 
+      <!-- Contagem regressiva + placar -->
+      <div style="display:flex;border-bottom:1px solid #ede7f6;text-align:center;">
+        <div style="flex:1;padding:16px 10px;border-right:1px solid #ede7f6;">
+          <div style="font-size:1.6rem;font-weight:800;color:#7b1fa2;" id="countdown">--:--</div>
+          <div style="font-size:0.72rem;color:#999;text-transform:uppercase;letter-spacing:.5px;">tempo restante (estimado)</div>
+        </div>
+        <div style="flex:1;padding:16px 10px;">
+          <div style="font-size:1.6rem;font-weight:800;color:#2e7d32;" id="placar">0 / --</div>
+          <div style="font-size:0.72rem;color:#999;text-transform:uppercase;letter-spacing:.5px;">aulas gravadas</div>
+        </div>
+      </div>
+
       <!-- Frase de espera -->
       <div id="piada-box" style="padding:18px 22px;min-height:56px;font-size:0.92rem;
            color:#5c3d99;line-height:1.55;transition:opacity .4s;background:#fdf6ff;
@@ -409,17 +421,11 @@ Equações do 2º grau - fórmula de Bhaskara
         ☕ Enquanto o robô trabalha, um pensamento para você...
       </div>
 
-      <!-- Mini barra de progresso animada -->
-      <div style="height:3px;background:#ede7f6;overflow:hidden;">
+      <!-- Barra de progresso real -->
+      <div style="height:6px;background:#ede7f6;overflow:hidden;">
         <div id="prog-bar" style="height:100%;width:0%;background:linear-gradient(90deg,#7b1fa2,#e040fb);
-             transition:width 1.5s ease;animation:progresso-indeterminado 2s ease-in-out infinite alternate;"></div>
+             transition:width .8s ease;"></div>
       </div>
-      <style>
-        @keyframes progresso-indeterminado {
-          0%   { margin-left:0%;   width:30%; }
-          100% { margin-left:70%;  width:30%; }
-        }
-      </style>
 
       <!-- Log técnico colapsável -->
       <div style="padding:14px 22px;">
@@ -673,6 +679,67 @@ async function gerarTopicosIA() {
   }
 }
 
+// ---- Contagem regressiva inteligente ----
+let cdTotal = 0;        // total de aulas a gravar
+let cdFeitas = 0;       // aulas já gravadas nesta execução
+let cdJaExistentes = 0; // aulas que já estavam no diário
+let cdInicio = 0;       // timestamp do início
+let cdPrimeiraAula = 0; // timestamp da 1ª aula gravada (calibração)
+let cdRestanteSeg = 0;  // segundos restantes exibidos
+let cdTimer = null;
+
+function cdIniciar(totalAulas) {
+  cdTotal = totalAulas;
+  cdFeitas = 0;
+  cdJaExistentes = 0;
+  cdInicio = Date.now();
+  cdPrimeiraAula = 0;
+  // Estimativa inicial: ~35s de login/navegação + ~4s por aula
+  cdRestanteSeg = 35 + totalAulas * 4;
+  atualizarPlacar();
+  if (cdTimer) clearInterval(cdTimer);
+  cdTimer = setInterval(() => {
+    if (cdRestanteSeg > 0) cdRestanteSeg--;
+    const el = document.getElementById('countdown');
+    if (el) {
+      const m = Math.floor(cdRestanteSeg / 60);
+      const s = cdRestanteSeg % 60;
+      el.textContent = `${m}:${String(s).padStart(2, '0')}`;
+    }
+  }, 1000);
+}
+
+function cdAulaGravada() {
+  cdFeitas++;
+  const agora = Date.now();
+  if (!cdPrimeiraAula) cdPrimeiraAula = agora;
+  // Recalibra: ritmo real medido × aulas que faltam
+  const faltam = Math.max(cdTotal - cdJaExistentes - cdFeitas, 0);
+  if (cdFeitas >= 2) {
+    const ritmo = (agora - cdPrimeiraAula) / 1000 / (cdFeitas - 1);
+    cdRestanteSeg = Math.round(faltam * ritmo);
+  } else {
+    cdRestanteSeg = faltam * 4;
+  }
+  atualizarPlacar();
+}
+
+function atualizarPlacar() {
+  const placar = document.getElementById('placar');
+  const total = Math.max(cdTotal - cdJaExistentes, 0);
+  if (placar) placar.textContent = `${cdFeitas} / ${total || '--'}`;
+  const bar = document.getElementById('prog-bar');
+  if (bar && total > 0) bar.style.width = `${Math.min(cdFeitas / total * 100, 100)}%`;
+}
+
+function cdFinalizar() {
+  if (cdTimer) { clearInterval(cdTimer); cdTimer = null; }
+  const el = document.getElementById('countdown');
+  if (el) el.textContent = '0:00';
+  const bar = document.getElementById('prog-bar');
+  if (bar) bar.style.width = '100%';
+}
+
 function addLog(msg, tipo = '') {
   const box = document.getElementById('log-box');
   const linha = document.createElement('div');
@@ -724,6 +791,7 @@ async function executar() {
   document.getElementById('tela-form').style.display = 'none';
   document.getElementById('tela-progresso').style.display = 'block';
   iniciarPiadas();
+  cdIniciar(totalAulasCalculado || topicos.length);
 
   try {
     const resp = await fetch(`${BACKEND_URL}/executar-active`, {
@@ -739,6 +807,9 @@ async function executar() {
       if (msg === '__CONCLUIDO__') { sse.close(); mostrarSucesso(); }
       else if (msg === '__ERRO__') { sse.close(); mostrarFalha(); }
       else {
+        if (msg.startsWith('✏️')) cdAulaGravada();
+        const mEx = msg.match(/Já existem (\d+) aulas/);
+        if (mEx) { cdJaExistentes = parseInt(mEx[1]); atualizarPlacar(); }
         const tipo = msg.includes('ERRO') ? 'erro'
           : (msg.includes('✅') || msg.includes('OK')) ? 'ok' : 'info';
         addLog(msg, tipo);
@@ -807,6 +878,7 @@ function pararPiadas() {
 
 function mostrarFalha() {
   pararPiadas();
+  cdFinalizar();
   document.querySelector('#tela-progresso .typing-anim').style.display = 'none';
   document.querySelector('#tela-progresso .titulo').textContent = '❌ A automação falhou';
   document.querySelector('#tela-progresso .subtitulo').textContent = 'Veja os erros no relatório abaixo e tente novamente';
@@ -815,6 +887,7 @@ function mostrarFalha() {
 
 function mostrarSucesso() {
   pararPiadas();
+  cdFinalizar();
   // Mantém o log visível e mostra o sucesso acima dele
   document.querySelector('#tela-progresso .typing-anim').style.display = 'none';
   document.querySelector('#tela-progresso .titulo').textContent = 'Automação finalizada';
