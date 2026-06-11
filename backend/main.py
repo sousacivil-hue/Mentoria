@@ -1443,11 +1443,17 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                 await page.locator(
                     "button[type='submit'], button:has-text('Entrar'), button:has-text('Acessar'), input[type='submit']"
                 ).first.click()
-                await page.wait_for_timeout(5000)
-                # se a senha ainda está na tela, o login falhou
-                ainda_login = page.locator("input[type='password']").first
-                if await ainda_login.count() > 0 and await ainda_login.is_visible():
+                # espera a tela de login sair (até 25s)
+                saiu = False
+                for _ in range(25):
+                    await page.wait_for_timeout(1000)
+                    ainda_login = page.locator("input[type='password']").first
+                    if await ainda_login.count() == 0 or not await ainda_login.is_visible():
+                        saiu = True
+                        break
+                if not saiu:
                     raise RuntimeError("usuário ou senha incorretos (a tela de login não saiu).")
+                await page.wait_for_timeout(3000)
             log.append("✅ Login realizado")
         except Exception as e:
             log.append(f"❌ ERRO no login: {e}")
