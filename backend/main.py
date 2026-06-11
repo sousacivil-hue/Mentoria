@@ -1445,15 +1445,15 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                 else:
                     await senha_input.press("Enter")
 
-                # aguarda o Angular redirecionar para fora do #/login (até 30s)
+                # aguarda o menu lateral aparecer (indica login OK) — até 30s
                 for _ in range(30):
                     await page.wait_for_timeout(1000)
-                    if "login" not in page.url.lower():
+                    if await page.locator(".po-menu-item, po-menu").count() > 0:
                         break
                 else:
-                    raise RuntimeError("portal não saiu da tela de login após o clique em Entrar.")
-                await page.wait_for_timeout(3000)
-            log.append("✅ Login realizado — URL: " + page.url)
+                    raise RuntimeError("menu do portal não apareceu — verifique usuário e senha.")
+                await page.wait_for_timeout(2000)
+            log.append("✅ Login realizado")
         except Exception as e:
             log.append(f"❌ ERRO no login: {e}")
             log.append("__ERRO__")
@@ -1466,12 +1466,6 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
         try:
             await page.goto(data.url_plano)
             await page.wait_for_timeout(12000)
-            # se caiu no login de novo, aguarda redirecionar e tenta de novo
-            if "login" in page.url.lower():
-                log.append("🔄 Aguardando redirecionamento do portal...")
-                await page.wait_for_timeout(8000)
-                await page.goto(data.url_plano)
-                await page.wait_for_timeout(12000)
             log.append(f"🧭 URL atual: {page.url}")
             # aguarda a tabela Angular carregar (até 40s)
             total = 0
