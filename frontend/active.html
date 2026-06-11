@@ -808,6 +808,7 @@ async function executar() {
   document.getElementById('tela-form').style.display = 'none';
   document.getElementById('tela-progresso').style.display = 'block';
   resetFrases();
+  modoMandoAtivo = false;
   if (document.getElementById('modo-mando').checked) ativarModoMando();
   iniciarPiadas();
   cdIniciar(totalAulasCalculado || topicos.length);
@@ -851,7 +852,9 @@ const FRASES_MANDO = [
   '🪐 "Posso trazê-lo aquecido… ou posso trazê-lo preenchido."',
   '🪐 Capítulo de hoje: O Professor Que Recuperou Seu Domingo.',
 ];
+let modoMandoAtivo = false;
 function ativarModoMando() {
+  modoMandoAtivo = true;
   // Tema espacial na tela de progresso
   const card = document.querySelector('#tela-progresso .card');
   if (card) card.style.background = '#0d1117';
@@ -943,9 +946,28 @@ function pararPiadas() {
 function mostrarFalha() {
   pararPiadas();
   cdFinalizar();
-  document.querySelector('#tela-progresso .typing-anim').style.display = 'none';
-  document.querySelector('#tela-progresso .titulo').textContent = '❌ A automação falhou';
-  document.querySelector('#tela-progresso .subtitulo').textContent = 'Veja os erros no relatório abaixo e tente novamente';
+  // Robô "morto": para a animação e mostra a versão nocauteada
+  const anim = document.querySelector('#tela-progresso .typing-anim');
+  if (anim) {
+    anim.innerHTML = modoMandoAtivo
+      ? // Capacete do Mando caído de lado, visor com X X e língua pra fora
+        '<svg width="46" height="46" viewBox="0 0 64 64" style="transform:rotate(65deg);">' +
+        '<path d="M32 4 C16 4 10 16 10 28 L10 44 C10 50 14 56 20 58 L44 58 C50 56 54 50 54 44 L54 28 C54 16 48 4 32 4 Z" fill="#9aa5b1"/>' +
+        '<rect x="13" y="24" width="38" height="14" rx="4" fill="#3d4654"/>' +
+        // olhos em X X no visor
+        '<path d="M20 27 L26 33 M26 27 L20 33 M38 27 L44 33 M44 27 L38 33" stroke="#ff5252" stroke-width="3" stroke-linecap="round"/>' +
+        // língua pra fora
+        '<path d="M30 53 L34 53 L34 60 C34 62 32 63 32 63 C32 63 30 62 30 60 Z" fill="#ef6292"/>' +
+        '</svg>'
+      : '<span style="font-size:2.4rem;">😵</span>';
+    anim.style.display = 'flex';
+  }
+  document.querySelector('#tela-progresso .titulo').textContent = modoMandoAtivo
+    ? '❌ O caçador caiu em combate'
+    : '❌ A automação falhou';
+  document.querySelector('#tela-progresso .subtitulo').textContent = modoMandoAtivo
+    ? 'Mas mandalorianos sempre voltam. Veja o relatório e tente de novo.'
+    : 'Veja os erros no relatório abaixo e tente novamente';
   addLog('Automação encerrada com falha.', 'erro');
 }
 
