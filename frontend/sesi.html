@@ -197,33 +197,21 @@
     <!-- 2b: Horários das aulas -->
     <div class="card">
       <h2><span class="step-badge">3</span> Em quais aulas do dia você dá aula nessa turma?</h2>
-      <div class="dica" style="margin-bottom:12px;">O portal exige escolher o horário de cada aula. Informe o número da aula no dia (1ª a 6ª). Se tiver mais de uma no mesmo dia, separe por vírgula (ex: 2,3).</div>
-      <div class="row">
-        <div>
-          <label>Segunda</label>
-          <input type="text" id="hor-1" placeholder="Ex: 2,3">
-        </div>
-        <div>
-          <label>Terça</label>
-          <input type="text" id="hor-2" placeholder="">
-        </div>
-        <div>
-          <label>Quarta</label>
-          <input type="text" id="hor-3" placeholder="">
-        </div>
-      </div>
-      <div class="row" style="margin-top:12px;">
-        <div>
-          <label>Quinta</label>
-          <input type="text" id="hor-4" placeholder="">
-        </div>
-        <div>
-          <label>Sexta</label>
-          <input type="text" id="hor-5" placeholder="">
-        </div>
-        <div></div>
-      </div>
+      <div class="dica" style="margin-bottom:12px;">O portal exige escolher o horário de cada aula. Toque nos números das aulas que são suas em cada dia (1ª a 6ª aula).</div>
+      <div id="grade-horarios"></div>
     </div>
+    <style>
+      .linha-dia { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+      .linha-dia .nome-dia { width:64px; font-size:0.85rem; font-weight:700; color:#555; flex-shrink:0; }
+      .chips-aulas { display:flex; gap:6px; flex-wrap:wrap; }
+      .chip-aula {
+        width:42px; height:42px; border-radius:10px; border:1.5px solid #ddd;
+        background:#fafafa; color:#888; font-size:0.95rem; font-weight:700;
+        cursor:pointer; display:flex; align-items:center; justify-content:center;
+        user-select:none; transition:all .15s;
+      }
+      .chip-aula.ativa { background:#c62828; border-color:#c62828; color:white; }
+    </style>
 
     <!-- 3: Conteúdos -->
     <div class="card">
@@ -363,6 +351,33 @@ Tipos de fecundação e desenvolvimento
 <script>
 const BACKEND_URL = location.protocol === 'file:' ? 'http://localhost:8000' : '';
 
+// Monta a grade de horários: 5 dias × 6 aulas em chips clicáveis
+(function montarGradeHorarios() {
+  const dias = { 1: 'Segunda', 2: 'Terça', 3: 'Quarta', 4: 'Quinta', 5: 'Sexta' };
+  const grade = document.getElementById('grade-horarios');
+  for (const [num, nome] of Object.entries(dias)) {
+    const linha = document.createElement('div');
+    linha.className = 'linha-dia';
+    let chips = '';
+    for (let a = 1; a <= 6; a++) {
+      chips += `<div class="chip-aula" data-dia="${num}" data-aula="${a}" onclick="this.classList.toggle('ativa')">${a}ª</div>`;
+    }
+    linha.innerHTML = `<div class="nome-dia">${nome}</div><div class="chips-aulas">${chips}</div>`;
+    grade.appendChild(linha);
+  }
+})();
+
+function getHorarios() {
+  const horarios = {};
+  document.querySelectorAll('.chip-aula.ativa').forEach(c => {
+    const d = c.dataset.dia;
+    if (!horarios[d]) horarios[d] = [];
+    horarios[d].push(parseInt(c.dataset.aula));
+  });
+  for (const d in horarios) horarios[d].sort((a, b) => a - b);
+  return horarios;
+}
+
 async function gerarTopicosIA() {
   const disciplina = document.getElementById('ia-disciplina').value.trim();
   const serie = document.getElementById('ia-serie').value.trim();
@@ -456,12 +471,9 @@ async function executar() {
   if (topicos.length === 0) { alert('Cole seus tópicos de conteúdo.'); return; }
 
   // horários por dia da semana: {1: [2,3], 3: [1], ...}
-  const horarios = {};
-  for (let d = 1; d <= 5; d++) {
-    const val = document.getElementById(`hor-${d}`).value.trim();
-    if (val) {
-      horarios[d] = val.split(',').map(s => parseInt(s.trim())).filter(n => n >= 1 && n <= 6);
-    }
+  const horarios = getHorarios();
+  if (Object.keys(horarios).length === 0) {
+    alert('Selecione em quais aulas do dia você dá aula (passo 3).'); return;
   }
 
   const dados = {
