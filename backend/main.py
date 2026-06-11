@@ -533,7 +533,33 @@ async def run_active(job_id: str, data: ActiveFormData):
             await page.locator(
                 "button[type='submit'], input[type='submit'], button:has-text('Entrar'), button:has-text('Acessar')"
             ).first.click()
-            await page.wait_for_timeout(4000)
+
+            # Aguarda sair da página de login (até 15s)
+            for _ in range(10):
+                await page.wait_for_timeout(1500)
+                if "/login" not in page.url:
+                    break
+
+            if "/login" in page.url:
+                # Login não avançou — captura a mensagem de erro do site
+                msg_erro = ""
+                try:
+                    msg_erro = await page.evaluate(
+                        "() => Array.from(document.querySelectorAll("
+                        "'.alert, .error, .erro, [class*=alert], [class*=error], [role=alert], .toast, .swal2-content'"
+                        ")).map(e => e.innerText.trim()).filter(t => t).join(' | ')"
+                    )
+                except Exception:
+                    pass
+                log.append("❌ ERRO: o login não foi aceito — a página continuou na tela de login.")
+                if msg_erro:
+                    log.append(f"📢 Mensagem do site: {msg_erro}")
+                log.append("💡 Confira usuário e senha (teste entrar manualmente nesse mesmo link) e tente de novo.")
+                log.append("__ERRO__")
+                log.append("__CONCLUIDO__")
+                await browser.close()
+                return
+
             log.append(f"✅ Login realizado — {page.url}")
         except Exception as e:
             log.append(f"❌ ERRO no login: {e}")
