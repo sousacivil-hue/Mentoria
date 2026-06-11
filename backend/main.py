@@ -642,7 +642,22 @@ async def run_active(job_id: str, data: ActiveFormData):
                     break
             if fr2 is not None:
                 log.append(f"📑 Fase encontrada: {rotulo_achado}")
-                linha_bim = fr2.locator(f"tr:has-text('{rotulo_achado}')").first
+                # Tabelas aninhadas: várias <tr> podem conter o texto.
+                # Escolhe a MENOR (a linha específica, não a tabela inteira).
+                candidatas = fr2.locator(f"tr:has-text('{rotulo_achado}')")
+                qtd_tr = await candidatas.count()
+                linha_bim = None
+                menor_tam = None
+                for i in range(qtd_tr):
+                    tr = candidatas.nth(i)
+                    if await tr.locator("a:has-text('Registro de aulas')").count() == 0:
+                        continue
+                    tam = len((await tr.inner_text()) or "")
+                    if menor_tam is None or tam < menor_tam:
+                        menor_tam = tam
+                        linha_bim = tr
+                if linha_bim is None:
+                    raise RuntimeError(f"Linha de '{rotulo_achado}' sem link de Registro de aulas")
                 reg = linha_bim.locator("a:has-text('Registro de aulas')").first
                 await reg.wait_for(timeout=8000)
                 await reg.click()
