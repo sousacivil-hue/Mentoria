@@ -133,8 +133,37 @@ async def preencher_diario():
         await browser.close()
 
 
+async def _fechar_modal_aberto(page):
+    """Fecha qualquer modal que esteja aberto bloqueando a tela."""
+    overlay = page.locator(".po-modal-overlay")
+    for _ in range(10):
+        if await overlay.count() == 0:
+            return True
+        # Tenta Cancelar, Voltar, Fechar ou o X do modal
+        for sel in ("po-modal button:has-text('Cancelar')",
+                    "po-modal button:has-text('Voltar')",
+                    "po-modal button:has-text('Fechar')",
+                    "po-modal .po-modal-header-close-button, po-modal [icon='po-icon-close']"):
+            try:
+                b = page.locator(sel).first
+                if await b.count() > 0 and await b.is_visible():
+                    await b.click()
+                    await page.wait_for_timeout(1200)
+                    break
+            except Exception:
+                continue
+        else:
+            await page.keyboard.press("Escape")
+            await page.wait_for_timeout(1200)
+    return await overlay.count() == 0
+
+
 async def _preencher_aula(page, numero_aula: int, conteudo: str):
     """Clica em Editar da aula N, preenche o conteúdo e salva."""
+
+    # ── PASSO 0: Garante que nenhum modal anterior ficou aberto ──
+    if not await _fechar_modal_aberto(page):
+        raise RuntimeError("Modal anterior nao fechou - feche manualmente e continue")
 
     # ── PASSO 1: Acha o botão/link Editar da linha correta ──
     # Estratégia: pega todos os elementos clicáveis de "Editar" e clica no N-ésimo
@@ -193,8 +222,13 @@ async def _preencher_aula(page, numero_aula: int, conteudo: str):
     await salvar.wait_for(timeout=5000)
     await salvar.click()
 
-    # Aguarda modal fechar
-    await page.wait_for_timeout(2000)
+    # Aguarda o modal fechar de verdade (overlay sumir)
+    overlay = page.locator(".po-modal-overlay")
+    for _ in range(15):
+        await page.wait_for_timeout(1000)
+        if await overlay.count() == 0:
+            return
+    raise RuntimeError("Modal nao fechou apos Salvar - verifique se a aula foi salva")
 
 
 if __name__ == "__main__":
