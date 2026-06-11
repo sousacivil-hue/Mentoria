@@ -524,7 +524,7 @@ async def run_active(job_id: str, data: ActiveFormData):
         log.append("🔐 Fazendo login no ActiveSoft...")
         try:
             await page.goto(URL_ACTIVE)
-            await page.wait_for_timeout(3000)
+            await page.wait_for_timeout(1500)
             usuario_input = page.locator(
                 "input[name='usuario'], input[name='login'], input[name='username'], input[type='text']"
             ).first
@@ -569,7 +569,7 @@ async def run_active(job_id: str, data: ActiveFormData):
 
         async def achar(seletor, tentativas=10):
             """Procura um elemento na página e em todos os frames internos.
-            Repete por até `tentativas` x 1,5s para aguardar a página carregar."""
+            Repete por até `tentativas` x 0,8s para aguardar a página carregar."""
             for _ in range(tentativas):
                 for frame in page.frames:
                     try:
@@ -578,37 +578,23 @@ async def run_active(job_id: str, data: ActiveFormData):
                             return frame, loc.first
                     except Exception:
                         continue
-                await page.wait_for_timeout(1500)
+                await page.wait_for_timeout(800)
             return None, None
 
-        # ---- DIAGNÓSTICO: o que o robô enxerga na página ----
-        await page.wait_for_timeout(4000)
-        log.append(f"🔍 URL atual: {page.url}")
-        log.append(f"🔍 Frames na página: {len(page.frames)}")
-        for fi, frame in enumerate(page.frames):
-            try:
-                textos = await frame.evaluate(
-                    "() => Array.from(document.querySelectorAll('button, input[type=button], "
-                    "input[type=submit], a')).map(e => (e.innerText || e.value || '').trim())"
-                    ".filter(t => t).slice(0, 25)"
-                )
-                if textos:
-                    log.append(f"🔍 Frame {fi}: {textos}")
-            except Exception:
-                continue
-
         # ---- 1. Clica em EXIBIR (filtro de período) ----
-        frame_ex, exibir = await achar("button:has-text('EXIBIR'), input[value*='EXIBIR' i], a:has-text('EXIBIR'), *[onclick]:has-text('EXIBIR')")
+        frame_ex, exibir = await achar(
+            "button:has-text('EXIBIR'), input[value*='EXIBIR' i], a:has-text('EXIBIR'), *[onclick]:has-text('EXIBIR')",
+            tentativas=6,
+        )
         if exibir:
             await exibir.click()
-            await page.wait_for_timeout(3000)
+            await page.wait_for_timeout(1500)
             log.append("✅ Período exibido")
         else:
             log.append("⚠️ Botão EXIBIR não encontrado — tentando seguir mesmo assim")
 
         # ---- 2. Descobre as turmas disponíveis (procurando em frames) ----
         url_lista_turmas = page.url
-        await page.wait_for_timeout(2000)
         frame_diario, _ = await achar("a:has-text('Diário de classe')")
         if frame_diario is None:
             log.append("❌ ERRO: nenhum 'Diário de classe' encontrado na página")
@@ -624,7 +610,7 @@ async def run_active(job_id: str, data: ActiveFormData):
             fr, _ = await achar("a:has-text('Diário de classe')")
             links = fr.locator("a:has-text('Diário de classe')")
             await links.nth(indice_link).click()
-            await page.wait_for_timeout(3000)
+            await page.wait_for_timeout(1500)
 
             # Registro de aulas do bimestre (pode abrir em frame ou nova página)
             # Cada colégio nomeia diferente: "1º BIMESTRE", "1ª UNIDADE", "1ª ETAPA"...
@@ -694,7 +680,7 @@ async def run_active(job_id: str, data: ActiveFormData):
                             except Exception:
                                 continue
                         raise RuntimeError("Tabela de bimestres não encontrada")
-            await page.wait_for_timeout(3000)
+            await page.wait_for_timeout(1500)
             log.append(f"✅ Registro de aulas aberto")
 
             # Localiza o frame onde está a tabela de aulas
@@ -753,7 +739,7 @@ async def run_active(job_id: str, data: ActiveFormData):
                     "button:has-text('Gravar'), input[value*='Gravar' i]"
                 ).first
                 await gravar.click()
-                await page.wait_for_timeout(2500)
+                await page.wait_for_timeout(1200)
 
                 preenchidas += 1
                 log.append(f"✏️ {data_br} — {aula['conteudo'][:50]}")
@@ -766,13 +752,13 @@ async def run_active(job_id: str, data: ActiveFormData):
         for idx in range(total_turmas):
             # Volta para a lista de turmas
             await page.goto(url_lista_turmas)
-            await page.wait_for_timeout(2500)
+            await page.wait_for_timeout(1200)
             fr_check, _ = await achar("a:has-text('Diário de classe')")
             if fr_check is None:
                 _, exibir2 = await achar("button:has-text('EXIBIR'), input[value*='EXIBIR' i]")
                 if exibir2:
                     await exibir2.click()
-                    await page.wait_for_timeout(3000)
+                    await page.wait_for_timeout(1500)
                 fr_check, _ = await achar("a:has-text('Diário de classe')")
             if fr_check is None:
                 log.append(f"⚠️ Não consegui voltar à lista de turmas")
