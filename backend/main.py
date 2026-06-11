@@ -909,18 +909,16 @@ async def gerar_topicos(req: GerarTopicosRequest):
                 "anthropic-version": "2023-06-01",
             }
         else:
-            # API do Gemini (Google)
-            url = (
-                "https://generativelanguage.googleapis.com/v1beta/models/"
-                f"gemini-2.5-flash-lite:generateContent?key={api_key}"
-            )
+            # API do Gemini (Google) — tenta vários modelos gratuitos
+            # (cada um tem cota diária própria; se um esgotar, usa o próximo)
             body = json.dumps({
                 "contents": [{"parts": [{"text": prompt}]}]
             }).encode("utf-8")
             headers = {"Content-Type": "application/json"}
+            url = None  # definido no loop de modelos abaixo
 
-        def chamar():
-            reqobj = urllib.request.Request(url, data=body, headers=headers)
+        def chamar(url_chamada):
+            reqobj = urllib.request.Request(url_chamada, data=body, headers=headers)
             try:
                 with urllib.request.urlopen(reqobj, timeout=60) as resp:
                     return json.loads(resp.read().decode("utf-8"))
@@ -928,7 +926,35 @@ async def gerar_topicos(req: GerarTopicosRequest):
                 detalhe = e.read().decode("utf-8", errors="ignore")
                 raise RuntimeError(f"HTTP {e.code}: {detalhe[:600]}")
 
-        resultado = await asyncio.to_thread(chamar)
+        if api_key.startswith("sk-ant"):
+            resultado = await asyncio.to_thread(chamar, url)
+        else:
+            MODELOS_GEMINI = [
+                "gemini-2.5-flash-lite",
+                "gemini-2.0-flash-lite",
+                "gemini-2.0-flash",
+                "gemini-2.5-flash",
+            ]
+            resultado = None
+            ultimo_erro = None
+            for modelo in MODELOS_GEMINI:
+                url_m = (
+                    "https://generativelanguage.googleapis.com/v1beta/models/"
+                    f"{modelo}:generateContent?key={api_key}"
+                )
+                try:
+                    resultado = await asyncio.to_thread(chamar, url_m)
+                    break
+                except RuntimeError as e:
+                    ultimo_erro = e
+                    if "429" in str(e):
+                        continue  # cota esgotada nesse modelo — tenta o próximo
+                    raise
+            if resultado is None:
+                raise RuntimeError(
+                    "Cota diária gratuita do Gemini esgotada em todos os modelos. "
+                    f"Tente novamente amanhã ou cole sua lista de tópicos manualmente. ({ultimo_erro})"
+                )
 
         if api_key.startswith("sk-ant"):
             texto = resultado["content"][0]["text"]
