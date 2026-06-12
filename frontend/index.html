@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Automatizador de Diário — Você planeja. Você ensina. A gente só digita.</title>
+<title>SóDigita — Você planeja. Você ensina. A gente só digita.</title>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:'Segoe UI', Arial, sans-serif; background:#0D1117; color:#E6EAF2; line-height:1.6; }
@@ -53,13 +53,17 @@
   .sistema p { color:#8B93A7; font-size:14px; margin:10px 0 22px; }
 
   /* PREÇO */
-  .preco-box { max-width:420px; margin:0 auto; background:#161B26; border:2px solid transparent; border-radius:20px; padding:40px 34px; text-align:center; background-image:linear-gradient(#161B26,#161B26),linear-gradient(135deg,#7C5CFF,#00D4AA); background-origin:border-box; background-clip:padding-box,border-box; }
-  .preco-box .gratis { color:#00D4AA; font-weight:700; font-size:15px; }
-  .preco-box .valor { font-size:54px; font-weight:800; color:#fff; margin:10px 0 2px; }
-  .preco-box .valor small { font-size:18px; color:#8B93A7; font-weight:400; }
-  .preco-box ul { list-style:none; text-align:left; margin:24px 0 28px; }
-  .preco-box li { padding:7px 0; color:#C3CAD8; font-size:15px; }
-  .preco-box li::before { content:'✓ '; color:#00D4AA; font-weight:700; }
+  .planos { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; max-width:980px; margin:0 auto; }
+  .plano { background:#161B26; border:1px solid #232A38; border-radius:20px; padding:32px 26px; text-align:center; position:relative; }
+  .plano.destaque { border-color:#7C5CFF; }
+  .plano .badge { position:absolute; top:-14px; left:50%; transform:translateX(-50%); background:linear-gradient(90deg,#7C5CFF,#00D4AA); color:#0D1117; font-size:12px; font-weight:800; padding:4px 16px; border-radius:20px; white-space:nowrap; }
+  .plano h3 { color:#fff; font-size:18px; font-weight:800; margin-bottom:8px; }
+  .plano .inclui { color:#8B93A7; font-size:13px; margin-bottom:18px; min-height:40px; }
+  .plano .valor { font-size:42px; font-weight:800; color:#fff; }
+  .plano .valor small { font-size:16px; color:#8B93A7; font-weight:400; }
+  .plano ul { list-style:none; text-align:left; margin:18px 0 24px; }
+  .plano li { padding:6px 0; color:#C3CAD8; font-size:14px; border-bottom:1px solid #1C2330; }
+  .plano li::before { content:'✓ '; color:#00D4AA; font-weight:700; }
 
   /* ANÚNCIO + RODAPÉ */
   #anuncio { max-width:720px; margin:30px auto; min-height:90px; border:1px dashed rgba(255,255,255,.12); border-radius:12px; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.25); font-size:13px; }
@@ -70,7 +74,7 @@
 <body>
 
 <div class="hero">
-  <div class="logo-topo">📓 Automatizador <span class="grad-texto">de Diário</span> <span class="raio">⚡</span></div>
+  <div class="logo-topo">✏️ <span class="grad-texto">SóDigita</span> <span class="raio">⚡</span></div>
   <h1>São <span class="grad-texto">450 aulas</span> para registrar<br>nesse bimestre.</h1>
   <p class="slogan">Ou <b>um clique</b>. Você planeja. Você ensina. <b>A gente só digita.</b></p>
   <div class="botoes-hero">
@@ -151,24 +155,61 @@
 </div>
 
 <div class="secao">
-  <h2>Quanto custa</h2>
-  <div class="preco-box">
-    <div class="gratis">🎁 Teste grátis em 1 turma — sem cartão</div>
-    <div class="valor">R$ 29,90<small>/mês</small></div>
-    <ul>
-      <li>Turmas ilimitadas</li>
-      <li>Diário, chamada e lançamento de notas</li>
-      <li>Sugestão de conteúdos alinhada à BNCC</li>
-      <li>Suporte direto no WhatsApp</li>
-    </ul>
-    <a class="btn btn-primario" href="https://wa.me/5579991075326?text=Quero%20assinar%20o%20Automatizador%20de%20Di%C3%A1rio!" target="_blank">Assinar pelo WhatsApp</a>
+  <h2>Planos e preços</h2>
+  <p class="sub">Escolha só o que você precisa — ou leve tudo pela metade do preço.</p>
+  <div class="planos">
+    <div class="plano">
+      <h3>📓 Diário</h3>
+      <p class="inclui">Preenchimento automático do diário de classe</p>
+      <div class="valor">R$ 19,90<small>/mês</small></div>
+      <ul>
+        <li>Turmas ilimitadas</li>
+        <li>Calendário com feriados automáticos</li>
+        <li>Sugestão de tópicos (BNCC)</li>
+      </ul>
+      <a class="btn btn-primario" style="width:100%;display:block;" href="https://wa.me/5579991075326?text=Quero%20o%20plano%20Di%C3%A1rio%20do%20S%C3%B3Digita!" target="_blank">Assinar</a>
+    </div>
+    <div class="plano">
+      <h3>🔢 Notas</h3>
+      <p class="inclui">Lançamento automático de notas por turma</p>
+      <div class="valor">R$ 19,90<small>/mês</small></div>
+      <ul>
+        <li>Regra de média configurável</li>
+        <li>Lista de exceções por aluno</li>
+        <li>Pula quem já tem nota</li>
+      </ul>
+      <a class="btn btn-primario" style="width:100%;display:block;" href="https://wa.me/5579991075326?text=Quero%20o%20plano%20Notas%20do%20S%C3%B3Digita!" target="_blank">Assinar</a>
+    </div>
+    <div class="plano">
+      <h3>📋 Faltas</h3>
+      <p class="inclui">Registro automático de frequência</p>
+      <div class="valor">R$ 19,90<small>/mês</small></div>
+      <ul>
+        <li>Marca presença em todas as colunas</li>
+        <li>Grava e avança automaticamente</li>
+        <li>Turmas ilimitadas</li>
+      </ul>
+      <a class="btn btn-primario" style="width:100%;display:block;" href="https://wa.me/5579991075326?text=Quero%20o%20plano%20Faltas%20do%20S%C3%B3Digita!" target="_blank">Assinar</a>
+    </div>
+    <div class="plano destaque">
+      <div class="badge">🔥 Mais popular</div>
+      <h3>⚡ Completo</h3>
+      <p class="inclui">Diário + Notas + Faltas — tudo automatizado</p>
+      <div class="valor">R$ 39,90<small>/mês</small></div>
+      <ul>
+        <li>Tudo dos 3 planos acima</li>
+        <li>Economia de R$ 19,80/mês</li>
+        <li>Suporte prioritário no WhatsApp</li>
+      </ul>
+      <a class="btn btn-primario" style="width:100%;display:block;" href="https://wa.me/5579991075326?text=Quero%20o%20plano%20Completo%20do%20S%C3%B3Digita!" target="_blank">Assinar agora</a>
+    </div>
   </div>
 </div>
 
 <div id="anuncio">Espaço publicitário</div>
 
 <footer>
-  Automatizador de Diário ⚡ — Você planeja. Você ensina. A gente só digita.<br>
+  ✏️ SóDigita ⚡ — Você planeja. Você ensina. A gente só digita.<br>
   💬 WhatsApp: <a href="https://wa.me/5579991075326">(79) 99107-5326</a>
 </footer>
 

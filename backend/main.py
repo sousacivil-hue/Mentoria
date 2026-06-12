@@ -880,9 +880,254 @@ def _buscar_manchetes() -> list[str]:
     return itens
 
 
+class ActiveNotasFormData(BaseModel):
+    url_colegio: str = "https://siga.activesoft.com.br/login/"
+    usuario: str
+    senha: str
+    turma: str = ""        # ex: "8A", "8B" — vazio = todas
+    fase: str = ""         # ex: "AV3", "2ª Unidade" — vazio = não filtra
+    media_minima: float = 7.0
+    nota_alta: str = "5,0"
+    nota_baixa: str = "4,0"
+    nota_excecao: str = "3,0"
+    excecoes: list[str] = []   # trechos do nome (minúsculo sem acento)
+    pular_preenchidas: bool = True
+
+
+async def run_active_notas(job_id: str, data: ActiveNotasFormData):
+    import unicodedata
+    from playwright.async_api import async_playwright
+
+    log = jobs[job_id]
+
+    def sem_acento(s: str) -> str:
+        return "".join(
+            c for c in unicodedata.normalize("NFD", s)
+            if unicodedata.category(c) != "Mn"
+        ).lower()
+
+    def para_num(txt: str):
+        try:
+            return float((txt or "").strip().replace(",", "."))
+        except ValueError:
+            return None
+
+    excecoes_norm = [sem_acento(e) for e in data.excecoes]
+
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(headless=True)
+        page = await browser.new_page(viewport={"width": 1400, "height": 900})
+
+        # ── LOGIN ──────────────────────────────────────────────────────────────
+        log.append("🔐 Fazendo login no ActiveSoft...")
+        try:
+            await page.goto(data.url_colegio)
+            await page.wait_for_timeout(3000)
+            await page.locator(
+                "input[name='login'], input[name='usuario'], input[type='text']"
+            ).first.fill(data.usuario)
+            await page.locator("input[type='password']").first.fill(data.senha)
+            await page.locator(
+                "button[type='submit'], input[type='submit'], "
+                "button:has-text('Entrar'), button:has-text('Acessar')"
+            ).first.click()
+            await page.wait_for_timeout(4000)
+            log.append(f"✅ Login realizado — {page.url}")
+        except Exception as e:
+            log.append(f"❌ ERRO no login: {e}")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        async def achar(seletor, tentativas=10):
+            for _ in range(tentativas):
+                for frame in page.frames:
+                    try:
+                        loc = frame.locator(seletor)
+                        if await loc.count() > 0:
+                            return frame, loc.first
+                    except Exception:
+                        continue
+                await page.wait_for_timeout(1500)
+            return None, None
+
+        # ── NAVEGA PARA DIGITAÇÃO DE NOTAS ─────────────────────────────────────
+        log.append("🔢 Abrindo Digitação de notas...")
+        frame_menu, link_notas = await achar(
+            "a:has-text('Digitação de notas'), a:has-text('Notas')"
+        )
+        if link_notas is None:
+            log.append("❌ Link 'Digitação de notas' não encontrado")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+        await link_notas.click()
+        await page.wait_for_timeout(3000)
+
+        # ── CLICA EM EXIBIR (filtro de período) ────────────────────────────────
+        _, exibir = await achar(
+            "button:has-text('EXIBIR'), input[value*='EXIBIR' i]"
+        )
+        if exibir:
+            await exibir.click()
+            await page.wait_for_timeout(2000)
+
+        # ── ENCONTRA AS TURMAS ─────────────────────────────────────────────────
+        url_lista = page.url
+        frame_lista, _ = await achar("a:has-text('Digitação de notas')")
+        if frame_lista is None:
+            log.append("❌ Lista de turmas não encontrada")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        links_turmas = frame_lista.locator("a:has-text('Digitação de notas')")
+        total_turmas = await links_turmas.count()
+        log.append(f"📚 Turmas encontradas: {total_turmas}")
+
+        def norm(s):
+            return sem_acento(s).replace("º", "").replace("ª", "").replace(" ", "").replace("/", "")
+
+        for idx in range(total_turmas):
+            await page.goto(url_lista)
+            await page.wait_for_timeout(2000)
+
+            fr, _ = await achar("a:has-text('Digitação de notas')")
+            if fr is None:
+                _, exibir2 = await achar("button:has-text('EXIBIR'), input[value*='EXIBIR' i]")
+                if exibir2:
+                    await exibir2.click()
+                    await page.wait_for_timeout(2000)
+                fr, _ = await achar("a:has-text('Digitação de notas')")
+            if fr is None:
+                log.append("⚠️ Não consegui voltar à lista de turmas")
+                break
+
+            # filtra por turma se informado
+            if data.turma:
+                bloco = await fr.locator(
+                    "a:has-text('Digitação de notas')"
+                ).nth(idx).evaluate(
+                    "el => { let q=el, s=''; for(let i=0;i<10&&q;i++){"
+                    "const t=q.innerText||''; if(t.length>s.length&&t.length<2000)s=t;"
+                    "q=q.parentElement;} return s.slice(0,500); }"
+                )
+                if norm(data.turma) not in norm(bloco or ""):
+                    log.append(f"⏭️ Turma {idx + 1} não é '{data.turma}' — pulando")
+                    continue
+
+            log.append(f"➡️ Turma {idx + 1} de {total_turmas}...")
+            await fr.locator("a:has-text('Digitação de notas')").nth(idx).click()
+            await page.wait_for_timeout(3000)
+
+            # ── SELECIONA FASE/UNIDADE ─────────────────────────────────────────
+            if data.fase:
+                log.append(f"🗓️ Selecionando fase '{data.fase}'...")
+                fr_fase, select_fase = await achar(
+                    "select, select[name*='fase' i], select[name*='unidade' i], "
+                    "select[name*='periodo' i]"
+                )
+                if select_fase is not None:
+                    await select_fase.select_option(label=data.fase)
+                    await page.wait_for_timeout(1500)
+                else:
+                    log.append("⚠️ Dropdown de fase não encontrado — continuando sem filtrar fase")
+
+            # ── CLICA EM CONSULTAR ─────────────────────────────────────────────
+            _, consultar = await achar(
+                "input[value*='CONSULTAR' i], button:has-text('CONSULTAR'), "
+                "input[value*='Consultar' i], button:has-text('Consultar')"
+            )
+            if consultar:
+                await consultar.click()
+                await page.wait_for_timeout(3000)
+            else:
+                log.append("⚠️ Botão CONSULTAR não encontrado — continuando mesmo assim")
+
+            # ── PREENCHE AS NOTAS ──────────────────────────────────────────────
+            SEL_INPUT = (
+                "input:not([readonly]):not([disabled])"
+                ":not([type='hidden']):not([type='checkbox'])"
+                ":not([type='button']):not([type='submit'])"
+                ":not([type='radio'])"
+            )
+            frame_notas = None
+            for frame in page.frames:
+                try:
+                    if await frame.locator(f"tr:has({SEL_INPUT})").count() > 0:
+                        frame_notas = frame
+                        break
+                except Exception:
+                    continue
+
+            if frame_notas is None:
+                log.append("⚠️ Tabela de notas não encontrada nesta turma")
+                continue
+
+            linhas = frame_notas.locator(f"tr:has({SEL_INPUT})")
+            total_alunos = await linhas.count()
+            log.append(f"👥 Alunos encontrados: {total_alunos}")
+
+            preenchidos = 0
+            pulados = 0
+            for i in range(total_alunos):
+                linha = linhas.nth(i)
+                try:
+                    texto = sem_acento(await linha.inner_text())
+                    inputs = linha.locator(SEL_INPUT)
+                    n_inputs = await inputs.count()
+                    if n_inputs == 0:
+                        continue
+
+                    valores = [(await inputs.nth(k).input_value()).strip() for k in range(n_inputs)]
+                    vazios = [k for k, v in enumerate(valores) if not v]
+                    preenchidos_idx = [k for k, v in enumerate(valores) if v]
+
+                    if not vazios:
+                        pulados += 1
+                        continue
+
+                    campo_av = inputs.nth(vazios[-1])
+
+                    if any(e in texto for e in excecoes_norm):
+                        nota = data.nota_excecao
+                        motivo = "exceção"
+                    else:
+                        notas_existentes = [para_num(valores[k]) for k in preenchidos_idx]
+                        notas_existentes = [n for n in notas_existentes if n is not None]
+                        if len(notas_existentes) < 2:
+                            nota = data.nota_baixa
+                            motivo = "AV1/AV2 em branco"
+                        else:
+                            media = sum(notas_existentes[:2]) / 2
+                            nota = data.nota_alta if media >= data.media_minima else data.nota_baixa
+                            motivo = f"média {media:.1f}".replace(".", ",")
+
+                    await campo_av.scroll_into_view_if_needed()
+                    await campo_av.click()
+                    await campo_av.fill(nota)
+                    await campo_av.press("Tab")
+                    await page.wait_for_timeout(600)
+                    preenchidos += 1
+                    nome = " ".join(texto.split()[1:4]).title()
+                    log.append(f"  [{i + 1}/{total_alunos}] {nome}: {nota} ({motivo})")
+                except Exception as e:
+                    log.append(f"  [{i + 1}/{total_alunos}] ERRO: {e}")
+
+            log.append(f"📊 Turma {idx + 1}: {preenchidos} notas lançadas"
+                       + (f", {pulados} já tinham nota" if pulados else ""))
+
+        log.append("🎉 Lançamento de notas concluído!")
+        log.append("__CONCLUIDO__")
+        await browser.close()
+
+
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-11.10"}
+    return {"versao": "2026-06-12.1"}
 
 
 @app.get("/manchetes")
@@ -1651,6 +1896,207 @@ async def executar_sesi(data: SesiFormData):
     job_id = str(uuid.uuid4())
     jobs[job_id] = []
     asyncio.create_task(run_sesi(job_id, data))
+    return {"job_id": job_id}
+
+
+class ActiveFaltasFormData(BaseModel):
+    url_colegio: str = "https://siga.activesoft.com.br/login/"
+    usuario: str
+    senha: str
+    turma: str = ""   # vazio = todas as turmas
+    bimestre: str = "2"
+
+
+async def run_active_faltas(job_id: str, data: ActiveFaltasFormData):
+    from playwright.async_api import async_playwright
+
+    log = jobs[job_id]
+
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(headless=True)
+        page = await browser.new_page(viewport={"width": 1400, "height": 900})
+
+        # ── LOGIN ──────────────────────────────────────────────────────────────
+        log.append("🔐 Fazendo login no ActiveSoft...")
+        try:
+            await page.goto(data.url_colegio)
+            await page.wait_for_timeout(3000)
+            await page.locator(
+                "input[name='login'], input[name='usuario'], input[type='text']"
+            ).first.fill(data.usuario)
+            await page.locator("input[type='password']").first.fill(data.senha)
+            await page.locator(
+                "button[type='submit'], input[type='submit'], "
+                "button:has-text('Entrar'), button:has-text('Acessar')"
+            ).first.click()
+            await page.wait_for_timeout(4000)
+            log.append(f"✅ Login realizado — {page.url}")
+        except Exception as e:
+            log.append(f"❌ ERRO no login: {e}")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        async def achar(seletor, tentativas=10):
+            for _ in range(tentativas):
+                for frame in page.frames:
+                    try:
+                        loc = frame.locator(seletor)
+                        if await loc.count() > 0:
+                            return frame, loc.first
+                    except Exception:
+                        continue
+                await page.wait_for_timeout(1500)
+            return None, None
+
+        # ── CLICA EM EXIBIR ────────────────────────────────────────────────────
+        _, exibir = await achar("button:has-text('EXIBIR'), input[value*='EXIBIR' i]")
+        if exibir:
+            await exibir.click()
+            await page.wait_for_timeout(2000)
+
+        url_lista = page.url
+        frame_lista, _ = await achar("a:has-text('Diário de classe')")
+        if frame_lista is None:
+            log.append("❌ Lista de turmas (Diário de classe) não encontrada")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        total_turmas = await frame_lista.locator("a:has-text('Diário de classe')").count()
+        log.append(f"📚 Turmas encontradas: {total_turmas}")
+
+        def norm(s):
+            import unicodedata
+            s = "".join(c for c in unicodedata.normalize("NFD", s)
+                        if unicodedata.category(c) != "Mn").lower()
+            return s.replace("º", "").replace("ª", "").replace(" ", "").replace("/", "")
+
+        turmas_feitas = 0
+        for idx in range(total_turmas):
+            await page.goto(url_lista)
+            await page.wait_for_timeout(2500)
+            fr, _ = await achar("a:has-text('Diário de classe')")
+            if fr is None:
+                _, exibir2 = await achar("button:has-text('EXIBIR'), input[value*='EXIBIR' i]")
+                if exibir2:
+                    await exibir2.click()
+                    await page.wait_for_timeout(2000)
+                fr, _ = await achar("a:has-text('Diário de classe')")
+            if fr is None:
+                log.append("⚠️ Não consegui voltar à lista")
+                break
+
+            if data.turma:
+                bloco = await fr.locator(
+                    "a:has-text('Diário de classe')"
+                ).nth(idx).evaluate(
+                    "el => { let q=el, s=''; for(let i=0;i<10&&q;i++){"
+                    "const t=q.innerText||''; if(t.length>s.length&&t.length<2000)s=t;"
+                    "q=q.parentElement;} return s.slice(0,500); }"
+                )
+                if norm(data.turma) not in norm(bloco or ""):
+                    log.append(f"⏭️ Turma {idx + 1} não é '{data.turma}' — pulando")
+                    continue
+
+            log.append(f"➡️ Turma {idx + 1} de {total_turmas}...")
+            await fr.locator("a:has-text('Diário de classe')").nth(idx).click()
+            await page.wait_for_timeout(3000)
+
+            # ── ABRE REGISTRO DE AULAS DO BIMESTRE ────────────────────────────
+            fr2, _ = await achar(f"tr:has-text('{data.bimestre}º BIMESTRE')")
+            if fr2 is None:
+                log.append(f"⚠️ Tabela de bimestres não encontrada — pulando turma")
+                continue
+            linha_bim = fr2.locator(f"tr:has-text('{data.bimestre}º BIMESTRE')").first
+            reg = linha_bim.locator("a:has-text('Registro de aulas')").first
+            await reg.wait_for(timeout=8000)
+            await reg.click()
+            await page.wait_for_timeout(3000)
+
+            # ── CLICA NA ABA FREQUÊNCIA ────────────────────────────────────────
+            log.append("📋 Abrindo aba Frequência...")
+            _, aba_freq = await achar(
+                "a:has-text('Frequência'), a:has-text('Frequencia'), "
+                "li:has-text('Frequência') a, tab:has-text('Frequência')"
+            )
+            if aba_freq is None:
+                log.append("⚠️ Aba Frequência não encontrada — pulando turma")
+                continue
+            await aba_freq.click()
+            await page.wait_for_timeout(3000)
+
+            # ── CLICA EM P (Presente) EM TODAS AS COLUNAS ─────────────────────
+            log.append("✅ Marcando presença em todas as colunas...")
+            fr_freq = None
+            for frame in page.frames:
+                try:
+                    if await frame.locator("table th:has-text('P')").count() > 0:
+                        fr_freq = frame
+                        break
+                except Exception:
+                    continue
+
+            if fr_freq is None:
+                log.append("⚠️ Tabela de frequência não encontrada — pulando turma")
+                continue
+
+            colunas_p = fr_freq.locator("table th:has-text('P'), table th input[value='P']")
+            total_colunas = await colunas_p.count()
+            log.append(f"📊 Colunas de presença: {total_colunas}")
+
+            for col in range(total_colunas):
+                try:
+                    await colunas_p.nth(col).click()
+                    await page.wait_for_timeout(400)
+                except Exception as e:
+                    log.append(f"⚠️ Erro na coluna {col + 1}: {e}")
+
+            # ── GRAVAR ─────────────────────────────────────────────────────────
+            log.append("💾 Gravando frequência...")
+            _, gravar = await achar(
+                "button:has-text('Gravar'), input[value*='Gravar' i]"
+            )
+            if gravar:
+                await gravar.click()
+                await page.wait_for_timeout(4000)
+                log.append("✅ Frequência gravada")
+            else:
+                log.append("⚠️ Botão Gravar não encontrado")
+                continue
+
+            # ── PRÓXIMO ────────────────────────────────────────────────────────
+            _, proximo = await achar(
+                "button:has-text('Próximo'), input[value*='Próximo' i], "
+                "button:has-text('Proximo'), a:has-text('Próximo')"
+            )
+            if proximo:
+                await proximo.click()
+                await page.wait_for_timeout(3000)
+                log.append("➡️ Próximo clicado")
+
+            turmas_feitas += 1
+
+        log.append(f"🎉 Frequência concluída! Turmas processadas: {turmas_feitas}")
+        log.append("__CONCLUIDO__")
+        await browser.close()
+
+
+@app.post("/executar-active-faltas")
+async def executar_active_faltas(data: ActiveFaltasFormData):
+    job_id = str(uuid.uuid4())
+    jobs[job_id] = []
+    asyncio.create_task(run_active_faltas(job_id, data))
+    return {"job_id": job_id}
+
+
+@app.post("/executar-active-notas")
+async def executar_active_notas(data: ActiveNotasFormData):
+    job_id = str(uuid.uuid4())
+    jobs[job_id] = []
+    asyncio.create_task(run_active_notas(job_id, data))
     return {"job_id": job_id}
 
 
