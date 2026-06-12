@@ -159,31 +159,46 @@ async def lancar_notas():
             linha = linhas.nth(i)
             try:
                 texto = sem_acento(await linha.inner_text())
-                inputs = linha.locator(
-                    "input[type='text']:not([readonly]):not([disabled])"
-                )
+                inputs = linha.locator(SEL_INPUT)
                 n_inputs = await inputs.count()
-                if n_inputs < COLUNA_AV:
-                    continue  # linha sem a coluna AV3 (cabeçalho etc.)
 
-                campo_av3 = inputs.nth(COLUNA_AV - 1)
-                atual = (await campo_av3.input_value()).strip()
-                if PULAR_PREENCHIDAS and atual:
-                    pulados += 1
+                # Lê o valor de cada campo editável da linha
+                valores = []
+                for k in range(n_inputs):
+                    valores.append((await inputs.nth(k).input_value()).strip())
+
+                # Diagnóstico da primeira linha (para ajustes futuros)
+                if i == 0:
+                    nomes_attr = []
+                    for k in range(n_inputs):
+                        nomes_attr.append(await inputs.nth(k).evaluate(
+                            "el => (el.name || el.id || el.type || '?')"))
+                    print(f"  (diag linha 1: {n_inputs} campos editáveis,"
+                          f" valores={valores}, names={nomes_attr})")
+
+                if n_inputs == 0:
                     continue
+
+                # AV3 = campo vazio da linha; AV1/AV2 = os preenchidos
+                vazios = [k for k, v in enumerate(valores) if not v]
+                preenchidos_idx = [k for k, v in enumerate(valores) if v]
+                if not vazios:
+                    pulados += 1  # já tem tudo digitado
+                    continue
+                campo_av3 = inputs.nth(vazios[0])
 
                 # Decide a nota
                 if any(exc in texto for exc in EXCECOES):
                     nota = NOTA_EXCECAO
                     motivo = "exceção"
                 else:
-                    av1 = para_num(await inputs.nth(0).input_value())
-                    av2 = para_num(await inputs.nth(1).input_value())
-                    if av1 is None or av2 is None:
+                    notas_existentes = [para_num(valores[k]) for k in preenchidos_idx]
+                    notas_existentes = [n for n in notas_existentes if n is not None]
+                    if len(notas_existentes) < 2:
                         nota = NOTA_BAIXA
                         motivo = "AV1/AV2 em branco -> nota baixa"
                     else:
-                        media = (av1 + av2) / 2
+                        media = sum(notas_existentes[:2]) / 2
                         if media >= MEDIA_MINIMA:
                             nota = NOTA_ALTA
                         else:
