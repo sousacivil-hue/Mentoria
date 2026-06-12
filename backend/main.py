@@ -129,7 +129,14 @@ CONTEUDOS = {
 _indices: dict[str, int] = {}
 
 
-def get_conteudo(serie: str, assuntos_proprios: list[str]) -> str:
+def get_conteudo(serie: str, assuntos_proprios: list[str], assuntos_por_turma: dict[str, str] | None = None) -> str:
+    # dict turma→assunto: procura se alguma chave está contida no nome da série
+    if assuntos_por_turma:
+        serie_lower = serie.lower()
+        for identificador, assunto in assuntos_por_turma.items():
+            if identificador.lower() in serie_lower:
+                return assunto
+
     if assuntos_proprios:
         chave = serie[:6]
         idx = _indices.get(chave, 0)
@@ -150,6 +157,7 @@ class FormData(BaseModel):
     opcoes: dict
     modo_conteudo: str = "pronto"
     assuntos: list[str] = []
+    assuntos_por_turma: dict[str, str] = {}
     avaliacao: str = "AV2"
     nota: str = ""
 
@@ -217,7 +225,7 @@ async def run_automacao(job_id: str, data: FormData):
                     break
                 aula_id = match.group(1)
                 serie = alvo["serie"]
-                conteudo = get_conteudo(serie, data.assuntos)
+                conteudo = get_conteudo(serie, data.assuntos, data.assuntos_por_turma)
 
                 log.append(f"⏳ Aula {aula_num + 1}: {serie[:40]}")
                 await page.goto(f"https://siae.seduc.se.gov.br/siae.diario/Aula/Registrar/{aula_id}")
@@ -293,7 +301,7 @@ async def run_automacao(job_id: str, data: FormData):
                     break
                 aula_id = match.group(1)
                 serie = alvo["serie"]
-                conteudo = get_conteudo(serie, data.assuntos)
+                conteudo = get_conteudo(serie, data.assuntos, data.assuntos_por_turma)
 
                 log.append(f"⏳ Solicitada {aula_num + 1}: {serie[:40]}")
                 await page.goto(f"https://siae.seduc.se.gov.br/siae.diario/Aula/Registrar/{aula_id}")

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Automatizador de Diário — SIAE</title>
+<title>SóDigita — SIAE</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -200,7 +200,7 @@
 <body>
 
 <header>
-  <h1>📓 Automatizador de Diário</h1>
+  <h1>✏️ SóDigita — SIAE</h1>
   <span>Você planeja. Você ensina. A gente só digita.</span>
 </header>
 
@@ -242,32 +242,18 @@
       </div>
     </div>
 
-    <!-- 3: Assuntos -->
+    <!-- 3: Assuntos por turma -->
     <div class="card" id="card-assuntos">
-      <h2><span class="step-badge">3</span> Assuntos das aulas</h2>
-      <div class="toggle-conteudo">
-        <div class="opcao ativo" id="opt-pronto" onclick="setModoConteudo('pronto')">
-          <span class="icone">📚</span>
-          <span class="label">Usar lista pronta (Matemática)</span>
-        </div>
-        <div class="opcao" id="opt-proprio" onclick="setModoConteudo('proprio')">
-          <span class="icone">✏️</span>
-          <span class="label">Colar minha lista</span>
-        </div>
+      <h2><span class="step-badge">3</span> Assunto de hoje por turma</h2>
+      <div class="dica" style="margin-bottom:14px;">Preencha o assunto que foi dado em cada turma hoje. Use parte do nome (ex: <strong>6A</strong>, <strong>8B</strong>, <strong>EJA</strong>) para identificar.</div>
+
+      <div id="tabela-turmas">
+        <!-- linhas adicionadas dinamicamente -->
       </div>
 
-      <div id="bloco-proprio" style="display:none;">
-        <label>Cole seus assuntos (um por linha)</label>
-        <textarea id="assuntos-proprios" placeholder="Equações do 2º grau - introdução
-Equações do 2º grau - fórmula de Bhaskara
-Equações do 2º grau - exercícios
-..."></textarea>
-        <div class="dica">💡 Dica: peça ao ChatGPT ou Gemini "crie 25 tópicos de aula sobre [assunto] para [série]" e cole aqui. Os assuntos serão usados em sequência nas aulas pendentes.</div>
-      </div>
-
-      <div id="bloco-pronto">
-        <div class="dica">✅ Usaremos nossas listas prontas de Matemática, adequadas a cada série (6º Ano ao EJA), com 25 tópicos por turma. O robô identifica a série de cada turma automaticamente.</div>
-      </div>
+      <button type="button" onclick="adicionarTurma()" style="margin-top:12px;padding:9px 18px;border:1.5px dashed #1a73e8;background:transparent;color:#1a73e8;border-radius:10px;cursor:pointer;font-size:0.9rem;font-weight:600;width:100%;">
+        + Adicionar turma
+      </button>
     </div>
 
     <!-- 4: Notas (condicional) -->
@@ -326,24 +312,47 @@ Equações do 2º grau - exercícios
 const BACKEND_URL = location.protocol === 'file:' ? 'http://localhost:8000' : '';
 
 const opcoes = { aulas: true, solicitadas: false, chamada: false, notas: false };
-let modoConteudo = 'pronto';
+let linhaCount = 0;
 
 function toggleOpcao(el, key) {
   opcoes[key] = !opcoes[key];
   el.classList.toggle('ativo');
   document.getElementById('card-notas').style.display = opcoes.notas ? 'block' : 'none';
-  // Assuntos só são necessários se lançar aulas
   const precisaAssuntos = opcoes.aulas || opcoes.solicitadas;
   document.getElementById('card-assuntos').style.display = precisaAssuntos ? 'block' : 'none';
 }
 
-function setModoConteudo(modo) {
-  modoConteudo = modo;
-  document.getElementById('opt-pronto').classList.toggle('ativo', modo === 'pronto');
-  document.getElementById('opt-proprio').classList.toggle('ativo', modo === 'proprio');
-  document.getElementById('bloco-pronto').style.display = modo === 'pronto' ? 'block' : 'none';
-  document.getElementById('bloco-proprio').style.display = modo === 'proprio' ? 'block' : 'none';
+function adicionarTurma(identificador = '', assunto = '') {
+  const id = linhaCount++;
+  const div = document.createElement('div');
+  div.id = `linha-${id}`;
+  div.style.cssText = 'display:flex;gap:8px;margin-bottom:8px;align-items:center;';
+  div.innerHTML = `
+    <input type="text" placeholder="Turma (ex: 6A)" value="${identificador}"
+      style="width:110px;flex-shrink:0;padding:9px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:0.9rem;background:#fafafa;"
+      class="campo-turma">
+    <input type="text" placeholder="Assunto dado hoje" value="${assunto}"
+      style="flex:1;padding:9px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:0.9rem;background:#fafafa;"
+      class="campo-assunto">
+    <button onclick="document.getElementById('linha-${id}').remove()"
+      style="border:none;background:none;color:#aaa;cursor:pointer;font-size:1.1rem;padding:4px;">✕</button>
+  `;
+  document.getElementById('tabela-turmas').appendChild(div);
 }
+
+function coletarAssuntosPorTurma() {
+  const resultado = {};
+  document.querySelectorAll('#tabela-turmas > div').forEach(div => {
+    const turma = div.querySelector('.campo-turma').value.trim();
+    const assunto = div.querySelector('.campo-assunto').value.trim();
+    if (turma && assunto) resultado[turma] = assunto;
+  });
+  return resultado;
+}
+
+// Inicia com 2 linhas em branco
+adicionarTurma();
+adicionarTurma();
 
 function addLog(msg, tipo = '') {
   const box = document.getElementById('log-box');
@@ -368,20 +377,17 @@ async function executar() {
     alert('Informe a nota a ser lançada.'); return;
   }
 
-  const assuntosProprios = modoConteudo === 'proprio'
-    ? document.getElementById('assuntos-proprios').value.split('\n').map(s => s.trim()).filter(s => s)
-    : [];
+  const assuntosPorTurma = coletarAssuntosPorTurma();
 
-  if ((opcoes.aulas || opcoes.solicitadas) && modoConteudo === 'proprio' && assuntosProprios.length === 0) {
-    alert('Cole sua lista de assuntos ou escolha a lista pronta.'); return;
+  if ((opcoes.aulas || opcoes.solicitadas) && Object.keys(assuntosPorTurma).length === 0) {
+    alert('Adicione pelo menos uma turma com o assunto do dia.'); return;
   }
 
   const dados = {
     login: cpf,
     senha: senha,
     opcoes: opcoes,
-    modo_conteudo: modoConteudo,
-    assuntos: assuntosProprios,
+    assuntos_por_turma: assuntosPorTurma,
     avaliacao: document.getElementById('avaliacao').value,
     nota: document.getElementById('nota-valor').value.trim()
   };
