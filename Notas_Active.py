@@ -185,7 +185,9 @@ async def lancar_notas():
                 if not vazios:
                     pulados += 1  # já tem tudo digitado
                     continue
-                campo_av3 = inputs.nth(vazios[0])
+                # Usa o ÚLTIMO campo vazio: se AV2 também estiver em branco,
+                # a AV3 continua sendo o último da linha
+                campo_av3 = inputs.nth(vazios[-1])
 
                 # Decide a nota
                 if any(exc in texto for exc in EXCECOES):
