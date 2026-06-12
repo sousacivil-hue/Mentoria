@@ -1423,7 +1423,7 @@ async def run_sesi(job_id: str, data: SesiFormData):
 
 class SalesianoFormData(BaseModel):
     url_portal: str = "https://portalprdsalesianos.rm.cloudtotvs.com.br/FrameHTML/web/app/edu/PortalDoProfessor/#/login"
-    url_plano: str  # URL direta do plano de aula da turma
+    url_plano: str  # URL direta do plano de aula da turma (com #/portal/class/lessonPlan/...)
     usuario: str
     senha: str
     aula_inicio: int = 1
@@ -1431,7 +1431,7 @@ class SalesianoFormData(BaseModel):
     topicos: list[str] = []
 
 
-async def run_salesiano(job_id: str, data: SalesianoFormData):
+async def run_salesiano(job_id: str, data: SalesianoFormData):  # noqa: C901
     from playwright.async_api import async_playwright
 
     log = jobs[job_id]
@@ -1446,35 +1446,86 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
         browser = await pw.chromium.launch(headless=True)
         page = await browser.new_page(viewport={"width": 1400, "height": 900})
 
-        # ---- Login direto na URL do plano (sem segundo goto) ----
+        # ── LOGIN ──────────────────────────────────────────────────────────────
         log.append("🔐 Fazendo login no Portal do Professor...")
         try:
             await page.goto(data.url_portal)
-            await page.wait_for_timeout(3000)
+            try:
+                await page.wait_for_load_state("networkidle", timeout=20000)
+            except Exception:
+                pass
+            await page.wait_for_timeout(2000)
+
             senha_input = page.locator("input[type='password']").first
             if await senha_input.count() > 0 and await senha_input.is_visible():
-                user_input = page.locator("input[type='text'], input[name='login']").first
-                await user_input.fill(data.usuario)
-                await senha_input.fill(data.senha)
-                await page.wait_for_timeout(500)
-                botao = page.locator("button:has-text('Entrar'), button[type='submit']").first
+                user_input = page.locator(
+                    "input[name='login'], input[name='user' i], "
+                    "input[name='username' i], input[type='text']"
+                ).first
+                # preenche via JS para o Angular registrar o valor
+                await page.evaluate("""([sel_u, sel_p, u, p]) => {
+                    const set = (sel, val) => {
+                        const el = document.querySelector(sel);
+                        if (!el) return;
+                        Object.getOwnPropertyDescriptor(
+                            window.HTMLInputElement.prototype, 'value'
+                        ).set.call(el, val);
+                        el.dispatchEvent(new Event('input',  {bubbles:true}));
+                        el.dispatchEvent(new Event('change', {bubbles:true}));
+                    };
+                    set(sel_u, u); set(sel_p, p);
+                }""", ["input[type='text']", "input[type='password']",
+                       data.usuario, data.senha])
+                # digita também para acionar validadores Angular
+                await user_input.click()
+                await user_input.type(data.usuario, delay=60)
+                await senha_input.click()
+                await senha_input.type(data.senha, delay=60)
+                await page.wait_for_timeout(600)
+
+                botao = page.locator(
+                    "button:has-text('Entrar'), button[type='submit'], "
+                    "button:has-text('Acessar'), input[type='submit']"
+                ).first
                 if await botao.count() > 0:
                     await botao.click()
                 else:
                     await senha_input.press("Enter")
-                # aguarda o menu aparecer (token salvo no Angular)
-                for _ in range(30):
+
+                # aguarda menu aparecer E URL sair do login (até 40s)
+                logado = False
+                for _ in range(40):
                     await page.wait_for_timeout(1000)
-                    if await page.locator("po-menu, .po-menu-item").count() > 0:
+                    tem_menu = await page.locator(".po-menu-item, po-menu").count() > 0
+                    if tem_menu and "login" not in page.url.lower():
+                        logado = True
                         break
-                await page.wait_for_timeout(1000)
-                # navega para o plano via JS sem recarregar o app Angular
-                hash_part = data.url_plano.split('#')[-1] if '#' in data.url_plano else ''
-                if hash_part:
-                    await page.evaluate(f"() => {{ window.location.hash = '{hash_part}'; }}")
-                else:
-                    await page.goto(data.url_plano)
-            log.append("✅ Login realizado")
+
+                if not logado:
+                    avisos = await page.evaluate(
+                        """() => Array.from(document.querySelectorAll(
+                            'po-toaster,.po-toaster,[class*=error i],[role=alert]'
+                        )).map(e=>e.innerText.trim()).filter(t=>t).slice(0,5)"""
+                    )
+                    for a in avisos:
+                        log.append("🧭 aviso: " + a)
+                    log.append("🧭 URL: " + page.url)
+                    log.append("🧭 página: " + await page.evaluate(
+                        "() => document.body.innerText.trim().slice(0,300)"
+                    ))
+                    raise RuntimeError("portal não abriu após login — veja linhas 🧭 acima")
+
+            log.append("✅ Login realizado — " + page.url)
+            await page.wait_for_timeout(1500)
+
+            # ── NAVEGA AO PLANO VIA HASH (não recarrega o app Angular) ─────────
+            hash_part = data.url_plano.split('#')[-1] if '#' in data.url_plano else ''
+            if hash_part:
+                log.append("🔀 Navegando ao plano de aula via hash...")
+                await page.evaluate(f"() => {{ window.location.hash = '{hash_part}'; }}")
+            else:
+                await page.goto(data.url_plano)
+
         except Exception as e:
             log.append(f"❌ ERRO no login: {e}")
             log.append("__ERRO__")
@@ -1482,32 +1533,31 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
             await browser.close()
             return
 
-        log.append("📋 Abrindo o plano de aula...")
-        try:
-            # espera o Angular montar a tabela (tenta a cada segundo por até 60s)
-            log.append("⏳ Aguardando tabela carregar...")
-            total = 0
-            for _ in range(60):
-                await page.wait_for_timeout(1000)
-                total = await page.evaluate(
-                    "() => document.querySelectorAll('table tbody tr, po-table tbody tr').length"
-                )
-                if total > 0:
-                    break
-            log.append(f"🧭 URL atual: {page.url}")
-            if total == 0:
-                corpo = await page.evaluate("() => document.body.innerText.trim().slice(0, 300)")
-                log.append(f"🧭 Conteúdo da página: {corpo}")
-                raise RuntimeError("a tabela de aulas não carregou — confira o link do plano de aula.")
-            log.append(f"📚 {total} aulas encontradas")
-        except Exception as e:
-            log.append(f"❌ ERRO ao abrir o plano de aula: {e}")
+        # ── AGUARDA TABELA ──────────────────────────────────────────────────────
+        log.append("⏳ Aguardando tabela de aulas carregar...")
+        total = 0
+        for _ in range(60):
+            await page.wait_for_timeout(1000)
+            total = await page.evaluate(
+                "() => document.querySelectorAll('table tbody tr, po-table tbody tr').length"
+            )
+            if total > 0:
+                break
+
+        log.append(f"🧭 URL atual: {page.url}")
+        if total == 0:
+            log.append("🧭 página: " + await page.evaluate(
+                "() => document.body.innerText.trim().slice(0,300)"
+            ))
+            log.append("❌ Tabela de aulas não carregou. Confira o link do plano de aula.")
             log.append("__ERRO__")
             log.append("__CONCLUIDO__")
             await browser.close()
             return
 
-        # ---- Preenche cada aula vazia ----
+        log.append(f"📚 {total} aulas encontradas na tabela")
+
+        # ── PREENCHE CADA AULA ─────────────────────────────────────────────────
         preenchidas = 0
         for i in range(total):
             numero_aula = i + 1
@@ -1518,16 +1568,39 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                 log.append("✅ Todos os tópicos foram usados")
                 break
             try:
+                # fecha qualquer modal aberto antes de clicar na linha
+                overlay = page.locator(".po-modal-overlay")
+                if await overlay.count() > 0:
+                    await page.keyboard.press("Escape")
+                    await page.wait_for_timeout(800)
+
                 btn = page.locator("table tbody tr").nth(i).locator("text=Editar")
                 if await btn.count() == 0:
                     log.append(f"⏭️ Aula {numero_aula} sem botão Editar — pulando")
                     continue
                 await btn.scroll_into_view_if_needed()
                 await btn.click()
-                await page.wait_for_timeout(1200)
+                await page.wait_for_timeout(1500)
 
-                alvo = page.locator("po-modal textarea, [role='dialog'] textarea, dialog textarea").first
-                await alvo.wait_for(timeout=8000)
+                # clica em Editar dentro do modal para habilitar o textarea
+                editar_modal = page.locator(
+                    "po-modal button:has-text('Editar'), "
+                    "[role='dialog'] button:has-text('Editar')"
+                ).first
+                for _ in range(3):
+                    try:
+                        if await editar_modal.count() > 0 and await editar_modal.is_visible():
+                            await editar_modal.click()
+                        await page.wait_for_timeout(1000)
+                        alvo = page.locator(
+                            "po-modal textarea:not([disabled]), "
+                            "[role='dialog'] textarea:not([disabled])"
+                        ).first
+                        await alvo.wait_for(timeout=6000)
+                        break
+                    except Exception:
+                        await page.wait_for_timeout(1500)
+
                 await alvo.click()
                 await alvo.fill(conteudo)
                 await alvo.dispatch_event("input")
@@ -1535,364 +1608,31 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):
                 await page.wait_for_timeout(400)
 
                 salvar = page.locator(
-                    "po-modal button:has-text('Salvar'), [role='dialog'] button:has-text('Salvar')"
+                    "po-modal button:has-text('Salvar'), "
+                    "[role='dialog'] button:has-text('Salvar')"
                 ).first
                 await salvar.wait_for(timeout=5000)
                 await salvar.click()
-                await page.wait_for_timeout(1500)
+
+                # espera o modal fechar
+                for _ in range(15):
+                    await page.wait_for_timeout(1000)
+                    if await overlay.count() == 0:
+                        break
 
                 preenchidas += 1
                 log.append(f"✏️ Aula {numero_aula} — {conteudo[:50]}")
             except Exception as e:
                 log.append(f"⚠️ Erro na aula {numero_aula}: {e}")
-                break
+                try:
+                    await page.keyboard.press("Escape")
+                    await page.wait_for_timeout(800)
+                except Exception:
+                    pass
 
         log.append(f"📊 {preenchidas} aulas gravadas")
         log.append("🏁 Automação Salesiano finalizada!")
-        log.append("__CONCLUIDO__")
-        await browser.close()
-
-        log.append("🔐 Fazendo login no Portal do Professor (Totvs RM)...")
-        try:
-            await page.goto(data.url_portal)
-            try:
-                await page.wait_for_load_state("networkidle", timeout=20000)
-            except Exception:
-                pass
-            await page.wait_for_timeout(2000)
-
-            senha_input = page.locator("input[type='password'], input[name='password']").first
-            if await senha_input.count() > 0 and await senha_input.is_visible():
-                # usuário: campo de login do po-page-login (Totvs) ou genérico
-                user_input = page.locator(
-                    "input[name='login'], po-login input, "
-                    "input[name='user' i], input[name='username' i], "
-                    "form:has(input[type='password']) input[type='text'], "
-                    "input[id*='user' i], input[type='text']"
-                ).first
-                # preenche via JS para garantir que o Angular registra o valor
-                await page.evaluate("""([sel_user, sel_pass, usuario, senha]) => {
-                    const setVal = (sel, val) => {
-                        const el = document.querySelector(sel);
-                        if (!el) return;
-                        const nativeSet = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
-                        nativeSet.call(el, val);
-                        el.dispatchEvent(new Event('input', {bubbles: true}));
-                        el.dispatchEvent(new Event('change', {bubbles: true}));
-                    };
-                    setVal(sel_user, usuario);
-                    setVal(sel_pass, senha);
-                }""", [
-                    await user_input.evaluate("el => el.tagName.toLowerCase() + (el.name ? '[name=' + el.name + ']' : '') || 'input'"),
-                    "input[type='password']",
-                    data.usuario,
-                    data.senha
-                ])
-                await user_input.click()
-                await user_input.type(data.usuario, delay=80)
-                await senha_input.click()
-                await senha_input.type(data.senha, delay=80)
-                await page.wait_for_timeout(800)
-
-                botao = page.locator(
-                    "button:has-text('Entrar'), button[type='submit'], button:has-text('Acessar'), "
-                    "button:has-text('Login'), input[type='submit']"
-                ).first
-                if await botao.count() > 0:
-                    await botao.click()
-                else:
-                    await senha_input.press("Enter")
-
-                # sucesso = menu lateral apareceu E URL saiu do login (até 40s)
-                logado = False
-                for _ in range(40):
-                    await page.wait_for_timeout(1000)
-                    url_atual = page.url
-                    tem_menu = await page.locator(".po-menu-item, po-menu").count() > 0
-                    if tem_menu and "login" not in url_atual.lower():
-                        logado = True
-                        break
-                if not logado:
-                    avisos = await page.evaluate(
-                        """() => Array.from(document.querySelectorAll('po-toaster, .po-toaster, [class*=error i], [class*=invalid i], [role=alert], .po-field-container-bottom-text-error'))
-                            .map(e => e.innerText.trim()).filter(t => t).slice(0, 5)"""
-                    )
-                    for a in avisos:
-                        log.append("🧭 aviso do portal: " + a)
-                    corpo = await page.evaluate("() => document.body.innerText.trim().slice(0, 300)")
-                    log.append("🧭 texto da página: " + corpo)
-                    raise RuntimeError("o portal não abriu após o login — veja as linhas 🧭 acima.")
-                await page.wait_for_timeout(2000)
-            log.append("✅ Login realizado")
-        except Exception as e:
-            log.append(f"❌ ERRO no login: {e}")
-            log.append("__ERRO__")
-            log.append("__CONCLUIDO__")
-            await browser.close()
-            return
-
-        async def abrir_diario():
-            log.append("📒 Abrindo o Diário de Classe...")
-            try:
-                await page.wait_for_load_state("networkidle", timeout=15000)
-            except Exception:
-                pass
-
-            candidatos = [
-                "div.po-menu-item[aria-label='Diário de classe']",
-                ".po-menu-item:has(.an-book-bookmark)",
-                "a:has-text('Diário de classe')",
-                "[aria-label*='Diário' i]",
-                "[title*='Diário' i]",
-                "a[href*='diary' i]",
-                "a[href*='diario' i]",
-                "a[href*='classdiary' i]",
-                "a[href*='teacherdiary' i]",
-            ]
-            # o app Angular pode demorar para montar a tela após o login: espera até 30s
-            for espera in range(30):
-                for sel in candidatos:
-                    loc = page.locator(sel).first
-                    if await loc.count() > 0:
-                        try:
-                            await loc.click(timeout=5000)
-                            await page.wait_for_timeout(3000)
-                            return
-                        except Exception:
-                            continue
-                await page.wait_for_timeout(1000)
-
-            # fallback: 2º ícone do menu lateral (home é o 1º)
-            for sel in ["po-menu a", ".po-menu-item", "nav a", "aside a"]:
-                icones = page.locator(sel)
-                if await icones.count() >= 2:
-                    try:
-                        await icones.nth(1).click(timeout=5000)
-                        await page.wait_for_timeout(3000)
-                        return
-                    except Exception:
-                        continue
-
-            # diagnóstico: mostra o que existe na página para calibrar o seletor
-            log.append("🧭 Página atual: " + page.url)
-            itens = await page.evaluate(
-                """() => Array.from(document.querySelectorAll('a, [aria-label], .po-menu-item, button')).slice(0, 30).map(e =>
-                    e.tagName + ' | ' + (e.getAttribute('aria-label') || e.title || e.innerText || '').trim().slice(0, 40)
-                ).filter(t => t.split('|')[1].trim())"""
-            )
-            for l in itens:
-                log.append("🧭 item: " + l)
-            corpo = await page.evaluate("() => document.body.innerText.trim().slice(0, 300)")
-            log.append("🧭 texto da página: " + corpo)
-            raise RuntimeError("não encontrei o menu 'Diário de classe' — me envie as linhas 🧭 do log")
-
-        async def abrir_plano_da_turma(turma: str):
-            log.append(f"🔎 Procurando a turma {turma}...")
-
-            # Aceita "GE09EM1A", "1A", "1º A", "1ª A", "primeiro a"...
-            t = turma.upper().strip()
-            ordinais = {"PRIMEIRO": "1", "SEGUNDO": "2", "TERCEIRO": "3",
-                        "PRIMEIRA": "1", "SEGUNDA": "2", "TERCEIRA": "3"}
-            for nome, num in ordinais.items():
-                t = t.replace(nome, num)
-            m = re.match(r"^(\d)\s*[ºª°]?\s*(?:ANO|SERIE|SÉRIE)?\s*([A-Z])$", t)
-            serie_num, letra = (m.group(1), m.group(2)) if m else (None, None)
-
-            async def achar_linha():
-                # 1) busca pelo código exato
-                linha = page.locator("table tbody tr", has_text=turma).first
-                if await linha.count() > 0:
-                    return linha
-                # 2) busca por série + letra final do código (ex.: "2ª SÉRIE" + código terminando em A)
-                if serie_num:
-                    todas = page.locator("table tbody tr")
-                    for j in range(await todas.count()):
-                        cand = todas.nth(j)
-                        texto = (await cand.inner_text()).upper()
-                        if f"{serie_num}ª SÉRIE" in texto or f"{serie_num}º ANO" in texto:
-                            cod = re.search(r"\b[A-Z]{2}\d{2}[A-Z]+\d[A-Z]\b", texto)
-                            if cod and cod.group(0).endswith(letra):
-                                return cand
-                return None
-
-            linha_turma = None
-            for tentativa in range(10):
-                linha_turma = await achar_linha()
-                if linha_turma is not None:
-                    break
-                # tenta carregar mais resultados, se existir
-                mais = page.locator("text=Carregar mais resultados").first
-                if await mais.count() > 0 and await mais.is_visible():
-                    await mais.click()
-                await page.wait_for_timeout(1500)
-            if linha_turma is None:
-                raise RuntimeError(
-                    f"Turma {turma} não encontrada no Diário de Classe. "
-                    "Use o código da coluna 'Cód. Turma' (ex.: GE09EM2A) ou o formato '2A' / '2ª A'."
-                )
-
-            # clica nos "..." da linha
-            mais_acoes = linha_turma.locator(
-                "i.an-dots-three, .po-icon-more, [class*='more'], po-icon, span:has-text('...')"
-            ).last
-            await mais_acoes.scroll_into_view_if_needed()
-            await mais_acoes.click()
-            await page.wait_for_timeout(800)
-
-            plano = page.locator(
-                ".po-item-list-label:has-text('Plano de aula'), text=Plano de aula"
-            ).first
-            await plano.wait_for(timeout=8000)
-            await plano.click()
-            await page.wait_for_timeout(3000)
-            log.append("✅ Plano de aula aberto")
-
-        async def filtrar_e_pesquisar():
-            log.append(f"🗓️ Selecionando a etapa '{data.etapa}'...")
-            # abre os filtros se estiverem recolhidos
-            filtros = page.locator("text=Filtros").first
-            if await filtros.count() > 0:
-                combo_visivel = await page.locator("po-combo input, po-select select").first.is_visible()
-                if not combo_visivel:
-                    await filtros.click()
-                    await page.wait_for_timeout(800)
-
-            combo = page.locator("input[name='stepCode'], po-combo input, po-select select, po-lookup input").first
-            await combo.wait_for(timeout=8000)
-            await combo.click()
-            await combo.fill(data.etapa)
-            await page.wait_for_timeout(1200)
-            opcao = page.locator(f"po-combo li:has-text('{data.etapa}'), .po-combo-item:has-text('{data.etapa}'), li:has-text('{data.etapa}')").first
-            await opcao.wait_for(timeout=6000)
-            await opcao.click()
-            await page.wait_for_timeout(800)
-
-            # preenche o intervalo de datas (Material date range picker)
-            log.append(f"📅 Definindo o período {data.data_inicio} a {data.data_fim}...")
-            inicio = page.locator("input.mat-start-date, mat-date-range-input input >> nth=0").first
-            fim = page.locator("input.mat-end-date, mat-date-range-input input >> nth=1").first
-            if await inicio.count() > 0:
-                await inicio.click()
-                await page.keyboard.press("Control+a")
-                await page.keyboard.type(data.data_inicio, delay=50)
-                await fim.click()
-                await page.keyboard.press("Control+a")
-                await page.keyboard.type(data.data_fim, delay=50)
-            else:
-                campo_data = page.locator("po-datepicker-range input, input[name*='date' i]").first
-                await campo_data.wait_for(timeout=8000)
-                await campo_data.click()
-                await page.keyboard.press("Control+a")
-                digitos = re.sub(r"\D", "", data.data_inicio) + re.sub(r"\D", "", data.data_fim)
-                await page.keyboard.type(digitos, delay=60)
-            await page.keyboard.press("Escape")
-            await page.keyboard.press("Tab")
-            await page.wait_for_timeout(600)
-
-            await page.locator(
-                "button.po-button:has(.po-button-label:has-text('Pesquisar')), "
-                "button:has-text('Pesquisar'), po-button:has-text('Pesquisar')"
-            ).first.click()
-            await page.wait_for_timeout(3000)
-
-        async def preencher_aulas() -> int:
-            total_linhas = 0
-            for _ in range(20):
-                total_linhas = await page.evaluate(
-                    "() => document.querySelectorAll('table tbody tr, po-table tbody tr').length"
-                )
-                if total_linhas > 0:
-                    break
-                await page.wait_for_timeout(1000)
-
-            if total_linhas == 0:
-                raise RuntimeError("a tabela de aulas não carregou.")
-
-            log.append(f"📚 Aulas encontradas na tabela: {total_linhas}")
-
-            # Mapeia quais linhas já têm conteúdo realizado (linha vazia tem só o link 'Editar')
-            info_linhas = await page.evaluate(
-                """() => Array.from(document.querySelectorAll('table tbody tr')).map(tr => ({
-                    links: tr.querySelectorAll('a').length,
-                    texto: tr.innerText.trim().slice(0, 60)
-                }))"""
-            )
-
-            preenchidas = 0
-            for i in range(total_linhas):
-                numero_aula = i + 1
-                if numero_aula < data.aula_inicio:
-                    continue
-                if info_linhas[i]["links"] >= 2:
-                    log.append(f"⏭️ Aula {numero_aula} já tem conteúdo — pulando")
-                    continue
-                conteudo = topico_da_aula(preenchidas)
-                if conteudo is None:
-                    log.append("✅ Todos os tópicos foram usados")
-                    break
-                try:
-                    btn = page.locator("table tbody tr").nth(i).locator("text=Editar")
-                    await btn.wait_for(timeout=10000)
-                    await btn.scroll_into_view_if_needed()
-                    await btn.click()
-                    await page.wait_for_timeout(1200)
-
-                    textarea = page.locator(
-                        "label:has-text('Conteúdo realizado') + textarea, "
-                        "label:has-text('Conteudo realizado') + textarea, "
-                        "label:has-text('Conteúdo') ~ textarea"
-                    ).first
-                    fallback = page.locator(
-                        "po-modal textarea, dialog textarea, [role='dialog'] textarea"
-                    ).first
-                    try:
-                        await textarea.wait_for(timeout=5000)
-                        alvo = textarea
-                    except Exception:
-                        await fallback.wait_for(timeout=5000)
-                        alvo = fallback
-
-                    await alvo.click()
-                    await alvo.fill(conteudo)
-                    await alvo.dispatch_event("input")
-                    await alvo.dispatch_event("change")
-                    await page.wait_for_timeout(400)
-
-                    salvar = page.locator(
-                        "po-modal button:has-text('Salvar'), dialog button:has-text('Salvar'), "
-                        "[role='dialog'] button:has-text('Salvar')"
-                    ).first
-                    await salvar.wait_for(timeout=5000)
-                    await salvar.click()
-                    await page.wait_for_timeout(1500)
-
-                    preenchidas += 1
-                    log.append(f"✏️ Aula {numero_aula} — {conteudo[:50]}")
-                except Exception as e:
-                    log.append(f"⚠️ Erro na aula {numero_aula}: {e}")
-                    break
-            return preenchidas
-
-        # ---- Processa cada turma informada (mesmos tópicos para todas) ----
-        turmas = [t.strip().upper() for t in re.split(r"[,;]+", data.turma) if t.strip()]
-        total_geral = 0
-        turmas_ok = 0
-        for turma in turmas:
-            log.append(f"━━━ Turma {turma} ━━━")
-            try:
-                await abrir_diario()
-                await abrir_plano_da_turma(turma)
-                await filtrar_e_pesquisar()
-                gravadas = await preencher_aulas()
-                total_geral += gravadas
-                turmas_ok += 1
-                log.append(f"📊 Turma {turma}: {gravadas} aulas gravadas")
-            except Exception as e:
-                log.append(f"❌ ERRO na turma {turma}: {e}")
-
-        log.append(f"📊 Total: {total_geral} aulas gravadas em {turmas_ok} de {len(turmas)} turma(s)")
-        log.append("🏁 Automação Salesiano finalizada!")
-        if turmas_ok == 0:
+        if preenchidas == 0 and total > 0:
             log.append("__ERRO__")
         log.append("__CONCLUIDO__")
         await browser.close()
