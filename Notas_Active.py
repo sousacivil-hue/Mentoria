@@ -94,27 +94,45 @@ async def lancar_notas():
         input("\n>>> ENTER quando a lista de alunos estiver na tela: ")
         await page.wait_for_timeout(2000)
 
+        # Seletor flexível: qualquer input editável dentro de linha de tabela
+        SEL_INPUT = ("input:not([readonly]):not([disabled])"
+                     ":not([type='hidden']):not([type='checkbox'])"
+                     ":not([type='button']):not([type='submit'])"
+                     ":not([type='radio'])")
+        SEL_LINHA = f"tr:has({SEL_INPUT})"
+
         # Acha o frame com a tabela de alunos (linhas com inputs editáveis)
         frame_notas = None
         for frame in page.frames:
             try:
-                if await frame.locator(
-                    "table tr:has(input[type='text']:not([readonly]):not([disabled]))"
-                ).count() > 0:
+                if await frame.locator(SEL_LINHA).count() > 0:
                     frame_notas = frame
                     break
             except Exception:
                 continue
 
         if frame_notas is None:
-            print("\nERRO: tabela de notas não encontrada. A lista está na tela?")
+            print("\nERRO: tabela de notas não encontrada.")
+            print("\n--- DIAGNÓSTICO (me envie isto) ---")
+            print(f"URL atual: {page.url}")
+            print(f"Frames: {len(page.frames)}")
+            for fi, frame in enumerate(page.frames):
+                try:
+                    info = await frame.evaluate(
+                        "() => ({inputs: document.querySelectorAll('input').length,"
+                        " tabelas: document.querySelectorAll('table').length,"
+                        " titulo: document.title,"
+                        " texto: (document.body ? document.body.innerText : '').slice(0, 200)})"
+                    )
+                    print(f"Frame {fi}: {info}")
+                except Exception:
+                    continue
+            print("--- FIM DO DIAGNÓSTICO ---")
             input("ENTER para fechar...")
             await browser.close()
             return
 
-        linhas = frame_notas.locator(
-            "table tr:has(input[type='text']:not([readonly]):not([disabled]))"
-        )
+        linhas = frame_notas.locator(SEL_LINHA)
         total = await linhas.count()
         print(f"\nAlunos encontrados: {total}\n")
 
