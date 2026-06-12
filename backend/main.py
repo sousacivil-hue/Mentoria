@@ -226,11 +226,9 @@ async def run_automacao(job_id: str, data: FormData):
                 try:
                     obj = page.locator("textarea").nth(0)
                     await obj.wait_for(timeout=6000)
-                    await obj.triple_click()
                     await obj.fill(conteudo)
                     met = page.locator("textarea").nth(1)
                     if await met.count() > 0:
-                        await met.triple_click()
                         await met.fill(METODOLOGIA)
                     salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar')").first
                     await salvar.click()
@@ -304,11 +302,9 @@ async def run_automacao(job_id: str, data: FormData):
                 try:
                     obj = page.locator("textarea").nth(0)
                     await obj.wait_for(timeout=6000)
-                    await obj.triple_click()
                     await obj.fill(conteudo)
                     met = page.locator("textarea").nth(1)
                     if await met.count() > 0:
-                        await met.triple_click()
                         await met.fill(METODOLOGIA)
                     salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar')").first
                     await salvar.click()
@@ -1127,7 +1123,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-12.1"}
+    return {"versao": "2026-06-12.2"}
 
 
 @app.get("/manchetes")
