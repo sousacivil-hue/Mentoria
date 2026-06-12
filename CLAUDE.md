@@ -14,11 +14,11 @@
 | Faltas | Registro de frequência | R$ 19,90/mês |
 | Completo | Diário + Notas + Faltas | R$ 39,90/mês |
 
-## Sistemas Suportados
-- **ActiveSoft/SIGA** — usado pelo Colégio Vita e CEFF
-- **Salesiano (TOTVS RM)** — Portal do Professor Angular (hash routing)
-- **SIAE** — Seduc Sergipe
-- **SESI** — em desenvolvimento
+## Status por Sistema
+- **ActiveSoft/SIGA** ✅ — funciona pelo site (Render), diário completo validado
+- **Salesiano (TOTVS RM)** ⚠️ — scripts .py locais funcionam; versão web com problema de navegação Angular (token perdido)
+- **SIAE** ⚠️ — código existe, nunca testado em produção
+- **SESI** 🚧 — em desenvolvimento
 
 ## Infraestrutura
 - **Render.com** (free plan) — hospeda o backend FastAPI + Playwright
