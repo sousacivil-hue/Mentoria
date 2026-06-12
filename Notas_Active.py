@@ -15,7 +15,24 @@ Como usar:
 """
 
 import asyncio
+import builtins
 from playwright.async_api import async_playwright
+
+# Grava tudo que aparece na tela também em notas_log.txt (tempo real)
+_log_file = open("notas_log.txt", "w", encoding="utf-8")
+_print_original = builtins.print
+
+
+def print(*args, **kwargs):  # noqa: A001
+    _print_original(*args, **kwargs)
+    try:
+        _print_original(*args, **kwargs, file=_log_file)
+        _log_file.flush()
+    except Exception:
+        pass
+
+
+builtins.print = print
 
 # ─────────────────────────────────────────────────────────────
 # CONFIGURAÇÕES
@@ -197,7 +214,7 @@ async def lancar_notas():
 if __name__ == "__main__":
     try:
         asyncio.run(lancar_notas())
-    except Exception:
+    except BaseException:
         import traceback
         erro = traceback.format_exc()
         print("\n" + "=" * 60)
