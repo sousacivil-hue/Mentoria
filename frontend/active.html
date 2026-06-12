@@ -395,6 +395,57 @@ Equações do 2º grau - fórmula de Bhaskara
       <span style="display:block;font-size:0.78rem;font-weight:500;font-style:italic;opacity:.75;margin-top:4px;">This is the way.</span>
     </button>
 
+    <!-- DIVISOR -->
+    <div style="margin:32px 0 8px;text-align:center;color:#9BA6BC;font-size:13px;letter-spacing:1px;font-weight:700;">
+      ── OUTROS SERVIÇOS ──
+    </div>
+
+    <!-- NOTAS -->
+    <div class="card">
+      <h2><span class="step-badge" style="background:linear-gradient(135deg,#1565c0,#0288d1);">N</span> Lançar Notas (AV3)</h2>
+      <label>Turma (opcional)</label>
+      <input type="text" id="notas-turma" placeholder="Ex: 8A — vazio = todas">
+      <label>Fase / Unidade (opcional)</label>
+      <input type="text" id="notas-fase" placeholder="Ex: AV3, 2ª Unidade">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:14px;">
+        <div>
+          <label>Nota (média ≥ 7)</label>
+          <input type="text" id="notas-alta" value="5,0">
+        </div>
+        <div>
+          <label>Nota (abaixo de 7)</label>
+          <input type="text" id="notas-baixa" value="4,0">
+        </div>
+        <div>
+          <label>Nota (exceções)</label>
+          <input type="text" id="notas-excecao" value="3,0">
+        </div>
+      </div>
+      <label style="margin-top:14px;">Alunos com nota mínima (um por linha, trecho do nome)</label>
+      <textarea id="notas-excecoes" rows="3" placeholder="Ex:&#10;davi&#10;icaro&#10;vinicius oliveira"></textarea>
+      <button class="btn-executar" style="margin-top:16px;background:linear-gradient(135deg,#1565c0,#0288d1);" onclick="executarNotas()">
+        🔢 Lançar notas automaticamente
+      </button>
+    </div>
+
+    <!-- FALTAS -->
+    <div class="card">
+      <h2><span class="step-badge" style="background:linear-gradient(135deg,#2e7d32,#388e3c);">F</span> Registrar Frequência</h2>
+      <label>Turma (opcional)</label>
+      <input type="text" id="faltas-turma" placeholder="Ex: 8A — vazio = todas">
+      <label>Bimestre</label>
+      <select id="faltas-bimestre">
+        <option value="1">1º Bimestre</option>
+        <option value="2" selected>2º Bimestre</option>
+        <option value="3">3º Bimestre</option>
+        <option value="4">4º Bimestre</option>
+      </select>
+      <div class="aviso" style="margin-top:12px;">📋 Marca presença (P) em todas as colunas, grava e avança automaticamente.</div>
+      <button class="btn-executar" style="margin-top:16px;background:linear-gradient(135deg,#2e7d32,#388e3c);" onclick="executarFaltas()">
+        ✅ Registrar frequência automaticamente
+      </button>
+    </div>
+
   </div>
 
   <!-- PROGRESSO -->
@@ -769,6 +820,88 @@ function addLog(msg, tipo = '') {
   box.scrollTop = box.scrollHeight;
   if (msg && !msg.startsWith('=')) {
     document.getElementById('status-atual').textContent = msg.slice(0, 60);
+  }
+}
+
+async function executarNotas() {
+  const selectVal = document.getElementById('select-colegio').value;
+  const urlColegio = selectVal === 'outro'
+    ? document.getElementById('url-colegio').value.trim()
+    : selectVal;
+  const usuario = document.getElementById('active_usuario').value.trim();
+  const senha = document.getElementById('active_senha').value.trim();
+  if (!usuario || !senha) { alert('Preencha o usuário e a senha no card 1.'); return; }
+
+  const excecoesTxt = document.getElementById('notas-excecoes').value;
+  const excecoes = excecoesTxt.split('\n').map(s => s.trim()).filter(s => s);
+
+  const payload = {
+    url_colegio: urlColegio,
+    usuario, senha,
+    turma: document.getElementById('notas-turma').value.trim(),
+    fase: document.getElementById('notas-fase').value.trim(),
+    nota_alta: document.getElementById('notas-alta').value.trim(),
+    nota_baixa: document.getElementById('notas-baixa').value.trim(),
+    nota_excecao: document.getElementById('notas-excecao').value.trim(),
+    excecoes,
+    pular_preenchidas: true,
+  };
+
+  await dispararJob(`${BACKEND_URL}/executar-active-notas`, payload, 'Lançando notas...');
+}
+
+async function executarFaltas() {
+  const selectVal = document.getElementById('select-colegio').value;
+  const urlColegio = selectVal === 'outro'
+    ? document.getElementById('url-colegio').value.trim()
+    : selectVal;
+  const usuario = document.getElementById('active_usuario').value.trim();
+  const senha = document.getElementById('active_senha').value.trim();
+  if (!usuario || !senha) { alert('Preencha o usuário e a senha no card 1.'); return; }
+
+  await dispararJob(`${BACKEND_URL}/executar-active-faltas`, {
+    url_colegio: urlColegio, usuario, senha,
+    turma: document.getElementById('faltas-turma').value.trim(),
+    bimestre: document.getElementById('faltas-bimestre').value,
+  }, 'Registrando frequência...');
+}
+
+async function dispararJob(endpoint, payload, titulo) {
+  document.getElementById('tela-form').style.display = 'none';
+  document.getElementById('tela-progresso').style.display = 'block';
+  addLog(`⚡ ${titulo}`);
+  try {
+    const resp = await fetch(endpoint, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const { job_id } = await resp.json();
+    const sse = new EventSource(`${BACKEND_URL}/progresso/${job_id}`);
+    let semSinalTimer = null;
+    const resetarTimer = () => {
+      clearTimeout(semSinalTimer);
+      semSinalTimer = setTimeout(() => {
+        sse.close();
+        addLog('⚠️ Conexão perdida por 60s — verifique o portal e tente de novo.', 'erro');
+        voltarAoFormulario();
+      }, 60000);
+    };
+    resetarTimer();
+    sse.onmessage = (e) => {
+      resetarTimer();
+      const msg = e.data;
+      if (msg === '__CONCLUIDO__') { clearTimeout(semSinalTimer); sse.close(); mostrarSucesso(); }
+      else if (msg === '__ERRO__') { clearTimeout(semSinalTimer); sse.close(); mostrarFalha(); }
+      else {
+        const tipo = msg.includes('ERRO') || msg.includes('❌') ? 'erro'
+          : (msg.includes('✅') || msg.includes('✓')) ? 'ok' : 'info';
+        addLog(msg, tipo);
+      }
+    };
+    sse.onerror = () => { addLog('⚠️ Conexão instável — reconectando...', 'info'); };
+  } catch (err) {
+    addLog(`Erro ao conectar: ${err.message}`, 'erro');
+    voltarAoFormulario();
   }
 }
 
