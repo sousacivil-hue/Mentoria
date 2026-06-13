@@ -120,18 +120,9 @@ try:
     else:
         print("  → Todos presentes.")
 
-    import os
-    PERFIL_CHROME = os.path.expandvars(r"%LOCALAPPDATA%\Google\Chrome\User Data")
-
     with sync_playwright() as pw:
-        context = pw.chromium.launch_persistent_context(
-            user_data_dir=PERFIL_CHROME,
-            channel="chrome",
-            headless=False,
-            slow_mo=150,
-            viewport={"width": 1280, "height": 900},
-            args=["--profile-directory=Default"],
-        )
+        browser = pw.chromium.launch(headless=False, slow_mo=150, channel="chrome")
+        context = browser.new_context(viewport={"width": 1280, "height": 900})
         page = context.new_page()
 
         # ── LOGIN ────────────────────────────────────────
@@ -213,7 +204,7 @@ try:
         print(f"{'='*55}")
 
         input("\nENTER para fechar o Chrome...")
-        context.close()
+        browser.close()
 
 except BaseException:
     print("\n=== ERRO ===")
