@@ -127,6 +127,50 @@
     font-size: 0.82rem; color: #555; margin-top: 14px; line-height: 1.5;
   }
   .dica { font-size: 0.78rem; color: #888; margin-top: 6px; line-height: 1.4; }
+
+  /* LOADING OVERLAY */
+  #loading-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7); z-index: 999;
+    align-items: center; justify-content: center; flex-direction: column;
+  }
+  #loading-overlay.ativo { display: flex; }
+  .loading-box {
+    background: white; border-radius: 20px; padding: 36px 40px;
+    max-width: 380px; width: 90%; text-align: center;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+  }
+  .robo-anim {
+    font-size: 3.5rem;
+    display: inline-block;
+    animation: robo-digita 0.4s ease-in-out infinite alternate;
+    margin-bottom: 8px;
+  }
+  @keyframes robo-digita {
+    0%   { transform: translateY(0) rotate(-4deg); }
+    100% { transform: translateY(4px) rotate(4deg); }
+  }
+  .loading-titulo {
+    font-size: 1rem; font-weight: 700; color: #2e7d32; margin-bottom: 6px;
+  }
+  .piada-texto {
+    font-size: 0.88rem; color: #555; line-height: 1.6;
+    min-height: 60px; margin-bottom: 16px;
+    font-style: italic;
+  }
+  .loading-barra-wrap {
+    background: #e0e0e0; border-radius: 20px; height: 6px; overflow: hidden;
+  }
+  .loading-barra {
+    height: 100%; border-radius: 20px;
+    background: linear-gradient(90deg, #2e7d32, #66bb6a);
+    animation: barra-pulsa 1.2s ease-in-out infinite alternate;
+    width: 30%;
+  }
+  @keyframes barra-pulsa {
+    0%   { width: 20%; margin-left: 0; }
+    100% { width: 40%; margin-left: 60%; }
+  }
 </style>
 </head>
 <body>
@@ -166,6 +210,16 @@
       <input type="password" id="senha" placeholder="Sua senha do Infodat" autocomplete="current-password">
       <div class="aviso">🔒 Sua senha é usada apenas durante esta automação e não fica armazenada.</div>
       <button class="btn-verde" id="btn-carregar" onclick="carregarTurmas()">🔍 Carregar minhas turmas</button>
+    </div>
+  </div>
+
+  <!-- LOADING OVERLAY -->
+  <div id="loading-overlay">
+    <div class="loading-box">
+      <div class="robo-anim">🤖</div>
+      <div class="loading-titulo">Conectando ao Infodat...</div>
+      <div class="piada-texto" id="piada-txt"></div>
+      <div class="loading-barra-wrap"><div class="loading-barra"></div></div>
     </div>
   </div>
 
@@ -268,13 +322,24 @@ async function carregarTurmas() {
   const btn = document.getElementById('btn-carregar');
   btn.disabled = true;
 
-  let seg = 20;
-  btn.textContent = `⏳ Conectando ao Infodat... ${seg}s`;
-  const timer = setInterval(() => {
-    seg--;
-    if (seg > 0) btn.textContent = `⏳ Conectando ao Infodat... ${seg}s`;
-    else { clearInterval(timer); btn.textContent = '⏳ Quase lá...'; }
-  }, 1000);
+  const piadas = [
+    "— Professor, o senhor pode repetir a matéria?\n— Claro. Mas só se você repetir o ano também. 😄",
+    "— Por que o livro de matemática foi ao psicólogo?\nPorque tinha muitos problemas. 📚",
+    "— O que o professor de história disse ao aluno dormindo?\n— Acorda, o passado já passou! ⏳",
+    "— Qual é o prato favorito do professor de química?\n— Reação em cadeia de macarrão. 🧪",
+    "— O robô está digitando suas aulas agora.\nVocê merecia esse descanso. ☕",
+  ];
+  const overlay = document.getElementById('loading-overlay');
+  const piadaTxt = document.getElementById('piada-txt');
+  overlay.classList.add('ativo');
+  let idx = 0;
+  piadaTxt.textContent = piadas[idx];
+  const timerPiada = setInterval(() => {
+    idx = (idx + 1) % piadas.length;
+    piadaTxt.style.opacity = 0;
+    setTimeout(() => { piadaTxt.textContent = piadas[idx]; piadaTxt.style.opacity = 1; }, 300);
+  }, 4000);
+  piadaTxt.style.transition = 'opacity 0.3s';
 
   try {
     const resp = await fetch(`${BACKEND_URL}/turmas-infodat`, {
@@ -284,7 +349,8 @@ async function carregarTurmas() {
     });
     const dados = await resp.json();
 
-    clearInterval(timer);
+    clearInterval(timerPiada);
+    overlay.classList.remove('ativo');
     if (dados.erro) {
       alert('Erro: ' + dados.erro);
       btn.textContent = '🔍 Carregar minhas turmas';
@@ -312,7 +378,8 @@ async function carregarTurmas() {
     document.getElementById('tela-login').style.display = 'none';
     document.getElementById('tela-config').style.display = 'block';
   } catch (err) {
-    clearInterval(timer);
+    clearInterval(timerPiada);
+    overlay.classList.remove('ativo');
     alert('Erro ao conectar: ' + err.message);
     btn.textContent = '🔍 Carregar minhas turmas';
     btn.disabled = false;
