@@ -70,15 +70,18 @@ try:
             url_atual = page.url
             tem_senha = page.locator("input[type='password']").count() > 0
             print(f"  [{i+1}s] URL: {url_atual[:70]}  | campo_senha_visível: {tem_senha}")
-            if "sso.seduc.se.gov.br" not in url_atual:
+            # /sistemas = tela de seleção de sistema = login OK
+            if url_atual.rstrip("/").endswith("/sistemas"):
                 logado = True
                 break
-            if not tem_senha:
+            if "sso.seduc.se.gov.br" not in url_atual:
                 logado = True
                 break
 
         if logado:
             print(f"✅ LOGIN REALIZADO! URL final: {page.url}")
+            print("⏳ Aguardando React carregar os cards...")
+            page.wait_for_timeout(4000)
         else:
             print("❌ Login NÃO confirmado após 20 segundos.")
             print("Verifique o Chrome — pode ter aparecido erro ou CAPTCHA.")

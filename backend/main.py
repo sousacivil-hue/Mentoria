@@ -220,18 +220,32 @@ async def run_automacao(job_id: str, data: FormData):
             if campos_senha > 0:
                 await page.locator("input[type='password']").first.fill(data.senha)
             await page.keyboard.press("Enter")
-            # espera até sair da tela de login (máx 15s)
-            for _ in range(15):
+            # espera até chegar em /sistemas (tela de seleção = login OK)
+            for _ in range(20):
                 await page.wait_for_timeout(1000)
-                if "sso.seduc.se.gov.br" not in page.url:
+                url_atual = page.url
+                if url_atual.rstrip("/").endswith("/sistemas"):
                     logado = True
                     break
-                if await page.locator("input[type='password']").count() == 0:
+                if "sso.seduc.se.gov.br" not in url_atual:
                     logado = True
                     break
             if logado:
                 log.append("✅ Login realizado!")
-                await page.wait_for_timeout(1000)
+                # aguarda React renderizar os cards e clica no DIÁRIO via JS
+                await page.wait_for_timeout(4000)
+                clicou = await page.evaluate("""() => {
+                    const all = document.querySelectorAll('p, a, div, span');
+                    for (const el of all) {
+                        if (el.innerText && el.innerText.trim() === 'DIÁRIO') {
+                            el.click(); return true;
+                        }
+                    }
+                    return false;
+                }""")
+                if clicou:
+                    log.append("📓 Card DIÁRIO clicado!")
+                    await page.wait_for_timeout(3000)
             else:
                 log.append("⚠️ Login pode ter falhado — continuando mesmo assim...")
         except Exception as e:
@@ -1182,7 +1196,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.5"}
+    return {"versao": "2026-06-13.6"}
 
 
 @app.get("/manchetes")
