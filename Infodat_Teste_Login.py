@@ -51,21 +51,19 @@ try:
         # Seleciona escola (primeiro select)
         print(f"Selecionando escola: {ESCOLA}")
         page.locator("select#escola").select_option(value=ESCOLA)
-        page.wait_for_timeout(1500)
-        print("✅ Escola selecionada")
+        print("✅ Escola selecionada — aguardando lista de professores carregar...")
 
-        # Aguarda o select de professor carregar (pode ser dinâmico)
-        page.wait_for_timeout(1000)
-        selects_apos = page.locator("select").count()
-        print(f"Selects após escolher escola: {selects_apos}")
-        for i in range(selects_apos):
-            sel = page.locator("select").nth(i)
-            opts = sel.locator("option").all_text_contents()
-            print(f"  Select [{i}]: {opts[:5]}{'...' if len(opts) > 5 else ''}")
+        # Aguarda o select de professor carregar via AJAX (começa vazio)
+        page.wait_for_function(
+            "document.querySelector('select#professor').options.length > 1",
+            timeout=10000
+        )
+        opts_prof = page.locator("select#professor option").all_text_contents()
+        print(f"  Professores disponíveis: {opts_prof[:5]}{'...' if len(opts_prof) > 5 else ''}")
 
-        # Seleciona professor (segundo select)
+        # Seleciona professor pelo texto
         print(f"Selecionando professor: {PROFESSOR}")
-        page.locator("select").nth(1).select_option(label=PROFESSOR)
+        page.locator("select#professor").select_option(label=PROFESSOR)
         page.wait_for_timeout(1000)
         print("✅ Professor selecionado")
 
