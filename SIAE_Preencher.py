@@ -29,12 +29,12 @@ SENHA = "130224"
 # Exemplos: "6" (6º Ano), "7" (7º Ano), "3" (3ª Série), "eja", "mat digital", "exp mat", "financeira"
 ASSUNTOS = {
     "6":           "Critérios de divisibilidade",
-    "7":           "Juros simples: introdução",
-    "3":           "Matemática Financeira: juros compostos",
-    "mat digital": "Sistemas numéricos binário e decimal",
-    "eja":         "Frações no cotidiano",
-    "exp mat":     "Álgebra no cotidiano",
-    "financeira":  "Juros compostos na prática",
+    "7":           "Números inteiros: potenciação",
+    "3":           "Razão e proporção",
+    "mat digital": "Exercícios no livro",
+    "eja":         "Revisão de matemática básica",
+    "exp mat":     "Razão e proporção",
+    "financeira":  "Juros compostos",
 }
 
 METODOLOGIA = "Aula expositiva dialogada com resolução de exercícios."
