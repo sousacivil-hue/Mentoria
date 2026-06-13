@@ -49,15 +49,15 @@
   }
   input:focus, select:focus, textarea:focus { border-color: #2e7d32; background: white; }
 
-  .btn-executar {
-    width: 100%; padding: 16px;
+  .btn-verde {
+    width: 100%; padding: 14px;
     background: linear-gradient(135deg, #2e7d32, #1b5e20);
     color: white; border: none; border-radius: 12px;
-    font-size: 1.05rem; font-weight: 700; cursor: pointer;
-    transition: opacity 0.2s, transform 0.1s;
+    font-size: 1rem; font-weight: 700; cursor: pointer;
+    transition: opacity 0.2s; margin-top: 16px;
   }
-  .btn-executar:hover { opacity: 0.92; transform: translateY(-1px); }
-  .btn-executar:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-verde:hover { opacity: 0.9; }
+  .btn-verde:disabled { opacity: 0.5; cursor: not-allowed; }
 
   .btn-add {
     margin-top: 12px; padding: 9px 18px;
@@ -66,32 +66,33 @@
     font-size: 0.9rem; font-weight: 600; width: 100%;
   }
 
-  /* Tabela de entradas */
-  .entrada-row {
-    display: grid;
-    grid-template-columns: 100px 90px 60px 1fr auto;
-    gap: 6px; margin-bottom: 8px; align-items: center;
+  /* Turmas como checkboxes */
+  .turma-opcao {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 14px; border: 1.5px solid #ddd;
+    border-radius: 10px; margin-bottom: 8px;
+    cursor: pointer; transition: all 0.2s;
   }
-  .entrada-row input, .entrada-row select {
-    padding: 8px 10px; font-size: 0.88rem;
-  }
-  .entrada-row .btn-rem {
-    border: none; background: none; color: #bbb;
-    cursor: pointer; font-size: 1.1rem; padding: 4px;
-  }
-  .entrada-header {
-    display: grid;
-    grid-template-columns: 100px 90px 60px 1fr 28px;
-    gap: 6px; margin-bottom: 4px;
-    font-size: 0.75rem; font-weight: 600; color: #888;
-  }
+  .turma-opcao:hover { border-color: #2e7d32; }
+  .turma-opcao.selecionada { border-color: #2e7d32; background: #e8f5e9; }
+  .turma-opcao input[type=checkbox] { width: 18px; height: 18px; cursor: pointer; }
+  .turma-opcao .nome { font-size: 0.9rem; color: #333; }
 
+  /* Dias da semana */
+  .dias-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 4px;
+  }
+  .dia-item { text-align: center; }
+  .dia-item label { font-size: 0.78rem; color: #666; margin-bottom: 4px; }
+  .dia-item input { padding: 8px 4px; text-align: center; }
+
+  /* Progresso */
   #tela-progresso { display: none; }
+  #tela-config { display: none; }
   .spinner {
     width: 48px; height: 48px;
     border: 4px solid #e0e0e0; border-top-color: #2e7d32;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    border-radius: 50%; animation: spin 0.8s linear infinite;
     margin: 0 auto 16px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -99,7 +100,7 @@
   .progress-header .titulo { font-size: 1.1rem; font-weight: 700; color: #333; }
   .progress-header .subtitulo { font-size: 0.85rem; color: #888; margin-top: 4px; }
   .status-bar { background: #e8f5e9; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
-  .status-bar .status-texto { font-size: 0.9rem; color: #2e7d32; font-weight: 600; }
+  .status-texto { font-size: 0.9rem; color: #2e7d32; font-weight: 600; }
   .log-box {
     background: #1a1a2e; color: #a8ffb0;
     font-family: 'Courier New', monospace; font-size: 0.8rem;
@@ -137,9 +138,8 @@
 
 <div class="container">
 
-  <div id="tela-form">
-
-    <!-- 1: Login -->
+  <!-- PASSO 1: LOGIN -->
+  <div id="tela-login">
     <div class="card">
       <h2><span class="step-badge">1</span> Acesso ao Infodat</h2>
       <label>Escola</label>
@@ -160,57 +160,69 @@
         <option value="michelangelo">Colégio Michelangelo</option>
         <option value="2025_michelangelo">Colégio Michelangelo 2025</option>
       </select>
-      <label>Professor</label>
-      <input type="text" id="professor" placeholder="Nome completo como aparece no sistema" autocomplete="name">
+      <label>Professor (nome completo como aparece no sistema)</label>
+      <input type="text" id="professor" placeholder="Ex: MARCOS ANTÔNIO PASSOS CHAGAS" autocomplete="name">
       <label>Senha</label>
       <input type="password" id="senha" placeholder="Sua senha do Infodat" autocomplete="current-password">
       <div class="aviso">🔒 Sua senha é usada apenas durante esta automação e não fica armazenada.</div>
+      <button class="btn-verde" id="btn-carregar" onclick="carregarTurmas()">🔍 Carregar minhas turmas</button>
+    </div>
+  </div>
+
+  <!-- PASSO 2+: CONFIGURAÇÃO (aparece após carregar turmas) -->
+  <div id="tela-config">
+
+    <!-- Turmas -->
+    <div class="card">
+      <h2><span class="step-badge">2</span> Suas turmas</h2>
+      <div class="dica" style="margin-bottom:12px;">Marque as turmas que têm o <strong>mesmo horário e conteúdo</strong>. Turmas diferentes = execute uma de cada vez.</div>
+      <div id="lista-turmas"></div>
     </div>
 
-    <!-- 2: Aulas -->
+    <!-- Período -->
     <div class="card">
-      <h2><span class="step-badge">2</span> Aulas para registrar</h2>
-      <div class="dica" style="margin-bottom:14px;">
-        Adicione uma linha para cada aula. Turmas com o mesmo conteúdo podem ser adicionadas na mesma linha separadas por vírgula (ex: <strong>017A031, 017B031</strong>).
-      </div>
-
-      <div class="entrada-header">
-        <span>Data</span>
-        <span>Turma(s)</span>
-        <span>Nº Aulas</span>
-        <span>Conteúdo</span>
-        <span></span>
-      </div>
-      <div id="tabela-entradas"></div>
-
-      <button class="btn-add" onclick="adicionarEntrada()">+ Adicionar aula</button>
+      <h2><span class="step-badge">3</span> Período do bimestre</h2>
+      <label>Data de início</label>
+      <input type="date" id="data-inicio">
+      <label>Data de fim</label>
+      <input type="date" id="data-fim">
     </div>
 
-    <!-- 3: Gerador IA -->
+    <!-- Aulas por dia -->
     <div class="card">
-      <h2><span class="step-badge">3</span> ✨ Gerar conteúdo com IA (opcional)</h2>
-      <div class="dica" style="margin-bottom:12px;">Preencha abaixo e a IA sugere um tópico para cada aula. Você pode editar depois.</div>
+      <h2><span class="step-badge">4</span> Aulas por dia da semana</h2>
+      <div class="dica" style="margin-bottom:12px;">Quantas aulas você tem nessa disciplina em cada dia? Coloque 0 nos dias sem aula.</div>
+      <div class="dias-grid">
+        <div class="dia-item"><label>Seg</label><input type="number" id="d1" value="0" min="0" max="6"></div>
+        <div class="dia-item"><label>Ter</label><input type="number" id="d2" value="0" min="0" max="6"></div>
+        <div class="dia-item"><label>Qua</label><input type="number" id="d3" value="0" min="0" max="6"></div>
+        <div class="dia-item"><label>Qui</label><input type="number" id="d4" value="0" min="0" max="6"></div>
+        <div class="dia-item"><label>Sex</label><input type="number" id="d5" value="0" min="0" max="6"></div>
+      </div>
+    </div>
+
+    <!-- Tópicos -->
+    <div class="card">
+      <h2><span class="step-badge">5</span> Conteúdo das aulas</h2>
       <label>Disciplina</label>
       <input type="text" id="ia-disciplina" placeholder="Ex: Física">
-      <label>Série / Turma</label>
+      <label>Série</label>
       <input type="text" id="ia-serie" placeholder="Ex: 3ª Série Ensino Médio">
       <label>Assunto principal (opcional)</label>
       <input type="text" id="ia-assunto" placeholder="Ex: Eletrostática">
-      <button class="btn-add" style="margin-top:12px;" onclick="gerarTopicosIA()" id="btn-gerar-ia">
-        ✨ Gerar tópicos com IA
-      </button>
-      <div class="dica" style="margin-top:8px;">Os tópicos gerados preenchem automaticamente o campo Conteúdo de cada linha acima.</div>
+      <button class="btn-add" onclick="gerarTopicosIA()" id="btn-gerar-ia">✨ Gerar tópicos com IA</button>
+      <label style="margin-top:16px;">Tópicos (um por linha)</label>
+      <textarea id="topicos" style="min-height:160px;" placeholder="Clique em 'Gerar tópicos com IA' ou cole sua lista aqui..."></textarea>
     </div>
 
-    <!-- 4: Faltas -->
+    <!-- Faltas -->
     <div class="card">
-      <h2><span class="step-badge">4</span> Alunos com falta (opcional)</h2>
-      <div class="dica" style="margin-bottom:10px;">Um nome por linha. Pode ser parte do nome (ex: JOAO SILVA).</div>
-      <textarea id="faltas" placeholder="Deixe em branco se todos estiveram presentes" style="min-height:80px;"></textarea>
+      <h2><span class="step-badge">6</span> Alunos com falta (opcional)</h2>
+      <div class="dica" style="margin-bottom:10px;">Um nome por linha. Pode ser parte do nome.</div>
+      <textarea id="faltas" style="min-height:80px;" placeholder="Deixe em branco se todos estiveram presentes"></textarea>
     </div>
 
-    <button class="btn-executar" onclick="executar()">⚡ Registrar no Infodat</button>
-
+    <button class="btn-verde" onclick="executar()">⚡ Preencher o Infodat</button>
   </div>
 
   <!-- PROGRESSO -->
@@ -221,9 +233,7 @@
         <div class="titulo">Preenchendo o Infodat...</div>
         <div class="subtitulo">Acompanhe abaixo. Não feche esta janela.</div>
       </div>
-      <div class="status-bar">
-        <span class="status-texto" id="status-atual">Iniciando...</span>
-      </div>
+      <div class="status-bar"><span class="status-texto" id="status-atual">Iniciando...</span></div>
       <div class="log-box" id="log-box"></div>
     </div>
   </div>
@@ -242,76 +252,175 @@
 
 <script>
 const BACKEND_URL = location.protocol === 'file:' ? 'http://localhost:8000' : '';
-let rowCount = 0;
-const hoje = new Date().toLocaleDateString('pt-BR');
-
-function adicionarEntrada(data = hoje, turmas = '', numAulas = '2', conteudo = '') {
-  const id = rowCount++;
-  const div = document.createElement('div');
-  div.className = 'entrada-row';
-  div.id = `entrada-${id}`;
-  div.innerHTML = `
-    <input type="text" value="${data}" placeholder="DD/MM/AAAA" class="campo-data">
-    <input type="text" value="${turmas}" placeholder="017A031" class="campo-turmas">
-    <input type="number" value="${numAulas}" min="1" max="6" class="campo-num">
-    <input type="text" value="${conteudo}" placeholder="Conteúdo da aula" class="campo-conteudo">
-    <button class="btn-rem" onclick="document.getElementById('entrada-${id}').remove()">✕</button>
-  `;
-  document.getElementById('tabela-entradas').appendChild(div);
-}
-
-adicionarEntrada();
 
 fetch(`${BACKEND_URL}/versao`).then(r => r.json())
   .then(d => { document.getElementById('versao').textContent = `v${d.versao}`; })
   .catch(() => {});
 
-function addLog(msg, tipo = '') {
-  const box = document.getElementById('log-box');
-  const linha = document.createElement('div');
-  if (tipo) linha.className = `log-${tipo}`;
-  linha.textContent = msg;
-  box.appendChild(linha);
-  box.scrollTop = box.scrollHeight;
-  if (msg && !msg.startsWith('=')) {
-    document.getElementById('status-atual').textContent = msg.slice(0, 60);
+let turmasDisponiveis = [];
+
+async function carregarTurmas() {
+  const escola    = document.getElementById('escola').value;
+  const professor = document.getElementById('professor').value.trim();
+  const senha     = document.getElementById('senha').value.trim();
+  if (!professor || !senha) { alert('Preencha professor e senha.'); return; }
+
+  const btn = document.getElementById('btn-carregar');
+  btn.textContent = '⏳ Carregando turmas...';
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch(`${BACKEND_URL}/turmas-infodat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ escola, professor, senha })
+    });
+    const dados = await resp.json();
+
+    if (dados.erro) {
+      alert('Erro: ' + dados.erro);
+      btn.textContent = '🔍 Carregar minhas turmas';
+      btn.disabled = false;
+      return;
+    }
+
+    turmasDisponiveis = dados.turmas;
+    const lista = document.getElementById('lista-turmas');
+    lista.innerHTML = '';
+    turmasDisponiveis.forEach(t => {
+      const div = document.createElement('label');
+      div.className = 'turma-opcao';
+      div.innerHTML = `
+        <input type="checkbox" value="${t.value}" checked>
+        <span class="nome">${t.label}</span>
+      `;
+      div.querySelector('input').addEventListener('change', function() {
+        div.classList.toggle('selecionada', this.checked);
+      });
+      div.classList.add('selecionada');
+      lista.appendChild(div);
+    });
+
+    document.getElementById('tela-login').style.display = 'none';
+    document.getElementById('tela-config').style.display = 'block';
+  } catch (err) {
+    alert('Erro ao conectar: ' + err.message);
+    btn.textContent = '🔍 Carregar minhas turmas';
+    btn.disabled = false;
   }
 }
 
+async function gerarTopicosIA() {
+  const disciplina = document.getElementById('ia-disciplina').value.trim();
+  const serie = document.getElementById('ia-serie').value.trim();
+  if (!disciplina || !serie) { alert('Preencha a disciplina e a série.'); return; }
+
+  const btn = document.getElementById('btn-gerar-ia');
+  btn.textContent = '⏳ Gerando...';
+  btn.disabled = true;
+
+  // Estima a quantidade com base no período e dias
+  const ini = document.getElementById('data-inicio').value;
+  const fim = document.getElementById('data-fim').value;
+  let quantidade = 30;
+  if (ini && fim) {
+    const dias = Math.round((new Date(fim) - new Date(ini)) / 86400000);
+    const aulasPorSemana = [1,2,3,4,5].reduce((s, d) =>
+      s + (parseInt(document.getElementById('d' + d).value) || 0), 0);
+    quantidade = Math.max(10, Math.round(dias / 7 * aulasPorSemana));
+  }
+
+  try {
+    const resp = await fetch(`${BACKEND_URL}/gerar-topicos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        disciplina, serie,
+        assunto: document.getElementById('ia-assunto').value.trim(),
+        quantidade
+      })
+    });
+    const dados = await resp.json();
+    if (dados.erro) { alert(dados.erro); }
+    else { document.getElementById('topicos').value = dados.topicos.join('\n'); }
+  } catch (err) {
+    alert('Erro ao conectar: ' + err.message);
+  } finally {
+    btn.textContent = '✨ Gerar tópicos com IA';
+    btn.disabled = false;
+  }
+}
+
+function gerarCalendario(inicio, fim, aulasPorDia) {
+  const FERIADOS = new Set([
+    "2026-01-01","2026-02-16","2026-02-17","2026-04-03","2026-04-21",
+    "2026-05-01","2026-06-04","2026-06-24","2026-07-08","2026-09-07",
+    "2026-10-12","2026-10-15","2026-11-02","2026-11-15","2026-11-20","2026-12-25"
+  ]);
+  const datas = [];
+  let d = new Date(inicio + 'T12:00:00');
+  const f = new Date(fim + 'T12:00:00');
+  while (d <= f) {
+    const iso = d.toISOString().slice(0, 10);
+    const dow = d.getDay(); // 0=dom..6=sab
+    const qtd = dow >= 1 && dow <= 5 ? (aulasPorDia[dow] || 0) : 0;
+    if (qtd > 0 && !FERIADOS.has(iso)) {
+      const br = iso.split('-').reverse().join('/');
+      for (let i = 0; i < qtd; i++) datas.push({ data: br, num_aulas: String(qtd) });
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  // Remove duplicatas de data (já agrupados por qtd)
+  const vistas = new Set();
+  return datas.filter(e => { if (vistas.has(e.data)) return false; vistas.add(e.data); return true; });
+}
+
 async function executar() {
-  const escola  = document.getElementById('escola').value;
+  const escola    = document.getElementById('escola').value;
   const professor = document.getElementById('professor').value.trim();
-  const senha   = document.getElementById('senha').value.trim();
+  const senha     = document.getElementById('senha').value.trim();
+  const inicio    = document.getElementById('data-inicio').value;
+  const fim       = document.getElementById('data-fim').value;
 
-  if (!professor || !senha) { alert('Preencha professor e senha.'); return; }
+  const turmasSel = [...document.querySelectorAll('#lista-turmas input[type=checkbox]:checked')]
+    .map(cb => cb.value);
+  if (turmasSel.length === 0) { alert('Selecione pelo menos uma turma.'); return; }
+  if (!inicio || !fim) { alert('Informe o período (início e fim).'); return; }
 
+  const aulasPorDia = {};
+  [1,2,3,4,5].forEach(d => {
+    const v = parseInt(document.getElementById('d' + d).value) || 0;
+    if (v > 0) aulasPorDia[d] = v;
+  });
+  if (Object.keys(aulasPorDia).length === 0) { alert('Informe quantas aulas tem em pelo menos um dia.'); return; }
+
+  const topicosRaw = document.getElementById('topicos').value.trim();
+  const topicos = topicosRaw.split('\n').map(l => l.trim()).filter(Boolean);
+  if (topicos.length === 0) { alert('Cole ou gere os tópicos de conteúdo.'); return; }
+
+  // Gera o calendário de datas
+  const datas = gerarCalendario(inicio, fim, aulasPorDia);
+
+  // Monta as entradas: cada data × cada turma selecionada
   const entradas = [];
-  document.querySelectorAll('#tabela-entradas .entrada-row').forEach(row => {
-    const data     = row.querySelector('.campo-data').value.trim();
-    const turmasRaw = row.querySelector('.campo-turmas').value.trim();
-    const numAulas = row.querySelector('.campo-num').value.trim();
-    const conteudo = row.querySelector('.campo-conteudo').value.trim();
-    if (!data || !turmasRaw || !conteudo) return;
-    turmasRaw.split(',').map(t => t.trim()).filter(Boolean).forEach(turma => {
-      entradas.push({ data, turma_value: turma, num_aulas: numAulas || '2', conteudo });
+  datas.forEach((d, i) => {
+    const conteudo = topicos[i % topicos.length];
+    turmasSel.forEach(tv => {
+      entradas.push({ data: d.data, turma_value: tv, num_aulas: d.num_aulas, conteudo });
     });
   });
-
-  if (entradas.length === 0) { alert('Adicione pelo menos uma aula.'); return; }
 
   const faltasRaw = document.getElementById('faltas').value.trim();
   const alunos_falta = faltasRaw ? faltasRaw.split('\n').map(l => l.trim().toUpperCase()).filter(Boolean) : [];
 
-  const dados = { escola, professor, senha, entradas, alunos_falta };
-
-  document.getElementById('tela-form').style.display = 'none';
+  document.getElementById('tela-config').style.display = 'none';
   document.getElementById('tela-progresso').style.display = 'block';
 
   try {
     const resp = await fetch(`${BACKEND_URL}/executar-infodat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dados)
+      body: JSON.stringify({ escola, professor, senha, entradas, alunos_falta })
     });
     const { job_id } = await resp.json();
 
@@ -326,61 +435,31 @@ async function executar() {
         sse.close();
         addLog('ERRO: automação encerrada com falha.', 'erro');
       } else {
-        const tipo = msg.includes('ERRO') || msg.includes('❌') ? 'erro'
-          : (msg.includes('✅') || msg.includes('Gravado')) ? 'ok' : 'info';
+        const tipo = msg.includes('❌') || msg.includes('ERRO') ? 'erro'
+          : msg.includes('✅') ? 'ok' : 'info';
         addLog(msg, tipo);
       }
     };
-    sse.onerror = () => { addLog('Conexão perdida com o servidor.', 'erro'); sse.close(); };
+    sse.onerror = () => { addLog('Conexão perdida.', 'erro'); sse.close(); };
   } catch (err) {
-    addLog(`Erro ao conectar ao servidor: ${err.message}`, 'erro');
+    addLog('Erro ao conectar: ' + err.message, 'erro');
   }
 }
 
-async function gerarTopicosIA() {
-  const disciplina = document.getElementById('ia-disciplina').value.trim();
-  const serie = document.getElementById('ia-serie').value.trim();
-  if (!disciplina || !serie) { alert('Preencha a disciplina e a série.'); return; }
-
-  const btn = document.getElementById('btn-gerar-ia');
-  btn.textContent = '⏳ Gerando...';
-  btn.disabled = true;
-
-  const linhas = document.querySelectorAll('#tabela-entradas .entrada-row');
-  const quantidade = linhas.length || 5;
-
-  try {
-    const resp = await fetch(`${BACKEND_URL}/gerar-topicos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        disciplina, serie,
-        assunto: document.getElementById('ia-assunto').value.trim(),
-        quantidade
-      })
-    });
-    const dados = await resp.json();
-    if (dados.erro) {
-      alert(dados.erro);
-    } else {
-      const topicos = dados.topicos;
-      linhas.forEach((row, i) => {
-        if (i < topicos.length) {
-          row.querySelector('.campo-conteudo').value = topicos[i];
-        }
-      });
-    }
-  } catch (err) {
-    alert('Erro ao conectar ao servidor: ' + err.message);
-  } finally {
-    btn.textContent = '✨ Gerar tópicos com IA';
-    btn.disabled = false;
-  }
+function addLog(msg, tipo = '') {
+  const box = document.getElementById('log-box');
+  const linha = document.createElement('div');
+  if (tipo) linha.className = `log-${tipo}`;
+  linha.textContent = msg;
+  box.appendChild(linha);
+  box.scrollTop = box.scrollHeight;
+  if (msg && !msg.startsWith('='))
+    document.getElementById('status-atual').textContent = msg.slice(0, 60);
 }
 
 function reiniciar() {
   document.getElementById('tela-sucesso').style.display = 'none';
-  document.getElementById('tela-form').style.display = 'block';
+  document.getElementById('tela-login').style.display = 'block';
   document.getElementById('log-box').innerHTML = '';
 }
 </script>

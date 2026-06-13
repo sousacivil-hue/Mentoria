@@ -1237,7 +1237,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.9"}
+    return {"versao": "2026-06-13.10"}
 
 
 @app.get("/manchetes")
@@ -2349,6 +2349,71 @@ async def run_infodat(job_id: str, data: InfodatFormData):
         log.append(f"\n✅ CONCLUÍDO! Aulas gravadas: {gravadas}/{len(data.entradas)}")
         log.append("__CONCLUIDO__")
         await browser.close()
+
+
+class InfodatLoginData(BaseModel):
+    escola: str
+    professor: str
+    senha: str
+
+
+@app.post("/turmas-infodat")
+async def turmas_infodat(data: InfodatLoginData):
+    from playwright.async_api import async_playwright
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(headless=True)
+        context = await browser.new_context(
+            viewport={"width": 1280, "height": 900},
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/125.0.0.0 Safari/537.36"
+            ),
+        )
+        page = await context.new_page()
+        try:
+            for _ in range(3):
+                try:
+                    await page.goto(f"{INFODAT_BASE}/login.php",
+                                    wait_until="domcontentloaded", timeout=60000)
+                    break
+                except Exception:
+                    await page.wait_for_timeout(5000)
+
+            await page.wait_for_timeout(2000)
+            await page.locator("select#escola").select_option(value=data.escola)
+            await page.wait_for_function(
+                "document.querySelector('select#professor').options.length > 1",
+                timeout=10000,
+            )
+            await page.locator("select#professor").select_option(label=data.professor)
+            await page.locator("input[type='password']").first.fill(data.senha)
+            await page.locator("input[value='Entrar'], button:has-text('Entrar')").first.click()
+            for _ in range(20):
+                await page.wait_for_timeout(1000)
+                if "login.php" not in page.url:
+                    break
+            if "login.php" in page.url:
+                return {"erro": "Login não aceito — verifique professor e senha."}
+
+            await page.goto(f"{INFODAT_BASE}/diario_add.php",
+                            wait_until="domcontentloaded", timeout=30000)
+            await page.wait_for_timeout(2000)
+
+            turmas = await page.evaluate("""
+                () => {
+                    const sel = document.querySelector('select#cursoturmadisc');
+                    if (!sel) return [];
+                    return Array.from(sel.options)
+                        .filter(o => o.value)
+                        .map(o => ({ value: o.value, label: o.text.trim() }));
+                }
+            """)
+            return {"turmas": turmas}
+        except Exception as e:
+            return {"erro": str(e)}
+        finally:
+            await browser.close()
 
 
 @app.post("/executar-infodat")
