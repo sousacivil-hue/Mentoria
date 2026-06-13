@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SóDigita — Infodat</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; min-height: 100vh; }
+
+  header {
+    background: linear-gradient(135deg, #2e7d32, #1b5e20);
+    color: white; padding: 18px 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  header h1 { font-size: 1.4rem; font-weight: 700; }
+  header span { font-size: 0.85rem; opacity: 0.85; }
+
+  .container { max-width: 640px; margin: 32px auto; padding: 0 16px; }
+
+  .card {
+    background: white; border-radius: 16px;
+    padding: 28px; margin-bottom: 20px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  }
+  .card h2 {
+    font-size: 1rem; color: #2e7d32;
+    margin-bottom: 18px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .step-badge {
+    background: #2e7d32; color: white; border-radius: 50%;
+    width: 24px; height: 24px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.75rem; font-weight: 700; flex-shrink: 0;
+  }
+
+  label {
+    display: block; font-size: 0.85rem; font-weight: 600;
+    color: #444; margin-bottom: 6px; margin-top: 14px;
+  }
+  label:first-of-type { margin-top: 0; }
+
+  input, select, textarea {
+    width: 100%; padding: 11px 14px;
+    border: 1.5px solid #ddd; border-radius: 10px;
+    font-size: 0.95rem; outline: none;
+    transition: border 0.2s; background: #fafafa; font-family: inherit;
+  }
+  input:focus, select:focus, textarea:focus { border-color: #2e7d32; background: white; }
+
+  .btn-executar {
+    width: 100%; padding: 16px;
+    background: linear-gradient(135deg, #2e7d32, #1b5e20);
+    color: white; border: none; border-radius: 12px;
+    font-size: 1.05rem; font-weight: 700; cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn-executar:hover { opacity: 0.92; transform: translateY(-1px); }
+  .btn-executar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .btn-add {
+    margin-top: 12px; padding: 9px 18px;
+    border: 1.5px dashed #2e7d32; background: transparent;
+    color: #2e7d32; border-radius: 10px; cursor: pointer;
+    font-size: 0.9rem; font-weight: 600; width: 100%;
+  }
+
+  /* Tabela de entradas */
+  .entrada-row {
+    display: grid;
+    grid-template-columns: 100px 90px 60px 1fr auto;
+    gap: 6px; margin-bottom: 8px; align-items: center;
+  }
+  .entrada-row input, .entrada-row select {
+    padding: 8px 10px; font-size: 0.88rem;
+  }
+  .entrada-row .btn-rem {
+    border: none; background: none; color: #bbb;
+    cursor: pointer; font-size: 1.1rem; padding: 4px;
+  }
+  .entrada-header {
+    display: grid;
+    grid-template-columns: 100px 90px 60px 1fr 28px;
+    gap: 6px; margin-bottom: 4px;
+    font-size: 0.75rem; font-weight: 600; color: #888;
+  }
+
+  #tela-progresso { display: none; }
+  .spinner {
+    width: 48px; height: 48px;
+    border: 4px solid #e0e0e0; border-top-color: #2e7d32;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .progress-header { text-align: center; margin-bottom: 20px; }
+  .progress-header .titulo { font-size: 1.1rem; font-weight: 700; color: #333; }
+  .progress-header .subtitulo { font-size: 0.85rem; color: #888; margin-top: 4px; }
+  .status-bar { background: #e8f5e9; border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
+  .status-bar .status-texto { font-size: 0.9rem; color: #2e7d32; font-weight: 600; }
+  .log-box {
+    background: #1a1a2e; color: #a8ffb0;
+    font-family: 'Courier New', monospace; font-size: 0.8rem;
+    padding: 16px; border-radius: 12px;
+    height: 300px; overflow-y: auto; line-height: 1.7;
+  }
+  .log-erro { color: #ff6b6b; }
+  .log-ok { color: #69ff8a; }
+  .log-info { color: #74b9ff; }
+
+  #tela-sucesso { display: none; text-align: center; padding: 20px 0; }
+  .sucesso-icone { font-size: 4rem; margin-bottom: 12px; }
+  .sucesso-titulo { font-size: 1.3rem; font-weight: 700; color: #2e7d32; margin-bottom: 8px; }
+  .sucesso-sub { color: #666; font-size: 0.9rem; margin-bottom: 24px; }
+  .btn-novo {
+    background: #2e7d32; color: white; border: none;
+    padding: 13px 32px; border-radius: 10px;
+    font-size: 0.95rem; font-weight: 600; cursor: pointer;
+  }
+
+  .aviso {
+    background: #fff8e1; border-left: 4px solid #f9a825;
+    padding: 12px 14px; border-radius: 8px;
+    font-size: 0.82rem; color: #555; margin-top: 14px; line-height: 1.5;
+  }
+  .dica { font-size: 0.78rem; color: #888; margin-top: 6px; line-height: 1.4; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📗 SóDigita — Infodat</h1>
+  <span>Você planeja. Você ensina. A gente só digita. <span id="versao" style="opacity:.6;font-size:.75rem;"></span></span>
+</header>
+
+<div class="container">
+
+  <div id="tela-form">
+
+    <!-- 1: Login -->
+    <div class="card">
+      <h2><span class="step-badge">1</span> Acesso ao Infodat</h2>
+      <label>Escola</label>
+      <select id="escola">
+        <option value="arqui">Colégio Arqui</option>
+        <option value="2025_arqui">Colégio Arqui 2025</option>
+        <option value="cepi">Colégio CEPI Expansão</option>
+        <option value="dinamico">Colégio Dinâmico</option>
+        <option value="2025_dinamico">Colégio Dinâmico 2025</option>
+        <option value="alternativo2">Colégio Essencial</option>
+        <option value="hoje">Colégio Hoje</option>
+        <option value="2025_hoje">Colégio Hoje 2025</option>
+        <option value="ideal">Colégio Ideal</option>
+        <option value="2025_ideal">Colégio Ideal 2025</option>
+        <option value="alternativo">Colégio Intermédio</option>
+        <option value="magistral">Colégio Magistral</option>
+        <option value="master">Colégio Master</option>
+        <option value="michelangelo">Colégio Michelangelo</option>
+        <option value="2025_michelangelo">Colégio Michelangelo 2025</option>
+      </select>
+      <label>Professor</label>
+      <input type="text" id="professor" placeholder="Nome completo como aparece no sistema" autocomplete="name">
+      <label>Senha</label>
+      <input type="password" id="senha" placeholder="Sua senha do Infodat" autocomplete="current-password">
+      <div class="aviso">🔒 Sua senha é usada apenas durante esta automação e não fica armazenada.</div>
+    </div>
+
+    <!-- 2: Aulas -->
+    <div class="card">
+      <h2><span class="step-badge">2</span> Aulas para registrar</h2>
+      <div class="dica" style="margin-bottom:14px;">
+        Adicione uma linha para cada aula. Turmas com o mesmo conteúdo podem ser adicionadas na mesma linha separadas por vírgula (ex: <strong>017A031, 017B031</strong>).
+      </div>
+
+      <div class="entrada-header">
+        <span>Data</span>
+        <span>Turma(s)</span>
+        <span>Nº Aulas</span>
+        <span>Conteúdo</span>
+        <span></span>
+      </div>
+      <div id="tabela-entradas"></div>
+
+      <button class="btn-add" onclick="adicionarEntrada()">+ Adicionar aula</button>
+    </div>
+
+    <!-- 3: Faltas -->
+    <div class="card">
+      <h2><span class="step-badge">3</span> Alunos com falta (opcional)</h2>
+      <div class="dica" style="margin-bottom:10px;">Um nome por linha. Pode ser parte do nome (ex: JOAO SILVA).</div>
+      <textarea id="faltas" placeholder="Deixe em branco se todos estiveram presentes" style="min-height:80px;"></textarea>
+    </div>
+
+    <button class="btn-executar" onclick="executar()">⚡ Registrar no Infodat</button>
+
+  </div>
+
+  <!-- PROGRESSO -->
+  <div id="tela-progresso">
+    <div class="card">
+      <div class="progress-header">
+        <div class="spinner"></div>
+        <div class="titulo">Preenchendo o Infodat...</div>
+        <div class="subtitulo">Acompanhe abaixo. Não feche esta janela.</div>
+      </div>
+      <div class="status-bar">
+        <span class="status-texto" id="status-atual">Iniciando...</span>
+      </div>
+      <div class="log-box" id="log-box"></div>
+    </div>
+  </div>
+
+  <!-- SUCESSO -->
+  <div id="tela-sucesso">
+    <div class="card">
+      <div class="sucesso-icone">🎉</div>
+      <div class="sucesso-titulo">Diário atualizado com sucesso!</div>
+      <div class="sucesso-sub">Todas as aulas foram registradas no Infodat.</div>
+      <button class="btn-novo" onclick="reiniciar()">Fazer outra automação</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const BACKEND_URL = location.protocol === 'file:' ? 'http://localhost:8000' : '';
+let rowCount = 0;
+const hoje = new Date().toLocaleDateString('pt-BR');
+
+function adicionarEntrada(data = hoje, turmas = '', numAulas = '2', conteudo = '') {
+  const id = rowCount++;
+  const div = document.createElement('div');
+  div.className = 'entrada-row';
+  div.id = `entrada-${id}`;
+  div.innerHTML = `
+    <input type="text" value="${data}" placeholder="DD/MM/AAAA" class="campo-data">
+    <input type="text" value="${turmas}" placeholder="017A031" class="campo-turmas">
+    <input type="number" value="${numAulas}" min="1" max="6" class="campo-num">
+    <input type="text" value="${conteudo}" placeholder="Conteúdo da aula" class="campo-conteudo">
+    <button class="btn-rem" onclick="document.getElementById('entrada-${id}').remove()">✕</button>
+  `;
+  document.getElementById('tabela-entradas').appendChild(div);
+}
+
+adicionarEntrada();
+
+fetch(`${BACKEND_URL}/versao`).then(r => r.json())
+  .then(d => { document.getElementById('versao').textContent = `v${d.versao}`; })
+  .catch(() => {});
+
+function addLog(msg, tipo = '') {
+  const box = document.getElementById('log-box');
+  const linha = document.createElement('div');
+  if (tipo) linha.className = `log-${tipo}`;
+  linha.textContent = msg;
+  box.appendChild(linha);
+  box.scrollTop = box.scrollHeight;
+  if (msg && !msg.startsWith('=')) {
+    document.getElementById('status-atual').textContent = msg.slice(0, 60);
+  }
+}
+
+async function executar() {
+  const escola  = document.getElementById('escola').value;
+  const professor = document.getElementById('professor').value.trim();
+  const senha   = document.getElementById('senha').value.trim();
+
+  if (!professor || !senha) { alert('Preencha professor e senha.'); return; }
+
+  const entradas = [];
+  document.querySelectorAll('#tabela-entradas .entrada-row').forEach(row => {
+    const data     = row.querySelector('.campo-data').value.trim();
+    const turmasRaw = row.querySelector('.campo-turmas').value.trim();
+    const numAulas = row.querySelector('.campo-num').value.trim();
+    const conteudo = row.querySelector('.campo-conteudo').value.trim();
+    if (!data || !turmasRaw || !conteudo) return;
+    turmasRaw.split(',').map(t => t.trim()).filter(Boolean).forEach(turma => {
+      entradas.push({ data, turma_value: turma, num_aulas: numAulas || '2', conteudo });
+    });
+  });
+
+  if (entradas.length === 0) { alert('Adicione pelo menos uma aula.'); return; }
+
+  const faltasRaw = document.getElementById('faltas').value.trim();
+  const alunos_falta = faltasRaw ? faltasRaw.split('\n').map(l => l.trim().toUpperCase()).filter(Boolean) : [];
+
+  const dados = { escola, professor, senha, entradas, alunos_falta };
+
+  document.getElementById('tela-form').style.display = 'none';
+  document.getElementById('tela-progresso').style.display = 'block';
+
+  try {
+    const resp = await fetch(`${BACKEND_URL}/executar-infodat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dados)
+    });
+    const { job_id } = await resp.json();
+
+    const sse = new EventSource(`${BACKEND_URL}/progresso/${job_id}`);
+    sse.onmessage = (e) => {
+      const msg = e.data;
+      if (msg === '__CONCLUIDO__') {
+        sse.close();
+        document.getElementById('tela-progresso').style.display = 'none';
+        document.getElementById('tela-sucesso').style.display = 'block';
+      } else if (msg === '__ERRO__') {
+        sse.close();
+        addLog('ERRO: automação encerrada com falha.', 'erro');
+      } else {
+        const tipo = msg.includes('ERRO') || msg.includes('❌') ? 'erro'
+          : (msg.includes('✅') || msg.includes('Gravado')) ? 'ok' : 'info';
+        addLog(msg, tipo);
+      }
+    };
+    sse.onerror = () => { addLog('Conexão perdida com o servidor.', 'erro'); sse.close(); };
+  } catch (err) {
+    addLog(`Erro ao conectar ao servidor: ${err.message}`, 'erro');
+  }
+}
+
+function reiniciar() {
+  document.getElementById('tela-sucesso').style.display = 'none';
+  document.getElementById('tela-form').style.display = 'block';
+  document.getElementById('log-box').innerHTML = '';
+}
+</script>
+</body>
+</html>

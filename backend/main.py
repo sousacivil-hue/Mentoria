@@ -1237,7 +1237,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.8"}
+    return {"versao": "2026-06-13.9"}
 
 
 @app.get("/manchetes")
@@ -2199,6 +2199,163 @@ async def executar_active_faltas(data: ActiveFaltasFormData):
     job_id = str(uuid.uuid4())
     jobs[job_id] = []
     asyncio.create_task(run_active_faltas(job_id, data))
+    return {"job_id": job_id}
+
+
+# ════════════════════════════════════════════════════════════
+# INFODAT
+# ════════════════════════════════════════════════════════════
+
+class InfodatEntrada(BaseModel):
+    data: str           # DD/MM/AAAA
+    turma_value: str    # value do <option> no select de curso/disciplina
+    num_aulas: str = "2"
+    conteudo: str
+    ativ_aula: str = ""
+    ativ_casa: str = ""
+
+
+class InfodatFormData(BaseModel):
+    escola: str         # value do <option> no select de escola
+    professor: str      # texto exato do <option> no select de professor
+    senha: str
+    entradas: list[InfodatEntrada]
+    alunos_falta: list[str] = []  # partes do nome em maiúsculo
+
+
+INFODAT_BASE = "https://www.sigmawd.com.br/infodat/professor"
+
+
+async def run_infodat(job_id: str, data: InfodatFormData):
+    from playwright.async_api import async_playwright
+
+    log = jobs[job_id]
+
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(headless=True)
+        context = await browser.new_context(
+            viewport={"width": 1280, "height": 900},
+            user_agent=(
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/125.0.0.0 Safari/537.36"
+            ),
+        )
+        page = await context.new_page()
+
+        # ── LOGIN ────────────────────────────────────────────────────────────
+        log.append("🔐 Fazendo login no Infodat...")
+        for tentativa in range(3):
+            try:
+                await page.goto(f"{INFODAT_BASE}/login.php",
+                                wait_until="domcontentloaded", timeout=60000)
+                break
+            except Exception as e:
+                log.append(f"  ⚠️ Tentativa {tentativa + 1} falhou: {e.__class__.__name__}")
+                await page.wait_for_timeout(5000)
+
+        await page.wait_for_timeout(2000)
+
+        try:
+            await page.locator("select#escola").select_option(value=data.escola)
+            await page.wait_for_function(
+                "document.querySelector('select#professor').options.length > 1",
+                timeout=10000,
+            )
+            await page.locator("select#professor").select_option(label=data.professor)
+            await page.locator("input[type='password']").first.fill(data.senha)
+            await page.locator("input[value='Entrar'], button:has-text('Entrar')").first.click()
+
+            for _ in range(20):
+                await page.wait_for_timeout(1000)
+                if "login.php" not in page.url:
+                    break
+
+            if "login.php" in page.url:
+                log.append("❌ ERRO: login não aceito — verifique professor e senha.")
+                log.append("__ERRO__")
+                log.append("__CONCLUIDO__")
+                await browser.close()
+                return
+
+            log.append("✅ Login realizado!")
+        except Exception as e:
+            log.append(f"❌ ERRO no login: {e}")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        # ── ABRE DIÁRIO ONLINE ────────────────────────────────────────────────
+        log.append("📓 Abrindo Diário Online...")
+        try:
+            await page.locator("a.btn[href='diario.php']").click()
+            await page.wait_for_load_state("domcontentloaded")
+            await page.wait_for_timeout(2000)
+        except Exception as e:
+            log.append(f"❌ ERRO ao abrir diário: {e}")
+            log.append("__ERRO__")
+            log.append("__CONCLUIDO__")
+            await browser.close()
+            return
+
+        # ── PREENCHE CADA ENTRADA ─────────────────────────────────────────────
+        gravadas = 0
+        for i, entrada in enumerate(data.entradas, 1):
+            url_form = (
+                f"{INFODAT_BASE}/diario_add.php"
+                f"?c={entrada.turma_value}&d={entrada.data}&f={entrada.num_aulas}"
+            )
+            log.append(f"⏳ [{i}/{len(data.entradas)}] {entrada.turma_value} | {entrada.data} → {entrada.conteudo[:40]}")
+            try:
+                await page.goto(url_form, wait_until="domcontentloaded", timeout=30000)
+                await page.wait_for_timeout(2000)
+
+                campo = page.locator("input[name='conteudo'], input#conteudo")
+                if await campo.count() > 0:
+                    await campo.first.fill(entrada.conteudo)
+
+                if entrada.ativ_aula:
+                    await page.locator("textarea#ativaula").fill(entrada.ativ_aula)
+
+                if entrada.ativ_casa:
+                    await page.locator("textarea#ativcasa").fill(entrada.ativ_casa)
+
+                if data.alunos_falta:
+                    linhas = page.locator("tr")
+                    total = await linhas.count()
+                    for j in range(total):
+                        tr = linhas.nth(j)
+                        tds = tr.locator("td")
+                        if await tds.count() < 2:
+                            continue
+                        try:
+                            nome = (await tds.nth(1).inner_text()).strip().upper()
+                        except Exception:
+                            continue
+                        if any(f in nome for f in data.alunos_falta):
+                            cb = tr.locator("input[type='checkbox']")
+                            if await cb.count() > 0 and not await cb.first.is_checked():
+                                await cb.first.check()
+                                log.append(f"   ❌ Falta: {nome}")
+
+                await page.locator("button[type='submit'].btn-success").click()
+                await page.wait_for_timeout(3000)
+                gravadas += 1
+                log.append(f"   ✅ Gravado!")
+            except Exception as e:
+                log.append(f"   ⚠️ Erro: {e}")
+
+        log.append(f"\n✅ CONCLUÍDO! Aulas gravadas: {gravadas}/{len(data.entradas)}")
+        log.append("__CONCLUIDO__")
+        await browser.close()
+
+
+@app.post("/executar-infodat")
+async def executar_infodat(data: InfodatFormData):
+    job_id = str(uuid.uuid4())
+    jobs[job_id] = []
+    asyncio.create_task(run_infodat(job_id, data))
     return {"job_id": job_id}
 
 
