@@ -265,13 +265,13 @@ try:
             alvo = botoes_verdes[0]
             print(f"⏳ Chamada [{chamada_num}]...")
 
-            # clica no botão verde via JS
-            clicou = page.evaluate(f"""
-                () => {{
-                    const btns = document.querySelectorAll('button.btn-success, button[onclick*="carregarListaDePresenca"], button[onclick*="presenca"], a.btn-success');
-                    if (btns.length > 0) {{ btns[0].click(); return true; }}
+            # clica no 1º botão de chamada (abre modal com lista de alunos)
+            clicou = page.evaluate("""
+                () => {
+                    const btns = document.querySelectorAll('button[onclick^="carregarListaDePresenca"]');
+                    if (btns.length > 0) { btns[0].click(); return true; }
                     return false;
-                }}
+                }
             """)
 
             if not clicou:
