@@ -86,19 +86,31 @@ try:
             browser.close()
             sys.exit()
 
-        # Ir direto para a página de aulas (sessão já autenticada)
-        URL_AULAS = "https://siae.seduc.se.gov.br/siae.diario/Aula/Aulas"
-        print(f"⏳ Acessando página de aulas: {URL_AULAS}")
-        page.goto(URL_AULAS, wait_until="domcontentloaded", timeout=30000)
-        page.wait_for_timeout(3000)
-        print(f"🌐 URL final: {page.url}")
+        # Clicar no card DIÁRIO via JavaScript
+        print("⏳ Procurando card DIÁRIO na página...")
+        page.wait_for_timeout(2000)
 
-        # verifica se chegou na página certa ou foi redirecionado pro login
-        if "login" in page.url.lower() or "sso.seduc" in page.url:
-            print("❌ Redirecionou para login — sessão não foi aceita")
-        else:
+        clicou = page.evaluate("""() => {
+            const all = document.querySelectorAll('p, a, div, span');
+            for (const el of all) {
+                if (el.innerText && el.innerText.trim() === 'DIÁRIO') {
+                    el.click();
+                    return el.tagName + ' | ' + el.className;
+                }
+            }
+            return null;
+        }""")
+
+        if clicou:
+            print(f"✅ Clicou no elemento: {clicou}")
+            page.wait_for_timeout(4000)
+            print(f"🌐 URL após clique: {page.url}")
             botoes = page.locator("button.btn-primary[onclick^='registrar']").count()
-            print(f"✅ Página de aulas carregada! Botões de aula encontrados: {botoes}")
+            print(f"✅ Botões de aula encontrados: {botoes}")
+        else:
+            # diagnóstico
+            textos = page.evaluate("() => Array.from(document.querySelectorAll('p,a,span')).map(e => e.innerText.trim()).filter(t => t).slice(0, 30)")
+            print(f"❌ DIÁRIO não encontrado. Textos na página: {textos}")
 
         print(f"\n✅ TUDO OK! URL final: {page.url}")
         input("\nENTER para fechar o Chrome...")
