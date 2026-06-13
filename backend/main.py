@@ -1237,7 +1237,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.14"}
+    return {"versao": "2026-06-13.15"}
 
 
 @app.post("/ler-foto-notas")
@@ -2328,17 +2328,20 @@ async def run_infodat(job_id: str, data: InfodatFormData):
                 "document.querySelector('select#professor').options.length > 1",
                 timeout=15000,
             )
+            import unicodedata as _ud
+            def _sem_acento(s):
+                return "".join(c for c in _ud.normalize("NFD", s.upper()) if _ud.category(c) != "Mn")
+            busca_py = _sem_acento(data.professor[:20]).replace("'", "\\'")
             try:
                 await page.locator("select#professor").select_option(label=data.professor)
             except Exception:
-                nome_trecho = data.professor.upper()[:20].replace("'", "\\'")
                 await page.evaluate(f"""
                     () => {{
-                        const normalizar = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
-                        const busca = normalizar('{nome_trecho}');
+                        const semAcento = s => s.toUpperCase().normalize('NFD').split('').filter(c => c.charCodeAt(0) < 0x0300 || c.charCodeAt(0) > 0x036F).join('');
+                        const busca = '{busca_py}';
                         const sel = document.querySelector('select#professor');
                         for (const opt of sel.options) {{
-                            if (normalizar(opt.text).includes(busca)) {{
+                            if (semAcento(opt.text).includes(busca)) {{
                                 sel.value = opt.value;
                                 sel.dispatchEvent(new Event('change'));
                                 break;
@@ -2472,17 +2475,20 @@ async def turmas_infodat(data: InfodatLoginData):
                 "document.querySelector('select#professor').options.length > 1",
                 timeout=15000,
             )
+            import unicodedata as _ud
+            def _sem_acento(s):
+                return "".join(c for c in _ud.normalize("NFD", s.upper()) if _ud.category(c) != "Mn")
+            busca_py = _sem_acento(data.professor[:20]).replace("'", "\\'")
             try:
                 await page.locator("select#professor").select_option(label=data.professor)
             except Exception:
-                nome_trecho = data.professor.upper()[:20].replace("'", "\\'")
                 await page.evaluate(f"""
                     () => {{
-                        const normalizar = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
-                        const busca = normalizar('{nome_trecho}');
+                        const semAcento = s => s.toUpperCase().normalize('NFD').split('').filter(c => c.charCodeAt(0) < 0x0300 || c.charCodeAt(0) > 0x036F).join('');
+                        const busca = '{busca_py}';
                         const sel = document.querySelector('select#professor');
                         for (const opt of sel.options) {{
-                            if (normalizar(opt.text).includes(busca)) {{
+                            if (semAcento(opt.text).includes(busca)) {{
                                 sel.value = opt.value;
                                 sel.dispatchEvent(new Event('change'));
                                 break;
