@@ -1237,7 +1237,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.10"}
+    return {"versao": "2026-06-13.11"}
 
 
 @app.get("/manchetes")
@@ -2258,11 +2258,27 @@ async def run_infodat(job_id: str, data: InfodatFormData):
 
         try:
             await page.locator("select#escola").select_option(value=data.escola)
+            await page.evaluate(
+                "document.querySelector('select#escola').dispatchEvent(new Event('change'))"
+            )
             await page.wait_for_function(
                 "document.querySelector('select#professor').options.length > 1",
-                timeout=10000,
+                timeout=15000,
             )
-            await page.locator("select#professor").select_option(label=data.professor)
+            try:
+                await page.locator("select#professor").select_option(label=data.professor)
+            except Exception:
+                nome_trecho = data.professor.upper()[:20].replace("'", "\\'")
+                await page.evaluate(f"""
+                    () => {{
+                        const sel = document.querySelector('select#professor');
+                        for (const opt of sel.options) {{
+                            if (opt.text.toUpperCase().includes('{nome_trecho}')) {{
+                                sel.value = opt.value; break;
+                            }}
+                        }}
+                    }}
+                """)
             await page.locator("input[type='password']").first.fill(data.senha)
             await page.locator("input[value='Entrar'], button:has-text('Entrar')").first.click()
 
@@ -2382,11 +2398,27 @@ async def turmas_infodat(data: InfodatLoginData):
 
             await page.wait_for_timeout(2000)
             await page.locator("select#escola").select_option(value=data.escola)
+            await page.evaluate(
+                "document.querySelector('select#escola').dispatchEvent(new Event('change'))"
+            )
             await page.wait_for_function(
                 "document.querySelector('select#professor').options.length > 1",
-                timeout=10000,
+                timeout=15000,
             )
-            await page.locator("select#professor").select_option(label=data.professor)
+            try:
+                await page.locator("select#professor").select_option(label=data.professor)
+            except Exception:
+                nome_trecho = data.professor.upper()[:20].replace("'", "\\'")
+                await page.evaluate(f"""
+                    () => {{
+                        const sel = document.querySelector('select#professor');
+                        for (const opt of sel.options) {{
+                            if (opt.text.toUpperCase().includes('{nome_trecho}')) {{
+                                sel.value = opt.value; break;
+                            }}
+                        }}
+                    }}
+                """)
             await page.locator("input[type='password']").first.fill(data.senha)
             await page.locator("input[value='Entrar'], button:has-text('Entrar')").first.click()
             for _ in range(20):
