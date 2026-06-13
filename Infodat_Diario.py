@@ -36,7 +36,7 @@ BASE_URL  = "https://www.sigmawd.com.br/infodat/professor"
 TURMAS = [
     {
         "values":    ["017A031", "017B031"],   # Terceira Série A e B — mesmo conteúdo
-        "conteudo":  "Resolução de Exercícios",
+        "conteudo":  "teste_chagas",
         "num_aulas": 2,
         "ativ_aula": "",   # opcional
         "ativ_casa": "",   # opcional
