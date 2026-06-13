@@ -93,27 +93,37 @@ try:
         print("⏳ Procurando card DIÁRIO na página...")
         page.wait_for_timeout(2000)
 
-        clicou = page.evaluate("""() => {
-            const all = document.querySelectorAll('p, a, div, span');
-            for (const el of all) {
-                if (el.innerText && el.innerText.trim() === 'DIÁRIO') {
-                    el.click();
-                    return el.tagName + ' | ' + el.className;
+        # Playwright clica no <a> pai do texto DIÁRIO (React usa event listener, não href)
+        clicou = None
+        try:
+            # localiza o <a> que contém "DIÁRIO" e clica com force=True para ignorar visibilidade
+            loc = page.locator("a").filter(has_text="DIÁRIO").first
+            if loc.count() > 0:
+                loc.click(force=True, timeout=5000)
+                clicou = "a[has_text=DIÁRIO]"
+        except Exception as e:
+            print(f"⚠️ Erro ao clicar: {e}")
+            # fallback: dispatchEvent MouseEvent via JS (funciona com React)
+            clicou = page.evaluate("""() => {
+                const all = document.querySelectorAll('a, div[style*="cursor: pointer"]');
+                for (const el of all) {
+                    if (el.innerText && el.innerText.includes('DIÁRIO')) {
+                        el.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true}));
+                        return el.tagName + ':' + el.className.slice(0,30);
+                    }
                 }
-            }
-            return null;
-        }""")
+                return null;
+            }""")
 
         if clicou:
-            print(f"✅ Clicou no elemento: {clicou}")
-            page.wait_for_timeout(4000)
+            print(f"✅ Clicou! Aguardando navegação...")
+            page.wait_for_timeout(5000)
             print(f"🌐 URL após clique: {page.url}")
             botoes = page.locator("button.btn-primary[onclick^='registrar']").count()
             print(f"✅ Botões de aula encontrados: {botoes}")
         else:
-            # diagnóstico
-            textos = page.evaluate("() => Array.from(document.querySelectorAll('p,a,span')).map(e => e.innerText.trim()).filter(t => t).slice(0, 30)")
-            print(f"❌ DIÁRIO não encontrado. Textos na página: {textos}")
+            links = page.evaluate("() => Array.from(document.querySelectorAll('a')).map(a => a.innerText.trim() + ' → ' + a.href).slice(0, 20)")
+            print(f"❌ Não clicou. Links na página: {links}")
 
         print(f"\n✅ TUDO OK! URL final: {page.url}")
         input("\nENTER para fechar o Chrome...")
