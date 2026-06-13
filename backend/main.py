@@ -189,7 +189,7 @@ class FormData(BaseModel):
     nota: str = ""
 
 
-URL_LOGIN = "https://sso.seduc.se.gov.br/sistemas"
+URL_LOGIN = "https://sso.seduc.se.gov.br/"
 URL_AULAS = "https://siae.seduc.se.gov.br/siae.diario/Aula/Aulas"
 METODOLOGIA = "Aula expositiva dialogada com resolução de exercícios."
 
@@ -206,16 +206,24 @@ async def run_automacao(job_id: str, data: FormData):
 
         log.append("🔐 Fazendo login no SIAE...")
         await page.goto(URL_LOGIN, wait_until="domcontentloaded", timeout=60000)
-        await page.wait_for_timeout(2000)
+        await page.wait_for_timeout(3000)
+        log.append(f"🌐 Página: {page.url}")
+        campos_texto = await page.locator("input[type='text'], input[type='email'], input:not([type])").count()
+        campos_senha = await page.locator("input[type='password']").count()
+        log.append(f"🔍 Campos encontrados: texto={campos_texto} senha={campos_senha}")
         logado = False
         try:
-            await page.fill("input[name='username'], input[type='text']", data.login)
-            await page.fill("input[name='password'], input[type='password']", data.senha)
+            if campos_texto > 0:
+                await page.locator("input[type='text'], input[type='email'], input:not([type])").first.fill(data.login)
+            elif await page.locator("input[name='username']").count() > 0:
+                await page.fill("input[name='username']", data.login)
+            if campos_senha > 0:
+                await page.locator("input[type='password']").first.fill(data.senha)
             await page.keyboard.press("Enter")
             # espera até sair da tela de login (máx 15s)
             for _ in range(15):
                 await page.wait_for_timeout(1000)
-                if "sso.seduc" not in page.url or "sistemas" not in page.url:
+                if "sso.seduc.se.gov.br" not in page.url:
                     logado = True
                     break
                 if await page.locator("input[type='password']").count() == 0:
@@ -1173,7 +1181,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.2"}
+    return {"versao": "2026-06-13.3"}
 
 
 @app.get("/manchetes")
