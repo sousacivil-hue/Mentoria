@@ -1237,7 +1237,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.13"}
+    return {"versao": "2026-06-13.14"}
 
 
 @app.post("/ler-foto-notas")
@@ -2334,9 +2334,11 @@ async def run_infodat(job_id: str, data: InfodatFormData):
                 nome_trecho = data.professor.upper()[:20].replace("'", "\\'")
                 await page.evaluate(f"""
                     () => {{
+                        const normalizar = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+                        const busca = normalizar('{nome_trecho}');
                         const sel = document.querySelector('select#professor');
                         for (const opt of sel.options) {{
-                            if (opt.text.toUpperCase().includes('{nome_trecho}')) {{
+                            if (normalizar(opt.text).includes(busca)) {{
                                 sel.value = opt.value;
                                 sel.dispatchEvent(new Event('change'));
                                 break;
@@ -2476,9 +2478,11 @@ async def turmas_infodat(data: InfodatLoginData):
                 nome_trecho = data.professor.upper()[:20].replace("'", "\\'")
                 await page.evaluate(f"""
                     () => {{
+                        const normalizar = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase();
+                        const busca = normalizar('{nome_trecho}');
                         const sel = document.querySelector('select#professor');
                         for (const opt of sel.options) {{
-                            if (opt.text.toUpperCase().includes('{nome_trecho}')) {{
+                            if (normalizar(opt.text).includes(busca)) {{
                                 sel.value = opt.value;
                                 sel.dispatchEvent(new Event('change'));
                                 break;
