@@ -243,6 +243,25 @@
   }
   .sistemas-list li:last-child { border-bottom: none; }
   .badge-ok { color: #2e7d32; font-weight: 700; }
+
+  /* ABAS */
+  .abas {
+    display: flex; gap: 0; margin-bottom: 20px;
+    background: white; border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    overflow: hidden;
+  }
+  .aba {
+    flex: 1; padding: 14px 8px; text-align: center;
+    font-size: 0.88rem; font-weight: 700; cursor: pointer;
+    color: #888; border: none; background: none;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .aba:hover { background: #f9f4ff; color: #7b1fa2; }
+  .aba.ativa { color: #7b1fa2; border-bottom-color: #7b1fa2; background: #f3e5f5; }
+  .aba-conteudo { display: none; }
+  .aba-conteudo.ativa { display: block; }
 </style>
 </head>
 <body>
@@ -259,6 +278,14 @@
 
   <div id="tela-form">
 
+    <!-- ABAS -->
+    <div class="abas">
+      <button class="aba ativa" onclick="mudarAba('diario', this)">📓 Diário</button>
+      <button class="aba" onclick="mudarAba('notas', this)">📊 Notas</button>
+      <button class="aba" onclick="mudarAba('chamada', this)">✅ Chamada</button>
+    </div>
+
+    <div id="aba-diario" class="aba-conteudo ativa">
     <!-- 1: Login -->
     <div class="card">
       <h2><span class="step-badge">1</span> Acesso ao sistema</h2>
@@ -394,15 +421,15 @@ Equações do 2º grau - fórmula de Bhaskara
       ⚡ Transferir meu planejamento para o diário
       <span style="display:block;font-size:0.78rem;font-weight:500;font-style:italic;opacity:.75;margin-top:4px;">This is the way.</span>
     </button>
+    </div><!-- /aba-diario -->
 
-    <!-- DIVISOR -->
-    <div style="margin:32px 0 8px;text-align:center;color:#9BA6BC;font-size:13px;letter-spacing:1px;font-weight:700;">
-      ── OUTROS SERVIÇOS ──
-    </div>
+    <!-- ABA NOTAS -->
+    <div id="aba-notas" class="aba-conteudo">
 
     <!-- NOTAS -->
     <div class="card">
       <h2><span class="step-badge" style="background:linear-gradient(135deg,#1565c0,#0288d1);">N</span> Lançar Notas (AV3)</h2>
+      <div class="aviso" style="margin-bottom:14px;">⚠️ Esta função é configurada para o <strong>Colégio Vita</strong>. Para outros colégios, use a foto abaixo.</div>
       <label>Turma (opcional)</label>
       <input type="text" id="notas-turma" placeholder="Ex: 8A — vazio = todas">
       <label>Fase / Unidade (opcional)</label>
@@ -443,10 +470,12 @@ Equações do 2º grau - fórmula de Bhaskara
         <div class="dica" style="margin-top:6px;">Formato: NOME DO ALUNO: nota — uma por linha. Edite antes de confirmar.</div>
       </div>
     </div>
+    </div><!-- /aba-notas -->
 
-    <!-- FALTAS -->
+    <!-- ABA CHAMADA -->
+    <div id="aba-chamada" class="aba-conteudo">
     <div class="card">
-      <h2><span class="step-badge" style="background:linear-gradient(135deg,#2e7d32,#388e3c);">F</span> Registrar Frequência</h2>
+      <h2><span class="step-badge" style="background:linear-gradient(135deg,#2e7d32,#388e3c);">✅</span> Registrar Frequência</h2>
       <label>Turma (opcional)</label>
       <input type="text" id="faltas-turma" placeholder="Ex: 8A — vazio = todas">
       <label>Bimestre</label>
@@ -461,6 +490,7 @@ Equações do 2º grau - fórmula de Bhaskara
         ✅ Registrar frequência automaticamente
       </button>
     </div>
+    </div><!-- /aba-chamada -->
 
   </div>
 
@@ -592,6 +622,13 @@ Equações do 2º grau - fórmula de Bhaskara
 </div><!-- /page-wrapper -->
 
 <script>
+function mudarAba(nome, el) {
+  document.querySelectorAll('.aba').forEach(a => a.classList.remove('ativa'));
+  document.querySelectorAll('.aba-conteudo').forEach(c => c.classList.remove('ativa'));
+  el.classList.add('ativa');
+  document.getElementById('aba-' + nome).classList.add('ativa');
+}
+
 const BACKEND_URL = location.protocol === 'file:' ? 'http://localhost:8000' : '';
 fetch(`${BACKEND_URL}/versao`).then(r=>r.json()).then(j=>{
   const el = document.getElementById('versao-tag');
