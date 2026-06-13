@@ -1237,7 +1237,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.15"}
+    return {"versao": "2026-06-13.16"}
 
 
 @app.post("/ler-foto-notas")
@@ -2328,27 +2328,27 @@ async def run_infodat(job_id: str, data: InfodatFormData):
                 "document.querySelector('select#professor').options.length > 1",
                 timeout=15000,
             )
+            # Lê opções em Python e seleciona por valor (evita problemas de acentos)
             import unicodedata as _ud
             def _sem_acento(s):
                 return "".join(c for c in _ud.normalize("NFD", s.upper()) if _ud.category(c) != "Mn")
-            busca_py = _sem_acento(data.professor[:20]).replace("'", "\\'")
-            try:
-                await page.locator("select#professor").select_option(label=data.professor)
-            except Exception:
-                await page.evaluate(f"""
-                    () => {{
-                        const semAcento = s => s.toUpperCase().normalize('NFD').split('').filter(c => c.charCodeAt(0) < 0x0300 || c.charCodeAt(0) > 0x036F).join('');
-                        const busca = '{busca_py}';
-                        const sel = document.querySelector('select#professor');
-                        for (const opt of sel.options) {{
-                            if (semAcento(opt.text).includes(busca)) {{
-                                sel.value = opt.value;
-                                sel.dispatchEvent(new Event('change'));
-                                break;
-                            }}
-                        }}
-                    }}
-                """)
+            opcoes = await page.evaluate("""
+                () => Array.from(document.querySelector('select#professor').options)
+                    .filter(o => o.value)
+                    .map(o => ({value: o.value, text: o.text.trim()}))
+            """)
+            busca = _sem_acento(data.professor)
+            valor_prof = None
+            for opt in opcoes:
+                if busca in _sem_acento(opt["text"]):
+                    valor_prof = opt["value"]
+                    log.append(f"✅ Professor encontrado: {opt['text']}")
+                    break
+            if valor_prof:
+                await page.locator("select#professor").select_option(value=valor_prof)
+            else:
+                log.append(f"⚠️ Professor não encontrado na lista. Opções: {[o['text'] for o in opcoes[:5]]}")
+                await page.locator("select#professor").select_option(index=1)
             await page.locator("input[type='password']").first.fill(data.senha)
             await page.locator("input[value='Entrar'], button:has-text('Entrar')").first.click()
 
@@ -2478,24 +2478,21 @@ async def turmas_infodat(data: InfodatLoginData):
             import unicodedata as _ud
             def _sem_acento(s):
                 return "".join(c for c in _ud.normalize("NFD", s.upper()) if _ud.category(c) != "Mn")
-            busca_py = _sem_acento(data.professor[:20]).replace("'", "\\'")
-            try:
-                await page.locator("select#professor").select_option(label=data.professor)
-            except Exception:
-                await page.evaluate(f"""
-                    () => {{
-                        const semAcento = s => s.toUpperCase().normalize('NFD').split('').filter(c => c.charCodeAt(0) < 0x0300 || c.charCodeAt(0) > 0x036F).join('');
-                        const busca = '{busca_py}';
-                        const sel = document.querySelector('select#professor');
-                        for (const opt of sel.options) {{
-                            if (semAcento(opt.text).includes(busca)) {{
-                                sel.value = opt.value;
-                                sel.dispatchEvent(new Event('change'));
-                                break;
-                            }}
-                        }}
-                    }}
-                """)
+            opcoes = await page.evaluate("""
+                () => Array.from(document.querySelector('select#professor').options)
+                    .filter(o => o.value)
+                    .map(o => ({value: o.value, text: o.text.trim()}))
+            """)
+            busca = _sem_acento(data.professor)
+            valor_prof = None
+            for opt in opcoes:
+                if busca in _sem_acento(opt["text"]):
+                    valor_prof = opt["value"]
+                    break
+            if valor_prof:
+                await page.locator("select#professor").select_option(value=valor_prof)
+            elif opcoes:
+                await page.locator("select#professor").select_option(value=opcoes[0]["value"])
             await page.locator("input[type='password']").first.fill(data.senha)
             await page.locator("input[value='Entrar'], button:has-text('Entrar')").first.click()
             for _ in range(20):
@@ -2503,7 +2500,8 @@ async def turmas_infodat(data: InfodatLoginData):
                 if "login.php" not in page.url:
                     break
             if "login.php" in page.url:
-                return {"erro": "Login não aceito — verifique professor e senha."}
+                nomes = [o["text"] for o in opcoes[:5]]
+                return {"erro": f"Login não aceito. Professores disponíveis: {nomes}"}
 
             await page.goto(f"{INFODAT_BASE}/diario_add.php",
                             wait_until="domcontentloaded", timeout=30000)
