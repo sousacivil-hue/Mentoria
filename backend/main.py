@@ -231,6 +231,13 @@ async def run_automacao(job_id: str, data: FormData):
                     break
             if logado:
                 log.append("✅ Login realizado!")
+                # clicar no card DIÁRIO na tela de seleção de sistemas
+                await page.wait_for_timeout(2000)
+                diario_card = page.locator("p:has-text('DIÁRIO'), div:has-text('DIÁRIO')")
+                if await diario_card.count() > 0:
+                    await diario_card.first.click()
+                    log.append("📓 Card DIÁRIO clicado!")
+                    await page.wait_for_timeout(3000)
             else:
                 log.append("⚠️ Login pode ter falhado — continuando mesmo assim...")
         except Exception as e:
@@ -1181,7 +1188,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.3"}
+    return {"versao": "2026-06-13.4"}
 
 
 @app.get("/manchetes")

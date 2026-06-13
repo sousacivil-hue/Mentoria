@@ -82,7 +82,23 @@ try:
         else:
             print("❌ Login NÃO confirmado após 20 segundos.")
             print("Verifique o Chrome — pode ter aparecido erro ou CAPTCHA.")
+            input("ENTER para fechar")
+            browser.close()
+            sys.exit()
 
+        # Clicar no card DIÁRIO
+        print("⏳ Procurando card DIÁRIO...")
+        page.wait_for_timeout(2000)
+        diario = page.locator("p:has-text('DIÁRIO'), div:has-text('DIÁRIO')")
+        if diario.count() > 0:
+            diario.first.click()
+            print("✅ Card DIÁRIO clicado!")
+            page.wait_for_timeout(3000)
+            print(f"🌐 URL após DIÁRIO: {page.url}")
+        else:
+            print("⚠️ Card DIÁRIO não encontrado — verifique o Chrome")
+
+        print(f"\n✅ TUDO OK! URL final: {page.url}")
         input("\nENTER para fechar o Chrome...")
         browser.close()
 
