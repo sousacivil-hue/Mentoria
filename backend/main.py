@@ -1237,7 +1237,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.18"}
+    return {"versao": "2026-06-13.19"}
 
 
 @app.post("/ler-foto-notas")
@@ -2486,6 +2486,7 @@ async def turmas_infodat(data: InfodatLoginData):
             """)
             palavras = _sem_acento(data.professor).split()
             valor_prof = None
+            marcos_opts = [o for o in opcoes if "MARCO" in o["text"].upper()]
             for opt in opcoes:
                 texto = _sem_acento(opt["text"])
                 if all(p in texto for p in palavras):
@@ -2502,8 +2503,7 @@ async def turmas_infodat(data: InfodatLoginData):
                 if "login.php" not in page.url:
                     break
             if "login.php" in page.url:
-                nomes = [o["text"] for o in opcoes[:5]]
-                return {"erro": f"Login não aceito. Professores disponíveis: {nomes}"}
+                return {"erro": f"total_opcoes={len(opcoes)} | palavras={palavras} | marcos={marcos_opts} | valor_encontrado={valor_prof}"}
 
             await page.goto(f"{INFODAT_BASE}/diario_add.php",
                             wait_until="domcontentloaded", timeout=30000)
