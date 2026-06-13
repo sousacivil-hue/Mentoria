@@ -205,13 +205,26 @@ async def run_automacao(job_id: str, data: FormData):
         page = await browser.new_page(viewport={"width": 1400, "height": 900})
 
         log.append("🔐 Fazendo login no SIAE...")
-        await page.goto(URL_LOGIN)
+        await page.goto(URL_LOGIN, wait_until="domcontentloaded", timeout=60000)
         await page.wait_for_timeout(2000)
+        logado = False
         try:
             await page.fill("input[name='username'], input[type='text']", data.login)
             await page.fill("input[name='password'], input[type='password']", data.senha)
             await page.keyboard.press("Enter")
-            await page.wait_for_timeout(4000)
+            # espera até sair da tela de login (máx 15s)
+            for _ in range(15):
+                await page.wait_for_timeout(1000)
+                if "sso.seduc" not in page.url or "sistemas" not in page.url:
+                    logado = True
+                    break
+                if await page.locator("input[type='password']").count() == 0:
+                    logado = True
+                    break
+            if logado:
+                log.append("✅ Login realizado!")
+            else:
+                log.append("⚠️ Login pode ter falhado — continuando mesmo assim...")
         except Exception as e:
             log.append(f"⚠️ Erro no login: {e}")
 
@@ -1160,7 +1173,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.1"}
+    return {"versao": "2026-06-13.2"}
 
 
 @app.get("/manchetes")
