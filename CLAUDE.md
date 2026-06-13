@@ -71,3 +71,21 @@ Ficam na pasta `diario_auto` na Área de Trabalho do professor.
 ## Histórico de Scripts por Turma (Salesiano)
 - `Historia_Otavio_1ano.py` — 1º ano História, turma 627185, 40 aulas, duplas
 - `preencher_diario.py` — mesmo conteúdo (cópia de trabalho)
+
+## Registro de Horas e Valor Desenvolvido
+
+> Atualizar a cada sessão de trabalho.
+
+| Data | Descrição | Horas |
+|------|-----------|-------|
+| Antes de 2026-06-13 | ActiveSoft diário + notas + frequência; Salesiano scripts locais; SESI login; infraestrutura Render/Docker; frontend base | ~28h |
+| 2026-06-13 | Infodat completo (login, turmas, diário); fix bugs de acento/AJAX; foto de notas Gemini; abas no Active; FAQ na home; loading animado; sábados letivos Infodat; resumo de aulas em tempo real; Salesiano → Totvs RM | ~17h |
+| **TOTAL** | | **~45h** |
+
+### Valor de mercado estimado
+| Perfil | Valor/hora | Total |
+|--------|-----------|-------|
+| Dev júnior | R$ 50/h | R$ 2.250 |
+| Dev pleno | R$ 100/h | R$ 4.500 |
+| Dev sênior | R$ 200/h | R$ 9.000 |
+| Agência | R$ 300/h | R$ 13.500 |
