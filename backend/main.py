@@ -5,7 +5,7 @@ import re
 import uuid
 from typing import AsyncGenerator
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -1237,7 +1237,70 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.11"}
+    return {"versao": "2026-06-13.12"}
+
+
+@app.post("/ler-foto-notas")
+async def ler_foto_notas(foto: UploadFile = File(...)):
+    import base64, urllib.request, urllib.error
+
+    api_key = os.environ.get("GEMINI_API_KEY", "")
+    if not api_key:
+        try:
+            caminho = os.path.join(os.path.dirname(os.path.abspath(__file__)), "chave.txt")
+            with open(caminho, encoding="utf-8") as f:
+                api_key = f.read().strip()
+        except FileNotFoundError:
+            pass
+    if not api_key:
+        return {"erro": "Chave da API não configurada no servidor."}
+
+    conteudo = await foto.read()
+    mime = foto.content_type or "image/jpeg"
+    b64 = base64.b64encode(conteudo).decode("utf-8")
+
+    prompt = (
+        "Esta imagem contém uma lista de notas de alunos. "
+        "Leia TODOS os nomes e suas respectivas notas. "
+        "Retorne APENAS no formato: NOME DO ALUNO: nota (uma por linha). "
+        "Use o nome completo em maiúsculas. Exemplo:\n"
+        "JOAO SILVA: 8,5\n"
+        "MARIA SOUZA: 7,0\n"
+        "Não adicione nenhum texto extra, só a lista."
+    )
+
+    MODELOS = ["gemini-2.0-flash", "gemini-2.5-flash-lite", "gemini-2.5-flash"]
+    ultimo_erro = None
+    for modelo in MODELOS:
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{modelo}:generateContent?key={api_key}"
+        )
+        body = json.dumps({
+            "contents": [{
+                "parts": [
+                    {"text": prompt},
+                    {"inline_data": {"mime_type": mime, "data": b64}}
+                ]
+            }]
+        }).encode("utf-8")
+        req = urllib.request.Request(url, data=body,
+                                     headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                resultado = json.loads(resp.read().decode("utf-8"))
+            texto = resultado["candidates"][0]["content"]["parts"][0]["text"].strip()
+            return {"texto": texto}
+        except urllib.error.HTTPError as e:
+            ultimo_erro = e.read().decode("utf-8", errors="ignore")
+            if "429" in str(e.code):
+                continue
+            return {"erro": f"Erro da API: {ultimo_erro[:300]}"}
+        except Exception as e:
+            ultimo_erro = str(e)
+            continue
+
+    return {"erro": f"Falha ao chamar a IA: {ultimo_erro}"}
 
 
 @app.get("/manchetes")
