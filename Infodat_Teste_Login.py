@@ -19,7 +19,7 @@ def print(*args, **kwargs):
 builtins.print = print
 
 # ── CONFIGURAÇÃO ──────────────────────────────────────────────
-ESCOLA    = "Colégio Arqui"               # texto do option no select de escola
+ESCOLA    = "arqui"                        # value do option no select de escola
 PROFESSOR = "MARCOS ANTÔNIO PASSOS CHAGAS"  # texto do option no select de professor
 SENHA     = "chagas"
 URL       = "https://www.sigmawd.com.br/infodat/professor/login.php"
@@ -50,7 +50,7 @@ try:
 
         # Seleciona escola (primeiro select)
         print(f"Selecionando escola: {ESCOLA}")
-        page.locator("select").nth(0).select_option(label=ESCOLA)
+        page.locator("select#escola").select_option(value=ESCOLA)
         page.wait_for_timeout(1500)
         print("✅ Escola selecionada")
 
