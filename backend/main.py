@@ -202,25 +202,19 @@ async def run_automacao(job_id: str, data: FormData):
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
-        page = await browser.new_page(viewport={"width": 1400, "height": 900})
+        context = await browser.new_context(viewport={"width": 1400, "height": 900})
+        page = await context.new_page()
 
         log.append("🔐 Fazendo login no SIAE...")
         await page.goto(URL_LOGIN, wait_until="domcontentloaded", timeout=60000)
-        await page.wait_for_timeout(3000)
-        log.append(f"🌐 Página: {page.url}")
-        campos_texto = await page.locator("input[type='text'], input[type='email'], input:not([type])").count()
-        campos_senha = await page.locator("input[type='password']").count()
-        log.append(f"🔍 Campos encontrados: texto={campos_texto} senha={campos_senha}")
+        await page.wait_for_timeout(2000)
+
         logado = False
         try:
-            if campos_texto > 0:
-                await page.locator("input[type='text'], input[type='email'], input:not([type])").first.fill(data.login)
-            elif await page.locator("input[name='username']").count() > 0:
-                await page.fill("input[name='username']", data.login)
-            if campos_senha > 0:
-                await page.locator("input[type='password']").first.fill(data.senha)
+            await page.locator("input[type='text'], input[type='email']").first.fill(data.login)
+            await page.locator("input[type='password']").first.fill(data.senha)
             await page.keyboard.press("Enter")
-            # espera até chegar em /sistemas (tela de seleção = login OK)
+
             for _ in range(20):
                 await page.wait_for_timeout(1000)
                 url_atual = page.url
@@ -230,22 +224,23 @@ async def run_automacao(job_id: str, data: FormData):
                 if "sso.seduc.se.gov.br" not in url_atual:
                     logado = True
                     break
+
             if logado:
                 log.append("✅ Login realizado!")
-                # aguarda React renderizar os cards e clica no DIÁRIO via JS
                 await page.wait_for_timeout(4000)
-                clicou = await page.evaluate("""() => {
-                    const all = document.querySelectorAll('p, a, div, span');
-                    for (const el of all) {
-                        if (el.innerText && el.innerText.trim() === 'DIÁRIO') {
-                            el.click(); return true;
-                        }
-                    }
-                    return false;
-                }""")
-                if clicou:
-                    log.append("📓 Card DIÁRIO clicado!")
-                    await page.wait_for_timeout(3000)
+                # clica no card DIÁRIO
+                loc = page.locator("a").filter(has_text="DIÁRIO").first
+                try:
+                    await loc.click(timeout=5000)
+                except Exception:
+                    pass
+                await page.wait_for_timeout(4000)
+                # pega aba do SIAE (pode ter aberto nova aba)
+                paginas = context.pages
+                siae_page = next((p for p in paginas if "siae.seduc" in p.url), None)
+                if siae_page:
+                    page = siae_page
+                    log.append(f"📓 SIAE aberto: {page.url}")
             else:
                 log.append("⚠️ Login pode ter falhado — continuando mesmo assim...")
         except Exception as e:
@@ -1196,7 +1191,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.6"}
+    return {"versao": "2026-06-13.7"}
 
 
 @app.get("/manchetes")
