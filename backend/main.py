@@ -1237,7 +1237,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.19"}
+    return {"versao": "2026-06-13.20"}
 
 
 @app.post("/ler-foto-notas")
@@ -2326,7 +2326,7 @@ async def run_infodat(job_id: str, data: InfodatFormData):
             )
             await page.wait_for_function(
                 "document.querySelector('select#professor').options.length > 1",
-                timeout=10000,
+                timeout=20000,
             )
             # Lê opções em Python e seleciona por valor (evita problemas de acentos)
             import unicodedata as _ud
@@ -2474,7 +2474,7 @@ async def turmas_infodat(data: InfodatLoginData):
             )
             await page.wait_for_function(
                 "document.querySelector('select#professor').options.length > 1",
-                timeout=10000,
+                timeout=20000,
             )
             import unicodedata as _ud
             def _sem_acento(s):
