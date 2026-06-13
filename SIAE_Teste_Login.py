@@ -115,6 +115,13 @@ try:
             page.wait_for_timeout(4000)
             print(f"🌐 URL após clique: {page.url}")
 
+        # Navegar para a tela de aulas
+        URL_AULAS = "https://siae.seduc.se.gov.br/siae.diario/Aula/Aulas"
+        print(f"⏳ Acessando lista de aulas: {URL_AULAS}")
+        page.goto(URL_AULAS, wait_until="domcontentloaded", timeout=30000)
+        page.wait_for_timeout(3000)
+        print(f"🌐 URL final: {page.url}")
+
         botoes = page.locator("button.btn-primary[onclick^='registrar']").count()
         print(f"✅ Botões de aula encontrados: {botoes}")
 
