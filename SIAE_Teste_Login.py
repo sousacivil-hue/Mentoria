@@ -35,7 +35,8 @@ try:
     print("Iniciando Chrome...")
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=False)
-        page = browser.new_page(viewport={"width": 1200, "height": 800})
+        context = browser.new_context(viewport={"width": 1200, "height": 800})
+        page = context.new_page()
 
         print(f"Abrindo: {URL}")
         page.goto(URL, wait_until="domcontentloaded", timeout=60000)
@@ -99,7 +100,7 @@ try:
         print(f"  Encontrou <a>: {loc.count() > 0}")
 
         # captura se abrir nova aba
-        with browser.expect_page() as new_page_info:
+        with context.expect_page() as new_page_info:
             try:
                 loc.click(timeout=5000)
             except Exception:
