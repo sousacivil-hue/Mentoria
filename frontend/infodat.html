@@ -266,8 +266,15 @@ async function carregarTurmas() {
   if (!professor || !senha) { alert('Preencha professor e senha.'); return; }
 
   const btn = document.getElementById('btn-carregar');
-  btn.textContent = '⏳ Carregando turmas...';
   btn.disabled = true;
+
+  let seg = 20;
+  btn.textContent = `⏳ Conectando ao Infodat... ${seg}s`;
+  const timer = setInterval(() => {
+    seg--;
+    if (seg > 0) btn.textContent = `⏳ Conectando ao Infodat... ${seg}s`;
+    else { clearInterval(timer); btn.textContent = '⏳ Quase lá...'; }
+  }, 1000);
 
   try {
     const resp = await fetch(`${BACKEND_URL}/turmas-infodat`, {
@@ -277,6 +284,7 @@ async function carregarTurmas() {
     });
     const dados = await resp.json();
 
+    clearInterval(timer);
     if (dados.erro) {
       alert('Erro: ' + dados.erro);
       btn.textContent = '🔍 Carregar minhas turmas';
@@ -304,6 +312,7 @@ async function carregarTurmas() {
     document.getElementById('tela-login').style.display = 'none';
     document.getElementById('tela-config').style.display = 'block';
   } catch (err) {
+    clearInterval(timer);
     alert('Erro ao conectar: ' + err.message);
     btn.textContent = '🔍 Carregar minhas turmas';
     btn.disabled = false;
