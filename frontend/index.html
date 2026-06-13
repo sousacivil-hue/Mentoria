@@ -65,6 +65,22 @@
   .plano li { padding:6px 0; color:#C3CAD8; font-size:14px; border-bottom:1px solid #1C2330; }
   .plano li::before { content:'✓ '; color:#00D4AA; font-weight:700; }
 
+  /* FAQ */
+  .faq-wrap { max-width:780px; margin:0 auto; }
+  .faq-titulo { font-size:clamp(24px,4vw,34px); font-weight:800; color:#fff; text-align:center; margin-bottom:10px; }
+  .faq-sub { text-align:center; color:#8B93A7; margin-bottom:44px; }
+  .faq-destaque { background:linear-gradient(135deg,#12193A,#0D1A2E); border:1.5px solid #2C3F6A; border-radius:20px; padding:36px 40px; margin-bottom:28px; }
+  .faq-destaque .pergunta { font-size:20px; font-weight:800; color:#00D4AA; margin-bottom:18px; }
+  .faq-destaque p { color:#C3CAD8; font-size:15.5px; line-height:1.75; margin-bottom:14px; }
+  .faq-destaque p:last-child { margin-bottom:0; }
+  .faq-destaque .exemplos { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin:20px 0; }
+  .faq-destaque .ex { background:rgba(0,212,170,.07); border:1px solid rgba(0,212,170,.2); border-radius:12px; padding:16px 18px; }
+  .faq-destaque .ex .area { font-size:12px; color:#00D4AA; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+  .faq-destaque .ex .desc { color:#C3CAD8; font-size:13.5px; line-height:1.5; }
+  .faq-item { background:#161B26; border:1px solid #232A38; border-radius:16px; padding:24px 28px; margin-bottom:14px; }
+  .faq-item .pergunta { font-size:16px; font-weight:700; color:#fff; margin-bottom:10px; }
+  .faq-item p { color:#9BA6BC; font-size:14.5px; line-height:1.65; }
+
   /* ANÚNCIO + RODAPÉ */
   #anuncio { max-width:720px; margin:30px auto; min-height:90px; border:1px dashed rgba(255,255,255,.12); border-radius:12px; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.25); font-size:13px; }
   footer { text-align:center; padding:40px 24px 50px; color:#5B6478; font-size:14px; }
@@ -207,6 +223,60 @@
         <li>Suporte prioritário no WhatsApp</li>
       </ul>
       <a class="btn btn-primario" style="width:100%;display:block;" href="https://wa.me/5579991075326?text=Quero%20o%20plano%20Completo%20do%20S%C3%B3Digita!" target="_blank">Assinar agora</a>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="secao">
+  <div class="faq-wrap">
+    <h2 class="faq-titulo">É seguro usar automação?</h2>
+    <p class="faq-sub">Uma dúvida comum — e uma resposta simples.</p>
+
+    <div class="faq-destaque">
+      <div class="pergunta">🤖 Automatizar o próprio trabalho é uma prática estabelecida e legítima</div>
+      <p>
+        O SóDigita faz exatamente o que um professor faria manualmente: acessa o sistema com as próprias credenciais, preenche os campos e clica em salvar. A diferença é que leva segundos, não horas.
+      </p>
+      <p>
+        Essa prática de automação de tarefas repetitivas é usada todos os dias por profissionais de diversas áreas no Brasil:
+      </p>
+      <div class="exemplos">
+        <div class="ex">
+          <div class="area">⚖️ Área Jurídica</div>
+          <div class="desc">Escritórios de advocacia automatizam protocolos, consultas de processos e petições nos portais dos tribunais (TJ, TRF, STJ).</div>
+        </div>
+        <div class="ex">
+          <div class="area">💰 Contabilidade</div>
+          <div class="desc">Contadores usam robôs para enviar declarações, consultar certidões e acessar o e-CAC da Receita Federal em nome de clientes.</div>
+        </div>
+        <div class="ex">
+          <div class="area">🏥 Saúde</div>
+          <div class="desc">Clínicas e hospitais automatizam o preenchimento de prontuários eletrônicos, agendamentos e registros no sistema CFM.</div>
+        </div>
+        <div class="ex">
+          <div class="area">🏫 Educação</div>
+          <div class="desc">Secretarias escolares usam automação para exportar relatórios, preencher formulários do MEC/INEP e migrar dados entre sistemas.</div>
+        </div>
+      </div>
+      <p>
+        Em nenhum desses casos houve responsabilização legal pelo uso de automação no próprio trabalho. <strong style="color:#fff;">O profissional tem pleno direito de usar ferramentas que agilizem suas tarefas — da mesma forma que usa o copiar e colar, atalhos de teclado ou qualquer outro recurso.</strong>
+      </p>
+    </div>
+
+    <div class="faq-item">
+      <div class="pergunta">🔐 O que acontece com minha senha?</div>
+      <p>Sua senha é usada apenas no momento da automação, direto na memória do servidor, e descartada imediatamente. Ela nunca é gravada em banco de dados, arquivo ou log. Nós nem conseguimos vê-la.</p>
+    </div>
+
+    <div class="faq-item">
+      <div class="pergunta">📋 O conteúdo preenchido é responsabilidade minha?</div>
+      <p>Sim. O SóDigita digita exatamente o que você informou. Você continua sendo o autor do diário — nós somos só o teclado.</p>
+    </div>
+
+    <div class="faq-item">
+      <div class="pergunta">🏫 A escola pode me punir por usar o SóDigita?</div>
+      <p>Não há base legal para isso. Você está cumprindo sua obrigação de preencher o diário — só com mais eficiência. O resultado final no sistema é idêntico ao que você faria manualmente.</p>
     </div>
   </div>
 </div>
