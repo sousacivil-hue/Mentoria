@@ -242,36 +242,46 @@ try:
 
         chamadas = 0
         chamada_num = 0
+        ja_feitas = set()  # rastreia onclicks já processados para evitar loop
+
         while True:
             page.wait_for_timeout(1000)
 
             botoes_verdes = page.evaluate("""
                 () => {
                     const result = [];
-                    const btns = document.querySelectorAll('button.btn-success, button[onclick*="carregarListaDePresenca"], button[onclick*="presenca"], a.btn-success');
+                    const btns = document.querySelectorAll('button[onclick^="carregarListaDePresenca"]');
                     for (const btn of btns) {
-                        const onclick = btn.getAttribute('onclick') || btn.getAttribute('href') || '';
+                        const onclick = btn.getAttribute('onclick') || '';
                         if (onclick) result.push({onclick});
                     }
                     return result;
                 }
             """)
 
-            if not botoes_verdes:
+            # filtra os que ainda não foram feitos
+            pendentes = [b for b in botoes_verdes if b["onclick"] not in ja_feitas]
+
+            if not pendentes:
                 print("✅ Chamadas: todas registradas!")
                 break
 
             chamada_num += 1
-            alvo = botoes_verdes[0]
+            alvo = pendentes[0]
+            ja_feitas.add(alvo["onclick"])
             print(f"⏳ Chamada [{chamada_num}]...")
 
-            # clica no 1º botão de chamada (abre modal com lista de alunos)
-            clicou = page.evaluate("""
-                () => {
+            onclick_alvo = alvo["onclick"].replace("'", "\\'")
+            clicou = page.evaluate(f"""
+                () => {{
                     const btns = document.querySelectorAll('button[onclick^="carregarListaDePresenca"]');
-                    if (btns.length > 0) { btns[0].click(); return true; }
+                    for (const btn of btns) {{
+                        if (btn.getAttribute('onclick') === '{onclick_alvo}') {{
+                            btn.click(); return true;
+                        }}
+                    }}
                     return false;
-                }
+                }}
             """)
 
             if not clicou:
