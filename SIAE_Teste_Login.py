@@ -93,37 +93,30 @@ try:
         print("⏳ Procurando card DIÁRIO na página...")
         page.wait_for_timeout(2000)
 
-        # Playwright clica no <a> pai do texto DIÁRIO (React usa event listener, não href)
-        clicou = None
-        try:
-            # localiza o <a> que contém "DIÁRIO" e clica com force=True para ignorar visibilidade
-            loc = page.locator("a").filter(has_text="DIÁRIO").first
-            if loc.count() > 0:
-                loc.click(force=True, timeout=5000)
-                clicou = "a[has_text=DIÁRIO]"
-        except Exception as e:
-            print(f"⚠️ Erro ao clicar: {e}")
-            # fallback: dispatchEvent MouseEvent via JS (funciona com React)
-            clicou = page.evaluate("""() => {
-                const all = document.querySelectorAll('a, div[style*="cursor: pointer"]');
-                for (const el of all) {
-                    if (el.innerText && el.innerText.includes('DIÁRIO')) {
-                        el.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true}));
-                        return el.tagName + ':' + el.className.slice(0,30);
-                    }
-                }
-                return null;
-            }""")
+        # Clica no DIÁRIO e captura nova aba ou navegação
+        print("⏳ Clicando no card DIÁRIO...")
+        loc = page.locator("a").filter(has_text="DIÁRIO").first
+        print(f"  Encontrou <a>: {loc.count() > 0}")
 
-        if clicou:
-            print(f"✅ Clicou! Aguardando navegação...")
-            page.wait_for_timeout(5000)
+        # captura se abrir nova aba
+        with browser.expect_page() as new_page_info:
+            try:
+                loc.click(timeout=5000)
+            except Exception:
+                pass
+
+        try:
+            nova_aba = new_page_info.value
+            nova_aba.wait_for_load_state("domcontentloaded", timeout=10000)
+            print(f"✅ Abriu nova aba! URL: {nova_aba.url}")
+            page = nova_aba  # continua na nova aba
+        except Exception:
+            # não abriu nova aba, verifica se a URL mudou
+            page.wait_for_timeout(4000)
             print(f"🌐 URL após clique: {page.url}")
-            botoes = page.locator("button.btn-primary[onclick^='registrar']").count()
-            print(f"✅ Botões de aula encontrados: {botoes}")
-        else:
-            links = page.evaluate("() => Array.from(document.querySelectorAll('a')).map(a => a.innerText.trim() + ' → ' + a.href).slice(0, 20)")
-            print(f"❌ Não clicou. Links na página: {links}")
+
+        botoes = page.locator("button.btn-primary[onclick^='registrar']").count()
+        print(f"✅ Botões de aula encontrados: {botoes}")
 
         print(f"\n✅ TUDO OK! URL final: {page.url}")
         input("\nENTER para fechar o Chrome...")
