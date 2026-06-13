@@ -33,6 +33,13 @@ TURMAS_DISPONIVEIS = {
     # Adicione mais turmas conforme necessário
 }
 
+# ── MODO TESTE — mude para False quando for usar de verdade ──
+MODO_TESTE = True
+TESTE_AULAS = [
+    {"turmas": ["3a"], "data": "12/06/2026", "num_aulas": "2",
+     "conteudo": "teste_chagas", "ativ_aula": "", "ativ_casa": ""},
+]
+TESTE_FALTAS = []  # lista de nomes, ex: ["JOAO SILVA"]
 # ══════════════════════════════════════════════════════════
 
 try:
@@ -49,54 +56,89 @@ try:
 
     # ── COLETA DE AULAS ──────────────────────────────────
     aulas = []
-    print("Digite as aulas a registrar. Linha em branco para terminar.")
-    print()
 
-    while True:
-        data = input("Data (DD/MM/AAAA) [Enter para hoje]: ").strip()
-        if not data:
-            data = datetime.now().strftime("%d/%m/%Y")
-        if not data:
-            break
+    if MODO_TESTE:
+        print("⚡ MODO TESTE — dados pré-configurados no topo do arquivo")
+        for t in TESTE_AULAS:
+            for ident in t["turmas"]:
+                v = TURMAS_DISPONIVEIS.get(ident)
+                if v:
+                    aulas.append({
+                        "data": t["data"],
+                        "value": v,
+                        "conteudo": t["conteudo"],
+                        "num_aulas": t["num_aulas"],
+                        "ativ_aula": t.get("ativ_aula", ""),
+                        "ativ_casa": t.get("ativ_casa", ""),
+                    })
+        ALUNOS_COM_FALTA = list(TESTE_FALTAS)
+        print(f"   Aulas: {len(aulas)} | Faltas: {ALUNOS_COM_FALTA or 'nenhuma'}")
+    else:
+        print("Turmas disponíveis:")
+        for ident, val in TURMAS_DISPONIVEIS.items():
+            print(f"  {ident} → {val}")
+        print()
+        print("Digite as aulas a registrar. Linha em branco para terminar.")
+        print()
 
-        turmas_input = input(f"  Turmas (ex: 3a 3b ou só 3a): ").strip().lower()
-        if not turmas_input:
-            break
-        idents = turmas_input.split()
-        values = []
-        for i in idents:
-            if i in TURMAS_DISPONIVEIS:
-                values.append(TURMAS_DISPONIVEIS[i])
-            else:
-                print(f"  ⚠️ Turma '{i}' não encontrada — ignorada")
-        if not values:
-            continue
+        while True:
+            data = input("Data (DD/MM/AAAA) [Enter para hoje]: ").strip()
+            if not data:
+                data = datetime.now().strftime("%d/%m/%Y")
+            if not data:
+                break
 
-        conteudo = input("  Conteúdo: ").strip()
-        if not conteudo:
-            break
+            turmas_input = input(f"  Turmas (ex: 3a 3b ou só 3a): ").strip().lower()
+            if not turmas_input:
+                break
+            idents = turmas_input.split()
+            values = []
+            for i in idents:
+                if i in TURMAS_DISPONIVEIS:
+                    values.append(TURMAS_DISPONIVEIS[i])
+                else:
+                    print(f"  ⚠️ Turma '{i}' não encontrada — ignorada")
+            if not values:
+                continue
 
-        num_aulas = input("  Número de aulas: ").strip()
-        if not num_aulas:
-            num_aulas = "2"
+            conteudo = input("  Conteúdo: ").strip()
+            if not conteudo:
+                break
 
-        ativ_aula = input("  Atividade de aula (Enter para pular): ").strip()
-        ativ_casa = input("  Atividade de casa (Enter para pular): ").strip()
+            num_aulas = input("  Número de aulas: ").strip()
+            if not num_aulas:
+                num_aulas = "2"
 
-        for v in values:
-            aulas.append({
-                "data": data,
-                "value": v,
-                "conteudo": conteudo,
-                "num_aulas": num_aulas,
-                "ativ_aula": ativ_aula,
-                "ativ_casa": ativ_casa,
-            })
+            ativ_aula = input("  Atividade de aula (Enter para pular): ").strip()
+            ativ_casa = input("  Atividade de casa (Enter para pular): ").strip()
 
-        print(f"  ✅ {len(values)} turma(s) adicionada(s)\n")
-        continuar = input("Adicionar mais aulas? (s/Enter para não): ").strip().lower()
-        if continuar != "s":
-            break
+            for v in values:
+                aulas.append({
+                    "data": data,
+                    "value": v,
+                    "conteudo": conteudo,
+                    "num_aulas": num_aulas,
+                    "ativ_aula": ativ_aula,
+                    "ativ_casa": ativ_casa,
+                })
+
+            print(f"  ✅ {len(values)} turma(s) adicionada(s)\n")
+            continuar = input("Adicionar mais aulas? (s/Enter para não): ").strip().lower()
+            if continuar != "s":
+                break
+
+        resp = input("\nHouve falta de algum aluno hoje? (s/n): ").strip().lower()
+        ALUNOS_COM_FALTA = []
+        if resp == "s":
+            print("Digite parte do nome do aluno com falta (um por linha). Linha em branco para terminar.")
+            while True:
+                nome = input("  Aluno com falta: ").strip()
+                if not nome:
+                    break
+                ALUNOS_COM_FALTA.append(nome.upper())
+            print(f"  → Faltas: {ALUNOS_COM_FALTA}")
+        else:
+            print("  → Todos presentes.")
 
     if not aulas:
         print("Nenhuma aula para registrar. Encerrando.")
@@ -104,20 +146,6 @@ try:
         sys.exit()
 
     print(f"\n📋 Total: {len(aulas)} aula(s) para gravar")
-
-    # ── FALTAS ───────────────────────────────────────────
-    resp = input("\nHouve falta de algum aluno hoje? (s/n): ").strip().lower()
-    ALUNOS_COM_FALTA = []
-    if resp == "s":
-        print("Digite parte do nome do aluno com falta (um por linha). Linha em branco para terminar.")
-        while True:
-            nome = input("  Aluno com falta: ").strip()
-            if not nome:
-                break
-            ALUNOS_COM_FALTA.append(nome.upper())
-        print(f"  → Faltas: {ALUNOS_COM_FALTA}")
-    else:
-        print("  → Todos presentes.")
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=False, slow_mo=150, channel="chrome")
