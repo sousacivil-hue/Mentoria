@@ -126,7 +126,13 @@ try:
 
         # ── LOGIN ────────────────────────────────────────
         print("\n🔐 Fazendo login...")
-        page.goto(f"{BASE_URL}/login.php", wait_until="domcontentloaded", timeout=60000)
+        for tentativa in range(3):
+            try:
+                page.goto(f"{BASE_URL}/login.php", wait_until="domcontentloaded", timeout=60000)
+                break
+            except Exception as e:
+                print(f"  ⚠️ Tentativa {tentativa+1} falhou: {e.__class__.__name__} — aguardando...")
+                page.wait_for_timeout(5000)
         page.wait_for_timeout(2000)
 
         page.locator("select#escola").select_option(value=ESCOLA)
