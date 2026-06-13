@@ -1237,7 +1237,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.20"}
+    return {"versao": "2026-06-13.21"}
 
 
 @app.post("/ler-foto-notas")
@@ -2350,7 +2350,9 @@ async def run_infodat(job_id: str, data: InfodatFormData):
             else:
                 log.append(f"⚠️ Professor não encontrado na lista. Opções: {[o['text'] for o in opcoes[:5]]}")
                 await page.locator("select#professor").select_option(index=1)
+            await page.wait_for_timeout(1000)
             await page.locator("input[type='password']").first.fill(data.senha)
+            await page.wait_for_timeout(500)
             await page.locator("input[value='Entrar'], button:has-text('Entrar')").first.click()
 
             for _ in range(30):
@@ -2496,14 +2498,16 @@ async def turmas_infodat(data: InfodatLoginData):
                 await page.locator("select#professor").select_option(value=valor_prof)
             elif opcoes:
                 await page.locator("select#professor").select_option(value=opcoes[0]["value"])
+            await page.wait_for_timeout(1000)
             await page.locator("input[type='password']").first.fill(data.senha)
+            await page.wait_for_timeout(500)
             await page.locator("input[value='Entrar'], button:has-text('Entrar')").first.click()
             for _ in range(30):
                 await page.wait_for_timeout(500)
                 if "login.php" not in page.url:
                     break
             if "login.php" in page.url:
-                return {"erro": f"total_opcoes={len(opcoes)} | palavras={palavras} | marcos={marcos_opts} | valor_encontrado={valor_prof}"}
+                return {"erro": "Login não aceito — verifique professor e senha."}
 
             await page.goto(f"{INFODAT_BASE}/diario_add.php",
                             wait_until="domcontentloaded", timeout=30000)
