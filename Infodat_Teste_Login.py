@@ -30,7 +30,7 @@ try:
 
     print("Iniciando Chrome...")
     with sync_playwright() as pw:
-        browser = pw.chromium.launch(headless=False, slow_mo=150)
+        browser = pw.chromium.launch(headless=False, slow_mo=150, channel="chrome")
         context = browser.new_context(viewport={"width": 1280, "height": 900})
         page = context.new_page()
 
