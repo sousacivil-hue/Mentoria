@@ -201,7 +201,7 @@
 
 <header>
   <h1>✏️ SóDigita — SIAE</h1>
-  <span>Você planeja. Você ensina. A gente só digita.</span>
+  <span>Você planeja. Você ensina. A gente só digita. <span id="versao" style="opacity:.6;font-size:.75rem;"></span></span>
 </header>
 
 <div class="container">
@@ -353,6 +353,11 @@ function coletarAssuntosPorTurma() {
 // Inicia com 2 linhas em branco
 adicionarTurma();
 adicionarTurma();
+
+// Mostra a versão do backend no cabeçalho
+fetch(`${BACKEND_URL}/versao`).then(r => r.json())
+  .then(d => { document.getElementById('versao').textContent = `v${d.versao}`; })
+  .catch(() => {});
 
 function addLog(msg, tipo = '') {
   const box = document.getElementById('log-box');
