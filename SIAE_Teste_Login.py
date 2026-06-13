@@ -88,15 +88,34 @@ try:
 
         # Clicar no card DIÁRIO
         print("⏳ Procurando card DIÁRIO...")
-        page.wait_for_timeout(2000)
-        diario = page.locator("p:has-text('DIÁRIO'), div:has-text('DIÁRIO')")
-        if diario.count() > 0:
-            diario.first.click()
+        page.wait_for_timeout(3000)
+
+        # tenta vários seletores
+        diario = None
+        for sel in [
+            "p.chakra-text:has-text('DIÁRIO')",
+            ".chakra-text:has-text('DIÁRIO')",
+            "p:text-is('DIÁRIO')",
+            "p:has-text('DIÁRIO')",
+            "div.css-dwrep4:has-text('DIÁRIO')",
+            "text=DIÁRIO",
+        ]:
+            loc = page.locator(sel)
+            if loc.count() > 0:
+                print(f"✅ Encontrado com seletor: {sel}")
+                loc.first.click()
+                diario = sel
+                break
+
+        if diario:
             print("✅ Card DIÁRIO clicado!")
             page.wait_for_timeout(3000)
             print(f"🌐 URL após DIÁRIO: {page.url}")
         else:
-            print("⚠️ Card DIÁRIO não encontrado — verifique o Chrome")
+            # diagnóstico: lista todos os textos de p na página
+            textos = page.evaluate("() => Array.from(document.querySelectorAll('p')).map(p => p.innerText.trim()).filter(t => t)")
+            print(f"⚠️ Card DIÁRIO não encontrado. Textos de <p> na página: {textos[:20]}")
+            print("Verifique o Chrome")
 
         print(f"\n✅ TUDO OK! URL final: {page.url}")
         input("\nENTER para fechar o Chrome...")
