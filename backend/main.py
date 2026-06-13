@@ -129,12 +129,39 @@ CONTEUDOS = {
 _indices: dict[str, int] = {}
 
 
+def _normalizar(texto: str) -> str:
+    import unicodedata
+    texto = unicodedata.normalize("NFD", texto.lower())
+    texto = "".join(c for c in texto if unicodedata.category(c) != "Mn")
+    return texto.replace("º", "").replace("ª", "")
+
+
 def get_conteudo(serie: str, assuntos_proprios: list[str], assuntos_por_turma: dict[str, str] | None = None) -> str:
-    # dict turma→assunto: procura se alguma chave está contida no nome da série
+    # dict turma→assunto: aceita formas triviais — "6" (6º ano), "3b" (3ª série B),
+    # "eja", "mat digital", "exp mat" (abreviações casam com início das palavras)
     if assuntos_por_turma:
-        serie_lower = serie.lower()
-        for identificador, assunto in assuntos_por_turma.items():
-            if identificador.lower() in serie_lower:
+        serie_norm = _normalizar(serie)
+        # identificadores mais específicos (mais longos) primeiro
+        for identificador in sorted(assuntos_por_turma, key=len, reverse=True):
+            assunto = assuntos_por_turma[identificador]
+            ident_norm = _normalizar(identificador.strip())
+            if not ident_norm:
+                continue
+            # só número (ex: "6") → "6 ano" ou "6 serie"
+            if ident_norm.isdigit() and len(ident_norm) <= 2:
+                if re.search(rf"\b{ident_norm}\s*(ano|serie)", serie_norm):
+                    return assunto
+                continue
+            # número+letra (ex: "3b") → "3 serie ... b"
+            m = re.fullmatch(r"(\d{1,2})\s*([a-z])", ident_norm)
+            if m:
+                num, letra = m.group(1), m.group(2)
+                if re.search(rf"\b{num}\s*(ano|serie)", serie_norm) and re.search(rf"(\s|-){letra}\b", serie_norm):
+                    return assunto
+                continue
+            # texto: cada palavra casa com o início de alguma palavra ("exp mat" → Expressão Matemática)
+            palavras = ident_norm.split()
+            if all(re.search(rf"\b{re.escape(p)}", serie_norm) for p in palavras):
                 return assunto
 
     if assuntos_proprios:
@@ -206,7 +233,8 @@ async def run_automacao(job_id: str, data: FormData):
                             if (!tr) continue;
                             const tds = tr.querySelectorAll('td');
                             const objeto = tds[2] ? tds[2].innerText.trim() : '';
-                            const serie = tds[3] ? tds[3].innerText.trim() : '';
+                            const materia = tds[1] ? tds[1].innerText.trim() : '';
+                            const serie = (tds[3] ? tds[3].innerText.trim() : '') + ' | ' + materia;
                             const onclick = btn.getAttribute('onclick') || '';
                             if (objeto === '' || objeto === '-') {
                                 result.push({onclick, serie});
@@ -282,7 +310,8 @@ async def run_automacao(job_id: str, data: FormData):
                             if (!tr) continue;
                             const tds = tr.querySelectorAll('td');
                             const objeto = tds[2] ? tds[2].innerText.trim() : '';
-                            const serie = tds[3] ? tds[3].innerText.trim() : '';
+                            const materia = tds[1] ? tds[1].innerText.trim() : '';
+                            const serie = (tds[3] ? tds[3].innerText.trim() : '') + ' | ' + materia;
                             const onclick = btn.getAttribute('onclick') || '';
                             if (objeto === '' || objeto === '-') {
                                 result.push({onclick, serie});
@@ -1131,7 +1160,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-12.2"}
+    return {"versao": "2026-06-13.1"}
 
 
 @app.get("/manchetes")
