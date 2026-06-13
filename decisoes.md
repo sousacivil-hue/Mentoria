@@ -40,3 +40,8 @@ Abrir sessões separadas para:
 1. Automatizar navegação clique-por-clique em cada sistema
 2. Tela do app com design SóDigita (logo, cores, nome)
 3. Sistema de acesso por plano (controle de quem pode usar o quê)
+
+## To-Do (infraestrutura)
+- [ ] UptimeRobot: cadastrar monitor em uptimerobot.com apontando para sodigita.com.br a cada 5 min (evitar hibernação do Render free)
+- [ ] Cronômetro: recalibrar estimativa de tempo (descalibrado)
+- [ ] Pagamento recorrente: Stripe ou Hotmart (após 20-30 assinantes manuais)
