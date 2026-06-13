@@ -22,8 +22,8 @@ builtins.print = print
 # CONFIGURAÇÃO — edite aqui antes de rodar
 # ══════════════════════════════════════════════════════════
 
-LOGIN = "789.626.335-15"
-SENHA = "130224"
+LOGIN = ""
+SENHA = ""
 
 # Assunto por turma — use parte do nome como aparece no SIAE
 # Exemplos: "6" (6º Ano), "7" (7º Ano), "3" (3ª Série), "eja", "mat digital", "exp mat", "financeira"
@@ -78,6 +78,21 @@ try:
     print("=" * 50)
     print("SIAE — Preenchimento automático do diário")
     print("=" * 50)
+
+    # ── PERGUNTAS INICIAIS ────────────────────────────────
+    resp = input("\nHouve falta de algum aluno hoje? (s/n): ").strip().lower()
+    ALUNOS_COM_FALTA = []
+    if resp == "s":
+        print("Digite os nomes dos alunos com falta (um por linha).")
+        print("Quando terminar, deixe a linha em branco e pressione ENTER.")
+        while True:
+            nome = input("  Aluno com falta: ").strip()
+            if not nome:
+                break
+            ALUNOS_COM_FALTA.append(nome.lower())
+        print(f"  → Faltas registradas para: {ALUNOS_COM_FALTA}")
+    else:
+        print("  → Todos presentes.")
 
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=False, slow_mo=100)
@@ -216,12 +231,93 @@ try:
             page.wait_for_timeout(2000)
 
         print(f"\n{'='*50}")
-        print(f"✅ CONCLUÍDO! Aulas preenchidas: {salvas}")
+        print(f"✅ Aulas preenchidas: {salvas}")
         if sem_assunto:
-            print(f"⚠️  Sem assunto configurado ({len(sem_assunto)} turmas):")
-            for t in sem_assunto:
-                print(f"   - {t}")
-            print("   → Adicione essas turmas no dicionário ASSUNTOS no topo do arquivo")
+            print(f"⚠️  Sem assunto ({len(sem_assunto)} turmas): {sem_assunto}")
+
+        # ── CHAMADA (presença) ────────────────────────────
+        print("\n📋 Iniciando registro de presença...")
+        page.goto(URL_AULAS, wait_until="domcontentloaded", timeout=30000)
+        page.wait_for_timeout(3000)
+
+        chamadas = 0
+        chamada_num = 0
+        while True:
+            page.wait_for_timeout(1000)
+
+            botoes_verdes = page.evaluate("""
+                () => {
+                    const result = [];
+                    const btns = document.querySelectorAll('button.btn-success, button[onclick*="carregarListaDePresenca"], button[onclick*="presenca"], a.btn-success');
+                    for (const btn of btns) {
+                        const onclick = btn.getAttribute('onclick') || btn.getAttribute('href') || '';
+                        if (onclick) result.push({onclick});
+                    }
+                    return result;
+                }
+            """)
+
+            if not botoes_verdes:
+                print("✅ Chamadas: todas registradas!")
+                break
+
+            chamada_num += 1
+            alvo = botoes_verdes[0]
+            print(f"⏳ Chamada [{chamada_num}]...")
+
+            # clica no botão verde via JS
+            clicou = page.evaluate(f"""
+                () => {{
+                    const btns = document.querySelectorAll('button.btn-success, button[onclick*="carregarListaDePresenca"], button[onclick*="presenca"], a.btn-success');
+                    if (btns.length > 0) {{ btns[0].click(); return true; }}
+                    return false;
+                }}
+            """)
+
+            if not clicou:
+                break
+
+            page.wait_for_timeout(3000)
+
+            # desmarca alunos com falta (se houver)
+            if ALUNOS_COM_FALTA:
+                try:
+                    page.evaluate(f"""
+                        (faltas) => {{
+                            const linhas = document.querySelectorAll('tr');
+                            for (const tr of linhas) {{
+                                const nome = tr.innerText.toLowerCase();
+                                const faltou = faltas.some(f => nome.includes(f));
+                                if (faltou) {{
+                                    const cb = tr.querySelector('input[type="checkbox"]');
+                                    if (cb && cb.checked) cb.click();
+                                }}
+                            }}
+                        }}
+                    """, ALUNOS_COM_FALTA)
+                except Exception:
+                    pass
+
+            # confirma na modal — botão verde de confirmar
+            try:
+                confirmar = page.locator("button.btn-success, button:has-text('Confirmar'), button:has-text('CONFIRMAR'), button:has-text('Salvar')").first
+                if confirmar.count() > 0:
+                    confirmar.click()
+                    page.wait_for_timeout(2000)
+                    chamadas += 1
+                    print(f"   ✅ Presença registrada!")
+                else:
+                    print(f"   ⚠️ Botão confirmar não encontrado")
+            except Exception as e:
+                print(f"   ⚠️ Erro na chamada: {e}")
+
+            page.goto(URL_AULAS, wait_until="domcontentloaded", timeout=30000)
+            page.wait_for_timeout(2000)
+
+        print(f"\n{'='*50}")
+        print(f"✅ CONCLUÍDO!")
+        print(f"   Aulas preenchidas: {salvas}")
+        print(f"   Presenças registradas: {chamadas}")
         print(f"{'='*50}")
 
         input("\nENTER para fechar o Chrome...")
