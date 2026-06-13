@@ -1237,7 +1237,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.16"}
+    return {"versao": "2026-06-13.17"}
 
 
 @app.post("/ler-foto-notas")
@@ -2337,10 +2337,11 @@ async def run_infodat(job_id: str, data: InfodatFormData):
                     .filter(o => o.value)
                     .map(o => ({value: o.value, text: o.text.trim()}))
             """)
-            busca = _sem_acento(data.professor)
+            palavras = _sem_acento(data.professor).split()
             valor_prof = None
             for opt in opcoes:
-                if busca in _sem_acento(opt["text"]):
+                texto = _sem_acento(opt["text"])
+                if all(p in texto for p in palavras):
                     valor_prof = opt["value"]
                     log.append(f"✅ Professor encontrado: {opt['text']}")
                     break
@@ -2483,10 +2484,11 @@ async def turmas_infodat(data: InfodatLoginData):
                     .filter(o => o.value)
                     .map(o => ({value: o.value, text: o.text.trim()}))
             """)
-            busca = _sem_acento(data.professor)
+            palavras = _sem_acento(data.professor).split()
             valor_prof = None
             for opt in opcoes:
-                if busca in _sem_acento(opt["text"]):
+                texto = _sem_acento(opt["text"])
+                if all(p in texto for p in palavras):
                     valor_prof = opt["value"]
                     break
             if valor_prof:
