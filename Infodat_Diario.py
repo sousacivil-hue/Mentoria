@@ -6,8 +6,7 @@ import sys, builtins, traceback
 from pathlib import Path
 from datetime import datetime
 
-LOG_FILE = Path.home() / "Desktop" / "diario_auto" / "infodat_diario_log.txt"
-LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+LOG_FILE = Path(__file__).parent / "infodat_diario_log.txt"
 _log = open(LOG_FILE, "w", encoding="utf-8")
 
 _print_orig = builtins.print
