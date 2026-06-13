@@ -186,9 +186,25 @@
       <button class="btn-add" onclick="adicionarEntrada()">+ Adicionar aula</button>
     </div>
 
-    <!-- 3: Faltas -->
+    <!-- 3: Gerador IA -->
     <div class="card">
-      <h2><span class="step-badge">3</span> Alunos com falta (opcional)</h2>
+      <h2><span class="step-badge">3</span> ✨ Gerar conteúdo com IA (opcional)</h2>
+      <div class="dica" style="margin-bottom:12px;">Preencha abaixo e a IA sugere um tópico para cada aula. Você pode editar depois.</div>
+      <label>Disciplina</label>
+      <input type="text" id="ia-disciplina" placeholder="Ex: Física">
+      <label>Série / Turma</label>
+      <input type="text" id="ia-serie" placeholder="Ex: 3ª Série Ensino Médio">
+      <label>Assunto principal (opcional)</label>
+      <input type="text" id="ia-assunto" placeholder="Ex: Eletrostática">
+      <button class="btn-add" style="margin-top:12px;" onclick="gerarTopicosIA()" id="btn-gerar-ia">
+        ✨ Gerar tópicos com IA
+      </button>
+      <div class="dica" style="margin-top:8px;">Os tópicos gerados preenchem automaticamente o campo Conteúdo de cada linha acima.</div>
+    </div>
+
+    <!-- 4: Faltas -->
+    <div class="card">
+      <h2><span class="step-badge">4</span> Alunos com falta (opcional)</h2>
       <div class="dica" style="margin-bottom:10px;">Um nome por linha. Pode ser parte do nome (ex: JOAO SILVA).</div>
       <textarea id="faltas" placeholder="Deixe em branco se todos estiveram presentes" style="min-height:80px;"></textarea>
     </div>
@@ -318,6 +334,47 @@ async function executar() {
     sse.onerror = () => { addLog('Conexão perdida com o servidor.', 'erro'); sse.close(); };
   } catch (err) {
     addLog(`Erro ao conectar ao servidor: ${err.message}`, 'erro');
+  }
+}
+
+async function gerarTopicosIA() {
+  const disciplina = document.getElementById('ia-disciplina').value.trim();
+  const serie = document.getElementById('ia-serie').value.trim();
+  if (!disciplina || !serie) { alert('Preencha a disciplina e a série.'); return; }
+
+  const btn = document.getElementById('btn-gerar-ia');
+  btn.textContent = '⏳ Gerando...';
+  btn.disabled = true;
+
+  const linhas = document.querySelectorAll('#tabela-entradas .entrada-row');
+  const quantidade = linhas.length || 5;
+
+  try {
+    const resp = await fetch(`${BACKEND_URL}/gerar-topicos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        disciplina, serie,
+        assunto: document.getElementById('ia-assunto').value.trim(),
+        quantidade
+      })
+    });
+    const dados = await resp.json();
+    if (dados.erro) {
+      alert(dados.erro);
+    } else {
+      const topicos = dados.topicos;
+      linhas.forEach((row, i) => {
+        if (i < topicos.length) {
+          row.querySelector('.campo-conteudo').value = topicos[i];
+        }
+      });
+    }
+  } catch (err) {
+    alert('Erro ao conectar ao servidor: ' + err.message);
+  } finally {
+    btn.textContent = '✨ Gerar tópicos com IA';
+    btn.disabled = false;
   }
 }
 
