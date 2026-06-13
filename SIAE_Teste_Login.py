@@ -86,36 +86,19 @@ try:
             browser.close()
             sys.exit()
 
-        # Clicar no card DIÁRIO
-        print("⏳ Procurando card DIÁRIO...")
+        # Ir direto para a página de aulas (sessão já autenticada)
+        URL_AULAS = "https://siae.seduc.se.gov.br/siae.diario/Aula/Aulas"
+        print(f"⏳ Acessando página de aulas: {URL_AULAS}")
+        page.goto(URL_AULAS, wait_until="domcontentloaded", timeout=30000)
         page.wait_for_timeout(3000)
+        print(f"🌐 URL final: {page.url}")
 
-        # tenta vários seletores
-        diario = None
-        for sel in [
-            "p.chakra-text:has-text('DIÁRIO')",
-            ".chakra-text:has-text('DIÁRIO')",
-            "p:text-is('DIÁRIO')",
-            "p:has-text('DIÁRIO')",
-            "div.css-dwrep4:has-text('DIÁRIO')",
-            "text=DIÁRIO",
-        ]:
-            loc = page.locator(sel)
-            if loc.count() > 0:
-                print(f"✅ Encontrado com seletor: {sel}")
-                loc.first.click()
-                diario = sel
-                break
-
-        if diario:
-            print("✅ Card DIÁRIO clicado!")
-            page.wait_for_timeout(3000)
-            print(f"🌐 URL após DIÁRIO: {page.url}")
+        # verifica se chegou na página certa ou foi redirecionado pro login
+        if "login" in page.url.lower() or "sso.seduc" in page.url:
+            print("❌ Redirecionou para login — sessão não foi aceita")
         else:
-            # diagnóstico: lista todos os textos de p na página
-            textos = page.evaluate("() => Array.from(document.querySelectorAll('p')).map(p => p.innerText.trim()).filter(t => t)")
-            print(f"⚠️ Card DIÁRIO não encontrado. Textos de <p> na página: {textos[:20]}")
-            print("Verifique o Chrome")
+            botoes = page.locator("button.btn-primary[onclick^='registrar']").count()
+            print(f"✅ Página de aulas carregada! Botões de aula encontrados: {botoes}")
 
         print(f"\n✅ TUDO OK! URL final: {page.url}")
         input("\nENTER para fechar o Chrome...")
