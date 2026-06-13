@@ -1237,7 +1237,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.17"}
+    return {"versao": "2026-06-13.18"}
 
 
 @app.post("/ler-foto-notas")
@@ -2317,7 +2317,7 @@ async def run_infodat(job_id: str, data: InfodatFormData):
                 log.append(f"  ⚠️ Tentativa {tentativa + 1} falhou: {e.__class__.__name__}")
                 await page.wait_for_timeout(5000)
 
-        await page.wait_for_timeout(2000)
+        await page.wait_for_timeout(500)
 
         try:
             await page.locator("select#escola").select_option(value=data.escola)
@@ -2326,7 +2326,7 @@ async def run_infodat(job_id: str, data: InfodatFormData):
             )
             await page.wait_for_function(
                 "document.querySelector('select#professor').options.length > 1",
-                timeout=15000,
+                timeout=10000,
             )
             # Lê opções em Python e seleciona por valor (evita problemas de acentos)
             import unicodedata as _ud
@@ -2353,8 +2353,8 @@ async def run_infodat(job_id: str, data: InfodatFormData):
             await page.locator("input[type='password']").first.fill(data.senha)
             await page.locator("input[value='Entrar'], button:has-text('Entrar')").first.click()
 
-            for _ in range(20):
-                await page.wait_for_timeout(1000)
+            for _ in range(30):
+                await page.wait_for_timeout(500)
                 if "login.php" not in page.url:
                     break
 
@@ -2467,14 +2467,14 @@ async def turmas_infodat(data: InfodatLoginData):
                 except Exception:
                     await page.wait_for_timeout(5000)
 
-            await page.wait_for_timeout(2000)
+            await page.wait_for_timeout(500)
             await page.locator("select#escola").select_option(value=data.escola)
             await page.evaluate(
                 "document.querySelector('select#escola').dispatchEvent(new Event('change'))"
             )
             await page.wait_for_function(
                 "document.querySelector('select#professor').options.length > 1",
-                timeout=15000,
+                timeout=10000,
             )
             import unicodedata as _ud
             def _sem_acento(s):
@@ -2497,8 +2497,8 @@ async def turmas_infodat(data: InfodatLoginData):
                 await page.locator("select#professor").select_option(value=opcoes[0]["value"])
             await page.locator("input[type='password']").first.fill(data.senha)
             await page.locator("input[value='Entrar'], button:has-text('Entrar')").first.click()
-            for _ in range(20):
-                await page.wait_for_timeout(1000)
+            for _ in range(30):
+                await page.wait_for_timeout(500)
                 if "login.php" not in page.url:
                     break
             if "login.php" in page.url:
