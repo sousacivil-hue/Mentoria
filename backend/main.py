@@ -386,6 +386,52 @@ async def run_automacao(job_id: str, data: FormData):
                 await page.wait_for_timeout(2000)
                 await selecionar_solicitadas()
 
+        # ── CHAMADA AUTOMÁTICA (após aulas regulares e solicitadas) ──
+        log.append("📋 Registrando presença em todas as aulas...")
+        await page.goto(URL_AULAS, wait_until="domcontentloaded", timeout=30000)
+        await page.wait_for_timeout(3000)
+
+        ja_feitos_chamada = set()
+        chamada_num = 0
+        while True:
+            await page.wait_for_timeout(1000)
+            botoes_chamada = await page.evaluate("""
+                () => {
+                    const result = [];
+                    const btns = document.querySelectorAll('button[onclick^="carregarListaDePresenca"]');
+                    for (const btn of btns) {
+                        const onclick = btn.getAttribute('onclick') || '';
+                        if (onclick) result.push({onclick});
+                    }
+                    return result;
+                }
+            """)
+            pendentes = [b for b in botoes_chamada if b["onclick"] not in ja_feitos_chamada]
+            if not pendentes:
+                log.append("✅ Presenças: todas registradas!")
+                break
+            alvo = pendentes[0]
+            onclick = alvo["onclick"]
+            ja_feitos_chamada.add(onclick)
+            chamada_num += 1
+            try:
+                onclick_esc = onclick.replace("'", "\\'")
+                await page.evaluate(f"""
+                    () => {{
+                        const btn = document.querySelector("button[onclick='{onclick_esc}']");
+                        if (btn) btn.click();
+                    }}
+                """)
+                await page.wait_for_selector("#lista.in, #lista[style*='display: block'], #btnConfirmar", timeout=8000)
+                await page.wait_for_timeout(1000)
+                await page.locator("#btnConfirmar").click()
+                await page.wait_for_timeout(2000)
+                log.append(f"✅ Presença {chamada_num} confirmada!")
+            except Exception as e:
+                log.append(f"⚠️ Erro na presença {chamada_num}: {e}")
+            await page.goto(URL_AULAS, wait_until="domcontentloaded", timeout=30000)
+            await page.wait_for_timeout(2000)
+
         # ---- SÓ CHAMADA ----
         if data.opcoes.get("chamada"):
             log.append("✅ Iniciando chamadas...")
@@ -1191,7 +1237,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.7"}
+    return {"versao": "2026-06-13.8"}
 
 
 @app.get("/manchetes")
