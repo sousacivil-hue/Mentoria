@@ -146,7 +146,7 @@ try:
 
         # ── DIÁRIO ONLINE ────────────────────────────────
         print("📓 Abrindo Diário Online...")
-        page.locator("a[href='diario.php']").click()
+        page.locator("a.btn[href='diario.php']").click()
         page.wait_for_load_state("domcontentloaded")
         page.wait_for_timeout(2000)
 
