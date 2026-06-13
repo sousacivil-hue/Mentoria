@@ -94,35 +94,32 @@ try:
         print("⏳ Procurando card DIÁRIO na página...")
         page.wait_for_timeout(2000)
 
-        # Clica no DIÁRIO e captura nova aba ou navegação
+        # Clica no DIÁRIO
         print("⏳ Clicando no card DIÁRIO...")
         loc = page.locator("a").filter(has_text="DIÁRIO").first
         print(f"  Encontrou <a>: {loc.count() > 0}")
-
-        # captura se abrir nova aba
-        with context.expect_page() as new_page_info:
-            try:
-                loc.click(timeout=5000)
-            except Exception:
-                pass
-
         try:
-            nova_aba = new_page_info.value
-            nova_aba.wait_for_load_state("domcontentloaded", timeout=10000)
-            print(f"✅ Abriu nova aba! URL: {nova_aba.url}")
-            page = nova_aba  # continua na nova aba
-        except Exception:
-            # não abriu nova aba, verifica se a URL mudou
-            page.wait_for_timeout(4000)
-            print(f"🌐 URL após clique: {page.url}")
+            loc.click(timeout=5000)
+        except Exception as e:
+            print(f"  Aviso ao clicar: {e}")
+        page.wait_for_timeout(4000)
 
-        # Navegar para a tela de aulas
+        # Verifica todas as abas abertas — pega a do SIAE
         URL_AULAS = "https://siae.seduc.se.gov.br/siae.diario/Aula/Aulas"
-        print(f"⏳ Acessando lista de aulas: {URL_AULAS}")
+        paginas = context.pages
+        print(f"  Abas abertas: {[p.url for p in paginas]}")
+        siae_page = next((p for p in paginas if "siae.seduc" in p.url), None)
+        if siae_page:
+            page = siae_page
+            print(f"✅ Usando aba SIAE: {page.url}")
+        else:
+            print("  Nenhuma aba SIAE — usando aba atual")
+
+        # Navegar direto para lista de aulas
+        print(f"⏳ Acessando: {URL_AULAS}")
         page.goto(URL_AULAS, wait_until="domcontentloaded", timeout=30000)
         page.wait_for_timeout(3000)
         print(f"🌐 URL final: {page.url}")
-
         botoes = page.locator("button.btn-primary[onclick^='registrar']").count()
         print(f"✅ Botões de aula encontrados: {botoes}")
 
