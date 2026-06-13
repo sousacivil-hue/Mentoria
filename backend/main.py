@@ -1237,7 +1237,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.12"}
+    return {"versao": "2026-06-13.13"}
 
 
 @app.post("/ler-foto-notas")
@@ -2337,7 +2337,9 @@ async def run_infodat(job_id: str, data: InfodatFormData):
                         const sel = document.querySelector('select#professor');
                         for (const opt of sel.options) {{
                             if (opt.text.toUpperCase().includes('{nome_trecho}')) {{
-                                sel.value = opt.value; break;
+                                sel.value = opt.value;
+                                sel.dispatchEvent(new Event('change'));
+                                break;
                             }}
                         }}
                     }}
@@ -2477,7 +2479,9 @@ async def turmas_infodat(data: InfodatLoginData):
                         const sel = document.querySelector('select#professor');
                         for (const opt of sel.options) {{
                             if (opt.text.toUpperCase().includes('{nome_trecho}')) {{
-                                sel.value = opt.value; break;
+                                sel.value = opt.value;
+                                sel.dispatchEvent(new Event('change'));
+                                break;
                             }}
                         }}
                     }}
