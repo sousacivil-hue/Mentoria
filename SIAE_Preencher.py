@@ -300,7 +300,7 @@ try:
 
             # confirma na modal — botão verde de confirmar
             try:
-                confirmar = page.locator("button.btn-success, button:has-text('Confirmar'), button:has-text('CONFIRMAR'), button:has-text('Salvar')").first
+                confirmar = page.locator("button#btnConfirmar").first
                 if confirmar.count() > 0:
                     confirmar.click()
                     page.wait_for_timeout(2000)
