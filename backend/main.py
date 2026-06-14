@@ -1242,7 +1242,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-14.24"}
+    return {"versao": "2026-06-14.25"}
 
 
 @app.post("/ler-foto-notas")
@@ -2351,12 +2351,15 @@ async def run_infodat(job_id: str, data: InfodatFormData):
             else:
                 log.append(f"⚠️ Professor não encontrado na lista. Opções: {[o['text'] for o in opcoes[:5]]}")
                 await page.locator("select#professor").select_option(index=1)
+            await page.evaluate(
+                "document.querySelector('select#professor').dispatchEvent(new Event('change'))"
+            )
             await page.wait_for_timeout(1000)
             await page.locator("input[type='password']").first.fill(data.senha)
             await page.wait_for_timeout(500)
             await page.locator("input[value='Entrar'], button:has-text('Entrar')").first.click()
 
-            for _ in range(30):
+            for _ in range(60):
                 await page.wait_for_timeout(500)
                 if "login.php" not in page.url:
                     break
@@ -2500,11 +2503,14 @@ async def turmas_infodat(data: InfodatLoginData):
                     nomes = [o["text"] for o in opcoes[:5]]
                     return {"erro": f"Professor não encontrado. Tente com outro trecho do nome. Exemplos da lista: {nomes}"}
             await page.locator("select#professor").select_option(value=valor_prof)
+            await page.evaluate(
+                "document.querySelector('select#professor').dispatchEvent(new Event('change'))"
+            )
             await page.wait_for_timeout(1000)
             await page.locator("input[type='password']").first.fill(data.senha)
             await page.wait_for_timeout(500)
             await page.locator("input[value='Entrar'], button:has-text('Entrar')").first.click()
-            for _ in range(30):
+            for _ in range(60):
                 await page.wait_for_timeout(500)
                 if "login.php" not in page.url:
                     break
