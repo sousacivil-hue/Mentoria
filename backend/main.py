@@ -1242,7 +1242,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-14.25"}
+    return {"versao": "2026-06-14.26"}
 
 
 @app.post("/ler-foto-notas")
@@ -2359,7 +2359,7 @@ async def run_infodat(job_id: str, data: InfodatFormData):
             await page.wait_for_timeout(500)
             await page.locator("input[value='Entrar'], button:has-text('Entrar')").first.click()
 
-            for _ in range(60):
+            for _ in range(120):
                 await page.wait_for_timeout(500)
                 if "login.php" not in page.url:
                     break
@@ -2510,7 +2510,7 @@ async def turmas_infodat(data: InfodatLoginData):
             await page.locator("input[type='password']").first.fill(data.senha)
             await page.wait_for_timeout(500)
             await page.locator("input[value='Entrar'], button:has-text('Entrar')").first.click()
-            for _ in range(60):
+            for _ in range(120):
                 await page.wait_for_timeout(500)
                 if "login.php" not in page.url:
                     break
