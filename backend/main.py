@@ -2,10 +2,15 @@ import asyncio
 import json
 import os
 import re
+import unicodedata
 import uuid
 from typing import AsyncGenerator
 
 from fastapi import FastAPI, Request, UploadFile, File
+
+
+def _sem_acento(s: str) -> str:
+    return "".join(c for c in unicodedata.normalize("NFD", s.upper()) if unicodedata.category(c) != "Mn")
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -1237,7 +1242,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.21"}
+    return {"versao": "2026-06-13.22"}
 
 
 @app.post("/ler-foto-notas")
@@ -2328,10 +2333,6 @@ async def run_infodat(job_id: str, data: InfodatFormData):
                 "document.querySelector('select#professor').options.length > 1",
                 timeout=20000,
             )
-            # Lê opções em Python e seleciona por valor (evita problemas de acentos)
-            import unicodedata as _ud
-            def _sem_acento(s):
-                return "".join(c for c in _ud.normalize("NFD", s.upper()) if _ud.category(c) != "Mn")
             opcoes = await page.evaluate("""
                 () => Array.from(document.querySelector('select#professor').options)
                     .filter(o => o.value)
@@ -2478,17 +2479,13 @@ async def turmas_infodat(data: InfodatLoginData):
                 "document.querySelector('select#professor').options.length > 1",
                 timeout=20000,
             )
-            import unicodedata as _ud
-            def _sem_acento(s):
-                return "".join(c for c in _ud.normalize("NFD", s.upper()) if _ud.category(c) != "Mn")
             opcoes = await page.evaluate("""
                 () => Array.from(document.querySelector('select#professor').options)
-                    .filter(o => o.value)
+                    .filter(o => o.value && o.text.trim())
                     .map(o => ({value: o.value, text: o.text.trim()}))
             """)
             palavras = _sem_acento(data.professor).split()
             valor_prof = None
-            marcos_opts = [o for o in opcoes if "MARCO" in o["text"].upper()]
             for opt in opcoes:
                 texto = _sem_acento(opt["text"])
                 if all(p in texto for p in palavras):
@@ -2496,8 +2493,9 @@ async def turmas_infodat(data: InfodatLoginData):
                     break
             if valor_prof:
                 await page.locator("select#professor").select_option(value=valor_prof)
-            elif opcoes:
-                await page.locator("select#professor").select_option(value=opcoes[0]["value"])
+            else:
+                nomes = [o["text"] for o in opcoes[:5]]
+                return {"erro": f"Professor não encontrado. Tente com outro trecho do nome. Exemplos da lista: {nomes}"}
             await page.wait_for_timeout(1000)
             await page.locator("input[type='password']").first.fill(data.senha)
             await page.wait_for_timeout(500)

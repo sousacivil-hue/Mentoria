@@ -362,6 +362,8 @@ async function carregarTurmas() {
       return;
     }
 
+    btn.textContent = '🔍 Carregar minhas turmas';
+    btn.disabled = false;
     turmasDisponiveis = dados.turmas;
     const lista = document.getElementById('lista-turmas');
     lista.innerHTML = '';
