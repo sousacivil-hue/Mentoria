@@ -1242,7 +1242,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-14.23"}
+    return {"versao": "2026-06-14.24"}
 
 
 @app.post("/ler-foto-notas")
@@ -2480,14 +2480,15 @@ async def turmas_infodat(data: InfodatLoginData):
                 "document.querySelector('select#professor').options.length > 1",
                 timeout=20000,
             )
-            if data.valor_prof:
+            opcoes = await page.evaluate("""
+                () => Array.from(document.querySelector('select#professor').options)
+                    .filter(o => o.value && o.text.trim())
+                    .map(o => ({value: o.value, text: o.text.trim()}))
+            """)
+            valores_validos = {o["value"] for o in opcoes}
+            if data.valor_prof and data.valor_prof in valores_validos:
                 valor_prof = data.valor_prof
             else:
-                opcoes = await page.evaluate("""
-                    () => Array.from(document.querySelector('select#professor').options)
-                        .filter(o => o.value && o.text.trim())
-                        .map(o => ({value: o.value, text: o.text.trim()}))
-                """)
                 palavras = _sem_acento(data.professor).split()
                 valor_prof = None
                 for opt in opcoes:
