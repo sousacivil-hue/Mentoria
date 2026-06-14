@@ -1242,7 +1242,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-13.22"}
+    return {"versao": "2026-06-14.23"}
 
 
 @app.post("/ler-foto-notas")
@@ -2445,6 +2445,7 @@ class InfodatLoginData(BaseModel):
     escola: str
     professor: str
     senha: str
+    valor_prof: str | None = None
 
 
 @app.post("/turmas-infodat")
@@ -2479,23 +2480,25 @@ async def turmas_infodat(data: InfodatLoginData):
                 "document.querySelector('select#professor').options.length > 1",
                 timeout=20000,
             )
-            opcoes = await page.evaluate("""
-                () => Array.from(document.querySelector('select#professor').options)
-                    .filter(o => o.value && o.text.trim())
-                    .map(o => ({value: o.value, text: o.text.trim()}))
-            """)
-            palavras = _sem_acento(data.professor).split()
-            valor_prof = None
-            for opt in opcoes:
-                texto = _sem_acento(opt["text"])
-                if all(p in texto for p in palavras):
-                    valor_prof = opt["value"]
-                    break
-            if valor_prof:
-                await page.locator("select#professor").select_option(value=valor_prof)
+            if data.valor_prof:
+                valor_prof = data.valor_prof
             else:
-                nomes = [o["text"] for o in opcoes[:5]]
-                return {"erro": f"Professor não encontrado. Tente com outro trecho do nome. Exemplos da lista: {nomes}"}
+                opcoes = await page.evaluate("""
+                    () => Array.from(document.querySelector('select#professor').options)
+                        .filter(o => o.value && o.text.trim())
+                        .map(o => ({value: o.value, text: o.text.trim()}))
+                """)
+                palavras = _sem_acento(data.professor).split()
+                valor_prof = None
+                for opt in opcoes:
+                    texto = _sem_acento(opt["text"])
+                    if all(p in texto for p in palavras):
+                        valor_prof = opt["value"]
+                        break
+                if not valor_prof:
+                    nomes = [o["text"] for o in opcoes[:5]]
+                    return {"erro": f"Professor não encontrado. Tente com outro trecho do nome. Exemplos da lista: {nomes}"}
+            await page.locator("select#professor").select_option(value=valor_prof)
             await page.wait_for_timeout(1000)
             await page.locator("input[type='password']").first.fill(data.senha)
             await page.wait_for_timeout(500)
@@ -2520,7 +2523,7 @@ async def turmas_infodat(data: InfodatLoginData):
                         .map(o => ({ value: o.value, label: o.text.trim() }));
                 }
             """)
-            return {"turmas": turmas}
+            return {"turmas": turmas, "valor_prof": valor_prof}
         except Exception as e:
             return {"erro": str(e)}
         finally:

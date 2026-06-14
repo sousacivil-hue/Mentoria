@@ -334,10 +334,13 @@ async function carregarTurmas() {
   const btn = document.getElementById('btn-carregar');
   btn.disabled = true;
 
+  const cacheKey = `infodat_prof_${escola}_${professor.toLowerCase()}`;
+  const valorProfCache = localStorage.getItem(cacheKey);
+
   const overlay = document.getElementById('loading-overlay');
   const piadaTxt = document.getElementById('piada-txt');
   overlay.classList.add('ativo');
-  let seg = 20;
+  let seg = valorProfCache ? 10 : 20;
   piadaTxt.textContent = `⏳ ${seg}s`;
   const timerPiada = setInterval(() => {
     seg--;
@@ -349,19 +352,21 @@ async function carregarTurmas() {
     const resp = await fetch(`${BACKEND_URL}/turmas-infodat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ escola, professor, senha })
+      body: JSON.stringify({ escola, professor, senha, valor_prof: valorProfCache || null })
     });
     const dados = await resp.json();
 
     clearInterval(timerPiada);
     overlay.classList.remove('ativo');
     if (dados.erro) {
+      localStorage.removeItem(cacheKey);
       alert('Erro: ' + dados.erro);
       btn.textContent = '🔍 Carregar minhas turmas';
       btn.disabled = false;
       return;
     }
 
+    if (dados.valor_prof) localStorage.setItem(cacheKey, dados.valor_prof);
     btn.textContent = '🔍 Carregar minhas turmas';
     btn.disabled = false;
     turmasDisponiveis = dados.turmas;
