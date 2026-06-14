@@ -340,7 +340,7 @@ async function carregarTurmas() {
   const overlay = document.getElementById('loading-overlay');
   const piadaTxt = document.getElementById('piada-txt');
   overlay.classList.add('ativo');
-  let seg = valorProfCache ? 10 : 20;
+  let seg = 20;
   piadaTxt.textContent = `⏳ ${seg}s`;
   const timerPiada = setInterval(() => {
     seg--;
