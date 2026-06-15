@@ -218,11 +218,15 @@ async def run_automacao(job_id: str, data: FormData):
         try:
             await page.locator("input#user-login").type(data.login, delay=50)
             await page.locator("input#user-password").fill(data.senha)
-            # tenta clicar no botão submit; fallback para Enter
-            try:
-                await page.locator("button[type='submit'], input[type='submit']").first.click(timeout=3000)
-            except Exception:
-                await page.keyboard.press("Enter")
+            # debug: ver botões disponíveis
+            botoes = await page.evaluate("""
+                () => Array.from(document.querySelectorAll('button, input[type=submit], a')).slice(0,5).map(b => ({
+                    tag: b.tagName, type: b.type||'', text: b.innerText?.trim().slice(0,30)||'', id: b.id, cls: b.className?.slice(0,30)||''
+                }))
+            """)
+            log.append(f"🔍 Botões: {botoes}")
+            # clica via JS no primeiro botão
+            await page.evaluate("document.querySelector('button').click()")
 
             for _ in range(20):
                 await page.wait_for_timeout(1000)
@@ -1246,7 +1250,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-15.35"}
+    return {"versao": "2026-06-15.36"}
 
 
 @app.post("/ler-foto-notas")
