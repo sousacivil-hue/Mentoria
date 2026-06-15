@@ -216,9 +216,9 @@ async def run_automacao(job_id: str, data: FormData):
 
         logado = False
         try:
-            # fecha modal se aparecer
+            # confirma modal de termos se aparecer
             try:
-                await page.locator("button.chakra-modal__close-btn").click(timeout=2000)
+                await page.locator("button:has-text('Confirmar')").click(timeout=2000)
                 await page.wait_for_timeout(500)
             except Exception:
                 pass
@@ -1257,7 +1257,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-15.40"}
+    return {"versao": "2026-06-15.41"}
 
 
 @app.post("/ler-foto-notas")
