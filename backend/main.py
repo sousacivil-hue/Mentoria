@@ -232,22 +232,22 @@ async def run_automacao(job_id: str, data: FormData):
 
             if logado:
                 log.append("✅ Login realizado!")
-                await page.wait_for_timeout(4000)
-                # clica no card DIÁRIO
-                loc = page.locator("a").filter(has_text="DIÁRIO").first
-                try:
-                    await loc.click(timeout=5000)
-                except Exception:
-                    pass
-                await page.wait_for_timeout(4000)
-                # pega aba do SIAE (pode ter aberto nova aba)
-                paginas = context.pages
-                siae_page = next((p for p in paginas if "siae.seduc" in p.url), None)
-                if siae_page:
-                    page = siae_page
-                    log.append(f"📓 SIAE aberto: {page.url}")
             else:
-                log.append("⚠️ Login pode ter falhado — continuando mesmo assim...")
+                log.append(f"⚠️ Login pode ter falhado — URL atual: {page.url}")
+                log.append("⚠️ Continuando mesmo assim...")
+            # clica no card DIÁRIO
+            loc = page.locator("a").filter(has_text="DIÁRIO").first
+            try:
+                await loc.click(timeout=5000)
+            except Exception:
+                pass
+            await page.wait_for_timeout(4000)
+            # pega aba do SIAE (pode ter aberto nova aba)
+            paginas = context.pages
+            siae_page = next((p for p in paginas if "siae.seduc" in p.url), None)
+            if siae_page:
+                page = siae_page
+                log.append(f"📓 SIAE aberto: {page.url}")
         except Exception as e:
             log.append(f"⚠️ Erro no login: {e}")
 
@@ -1242,7 +1242,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-14.27"}
+    return {"versao": "2026-06-15.28"}
 
 
 @app.post("/ler-foto-notas")
