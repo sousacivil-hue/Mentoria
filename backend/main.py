@@ -216,20 +216,9 @@ async def run_automacao(job_id: str, data: FormData):
 
         logado = False
         try:
-            # confirma modal de termos se aparecer
-            try:
-                await page.locator("button:has-text('Confirmar')").click(timeout=2000)
-                await page.wait_for_timeout(500)
-            except Exception:
-                pass
-            # CPF: digita só os números — a máscara do campo formata automaticamente
-            cpf = re.sub(r'\D', '', data.login)
-            await page.locator("input#user-login").click()
-            await page.locator("input#user-login").press_sequentially(cpf, delay=80)
-            await page.locator("input#user-password").click()
-            await page.locator("input#user-password").press_sequentially(data.senha, delay=50)
-            await page.wait_for_timeout(500)
-            await page.locator("button#submit-form").click()
+            await page.locator("input[type='text'], input[type='email']").first.fill(data.login)
+            await page.locator("input[type='password']").first.fill(data.senha)
+            await page.keyboard.press("Enter")
 
             for _ in range(20):
                 await page.wait_for_timeout(1000)
@@ -1253,7 +1242,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-15.42"}
+    return {"versao": "2026-06-15.43"}
 
 
 @app.post("/ler-foto-notas")
