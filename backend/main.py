@@ -222,16 +222,12 @@ async def run_automacao(job_id: str, data: FormData):
                 await page.wait_for_timeout(500)
             except Exception:
                 pass
-            # React precisa do setter nativo para detectar mudança de valor
-            await page.evaluate("""([login, senha]) => {
-                const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-                const loginEl = document.querySelector('input#user-login');
-                const senhaEl = document.querySelector('input#user-password');
-                setter.call(loginEl, login);
-                loginEl.dispatchEvent(new Event('input', { bubbles: true }));
-                setter.call(senhaEl, senha);
-                senhaEl.dispatchEvent(new Event('input', { bubbles: true }));
-            }""", [data.login, data.senha])
+            # CPF: digita só os números — a máscara do campo formata automaticamente
+            cpf = re.sub(r'\D', '', data.login)
+            await page.locator("input#user-login").click()
+            await page.locator("input#user-login").press_sequentially(cpf, delay=80)
+            await page.locator("input#user-password").click()
+            await page.locator("input#user-password").press_sequentially(data.senha, delay=50)
             await page.wait_for_timeout(500)
             await page.locator("button#submit-form").click()
 
@@ -1257,7 +1253,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-15.41"}
+    return {"versao": "2026-06-15.42"}
 
 
 @app.post("/ler-foto-notas")
