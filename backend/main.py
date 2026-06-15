@@ -216,8 +216,9 @@ async def run_automacao(job_id: str, data: FormData):
 
         logado = False
         try:
-            await page.locator("input#user-login").type(data.login, delay=50)
+            await page.locator("input#user-login").fill(data.login)
             await page.locator("input#user-password").fill(data.senha)
+            await page.wait_for_timeout(500)
             await page.locator("button#submit-form").click()
 
             for _ in range(20):
@@ -1242,7 +1243,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-15.37"}
+    return {"versao": "2026-06-15.38"}
 
 
 @app.post("/ler-foto-notas")
