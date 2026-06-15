@@ -226,7 +226,7 @@ async def run_automacao(job_id: str, data: FormData):
         try:
             await page.locator("input[type='text'], input[type='email']").first.fill(data.login)
             await page.locator("input[type='password']").first.fill(data.senha)
-            await page.keyboard.press("Enter")
+            await page.locator("input[type='password']").first.press("Enter")
 
             for _ in range(20):
                 await page.wait_for_timeout(1000)
@@ -1250,7 +1250,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-15.44"}
+    return {"versao": "2026-06-15.45"}
 
 
 @app.post("/ler-foto-notas")
