@@ -216,7 +216,10 @@ async def run_automacao(job_id: str, data: FormData):
 
         logado = False
         try:
-            await page.locator("input[type='text'], input[type='email']").first.fill(data.login)
+            # CPF pode ter máscara — digitar caractere por caractere
+            campo_usuario = page.locator("input[type='text'], input[type='email'], input[name='username'], input[name='cpf'], input[name='login'], input[id='username'], input[id='cpf']").first
+            await campo_usuario.click()
+            await campo_usuario.type(data.login, delay=50)
             await page.locator("input[type='password']").first.fill(data.senha)
             await page.keyboard.press("Enter")
 
@@ -1242,7 +1245,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-15.28"}
+    return {"versao": "2026-06-15.29"}
 
 
 @app.post("/ler-foto-notas")
