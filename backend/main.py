@@ -222,8 +222,16 @@ async def run_automacao(job_id: str, data: FormData):
                 await page.wait_for_timeout(500)
             except Exception:
                 pass
-            await page.locator("input#user-login").fill(data.login)
-            await page.locator("input#user-password").fill(data.senha)
+            # React precisa do setter nativo para detectar mudança de valor
+            await page.evaluate("""([login, senha]) => {
+                const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
+                const loginEl = document.querySelector('input#user-login');
+                const senhaEl = document.querySelector('input#user-password');
+                setter.call(loginEl, login);
+                loginEl.dispatchEvent(new Event('input', { bubbles: true }));
+                setter.call(senhaEl, senha);
+                senhaEl.dispatchEvent(new Event('input', { bubbles: true }));
+            }""", [data.login, data.senha])
             await page.wait_for_timeout(500)
             await page.locator("button#submit-form").click()
 
@@ -1249,7 +1257,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-15.39"}
+    return {"versao": "2026-06-15.40"}
 
 
 @app.post("/ler-foto-notas")
