@@ -216,18 +216,7 @@ async def run_automacao(job_id: str, data: FormData):
 
         logado = False
         try:
-            await page.wait_for_timeout(3000)
-            # debug: listar todos inputs da página
-            inputs_info = await page.evaluate("""
-                () => Array.from(document.querySelectorAll('input')).map(i => ({
-                    type: i.type, name: i.name, id: i.id, placeholder: i.placeholder
-                }))
-            """)
-            log.append(f"🔍 Inputs na página: {inputs_info}")
-
-            campo_usuario = page.locator("input:not([type='hidden']):not([type='password']):not([type='submit']):not([type='button'])").first
-            await campo_usuario.click()
-            await campo_usuario.type(data.login, delay=50)
+            await page.locator("input[type='text'], input[type='email']").first.fill(data.login)
             await page.locator("input[type='password']").first.fill(data.senha)
             await page.keyboard.press("Enter")
 
@@ -1253,7 +1242,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-15.31"}
+    return {"versao": "2026-06-15.32"}
 
 
 @app.post("/ler-foto-notas")
