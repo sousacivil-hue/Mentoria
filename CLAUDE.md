@@ -61,6 +61,9 @@ Ficam na pasta `diario_auto` na Área de Trabalho do professor.
 - [ ] UptimeRobot: configurar ping a cada 5 min para evitar hibernação do Render
 - [ ] Cronômetro: recalibrar estimativa de tempo (está descalibrado)
 
+## Ritual Mensal — Exploração de Ferramentas
+Todo mês reservar 30 min para explorar `github.com/hesreallyhim/awesome-claude-code` e avaliar o que vale instalar para o SóDigita. Categorias prioritárias: MCP (integrações), Hooks (segurança), Skills (produtividade).
+
 ## Ferramentas Instaladas
 - **claude-mem** — instalado em 16/06/2026, testar por 15 dias. Relatório em 01/07/2026: ajudou a lembrar contexto? Reduziu erros?
 
