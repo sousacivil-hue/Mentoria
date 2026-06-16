@@ -17,7 +17,7 @@
 ## Status por Sistema
 - **ActiveSoft/SIGA** ✅ — funciona pelo site (Render), diário completo validado
 - **Salesiano (TOTVS RM)** ⚠️ — scripts .py locais funcionam; versão web com problema de navegação Angular (token perdido)
-- **SIAE** ⚠️ — funcionou sábado/domingo 14-15/06, parou após tentativas de debug do login; último commit funcionando: `c6f5d2e`; suspeita: IP do Render bloqueado pelo firewall do governo de Sergipe
+- **SIAE** ⚠️ — funcionou sábado 14/06 (commit `c6f5d2e`); parou após 15+ commits de debug em sequência na segunda 15/06; causa: código alterado incorretamente, não bloqueio de IP; precisa reverter para `c6f5d2e` e testar no PC pessoal com browser visível
 - **SESI** 🚧 — em desenvolvimento
 
 ## Infraestrutura
