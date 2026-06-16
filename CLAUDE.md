@@ -17,7 +17,7 @@
 ## Status por Sistema
 - **ActiveSoft/SIGA** ✅ — funciona pelo site (Render), diário completo validado
 - **Salesiano (TOTVS RM)** ⚠️ — scripts .py locais funcionam; versão web com problema de navegação Angular (token perdido)
-- **SIAE** ⚠️ — código existe, nunca testado em produção
+- **SIAE** ⚠️ — funcionou sábado/domingo 14-15/06, parou após tentativas de debug do login; último commit funcionando: `c6f5d2e`; suspeita: IP do Render bloqueado pelo firewall do governo de Sergipe
 - **SESI** 🚧 — em desenvolvimento
 
 ## Infraestrutura
@@ -61,6 +61,23 @@ Ficam na pasta `diario_auto` na Área de Trabalho do professor.
 - [ ] UptimeRobot: configurar ping a cada 5 min para evitar hibernação do Render
 - [ ] Cronômetro: recalibrar estimativa de tempo (está descalibrado)
 
+## ⚠️ Regras de Segurança — Lição Aprendida em 15/06/2026
+
+> O SIAE funcionava no sábado/domingo. Tentativas de debug em sequência quebraram o login e não conseguimos reverter corretamente. Isso não pode se repetir.
+
+**ANTES de qualquer alteração em código que está funcionando em produção:**
+1. Perguntar: "Isso pode quebrar algo que já funciona?" — se sim, avisar o usuário antes de mexer
+2. Registrar o commit atual: `git log --oneline -1` — anotar o hash aqui no CLAUDE.md
+3. Criar branch de experimento separada — NUNCA debugar direto na branch de dev
+4. Só mergear para `main` após confirmar que funcionou
+
+**Se o usuário pedir para voltar ao código anterior:**
+- Usar `git revert <hash>` ou `git checkout <hash> -- arquivo` — NUNCA reescrever manualmente
+- O commit que funcionava fica registrado no status do sistema (ver seção acima)
+
+**Histórico de quebras:**
+- 15/06/2026: SIAE login quebrou após 15+ commits de debug em sequência. Commit funcionando antes: `c6f5d2e`
+
 ## Regras para Novos Scripts
 1. Sempre incluir captura de erro com `try/except BaseException` + log em arquivo + `input("ENTER para fechar")`
 2. Sempre incluir log em tempo real (arquivo `.txt` gravado a cada print)
@@ -80,7 +97,8 @@ Ficam na pasta `diario_auto` na Área de Trabalho do professor.
 |------|-----------|-------|
 | Antes de 2026-06-13 | ActiveSoft diário + notas + frequência; Salesiano scripts locais; SESI login; infraestrutura Render/Docker; frontend base | ~28h |
 | 2026-06-13 | Infodat completo (login, turmas, diário); fix bugs de acento/AJAX; foto de notas Gemini; abas no Active; FAQ na home; loading animado; sábados letivos Infodat; resumo de aulas em tempo real; Salesiano → Totvs RM | ~17h |
-| **TOTAL** | | **~45h** |
+| 2026-06-14/15 | Cache professor Infodat; code review fixes; debug SIAE login (não resolvido); instalação claude-mem | ~4h |
+| **TOTAL** | | **~49h** |
 
 ### Valor de mercado estimado
 | Perfil | Valor/hora | Total |
