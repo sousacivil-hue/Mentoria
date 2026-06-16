@@ -61,6 +61,9 @@ Ficam na pasta `diario_auto` na Área de Trabalho do professor.
 - [ ] UptimeRobot: configurar ping a cada 5 min para evitar hibernação do Render
 - [ ] Cronômetro: recalibrar estimativa de tempo (está descalibrado)
 
+## Ferramentas Instaladas
+- **claude-mem** — instalado em 16/06/2026, testar por 15 dias. Relatório em 01/07/2026: ajudou a lembrar contexto? Reduziu erros?
+
 ## ⚠️ Regras de Segurança — Lição Aprendida em 15/06/2026
 
 > O SIAE funcionava no sábado/domingo. Tentativas de debug em sequência quebraram o login e não conseguimos reverter corretamente. Isso não pode se repetir.
