@@ -359,15 +359,14 @@ function salvarTurmas() {
   if (turmas.length > 0) localStorage.setItem('siae_turmas', JSON.stringify(turmas));
 }
 
+const TURMAS_PADRAO = [
+  '6', '7', '3b', 'financeira', 'mat digital b', 'mat digital a', 'exp mat', 'etapa'
+];
+
 function carregarTurmas() {
   const salvas = localStorage.getItem('siae_turmas');
-  if (salvas) {
-    const turmas = JSON.parse(salvas);
-    turmas.forEach(t => adicionarTurma(t, ''));
-  } else {
-    adicionarTurma();
-    adicionarTurma();
-  }
+  const turmas = salvas ? JSON.parse(salvas) : TURMAS_PADRAO;
+  turmas.forEach(t => adicionarTurma(t, ''));
 }
 
 carregarTurmas();
