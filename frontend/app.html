@@ -406,6 +406,13 @@ async function executar() {
     alert('Adicione pelo menos uma turma com o assunto do dia.'); return;
   }
 
+  const assuntoCurtoDemais = Object.entries(assuntosPorTurma).filter(([t, a]) => a.trim().split(/\s+/).length < 2);
+  if (assuntoCurtoDemais.length > 0) {
+    const turmas = assuntoCurtoDemais.map(([t]) => t).join(', ');
+    alert(`O assunto precisa ter pelo menos duas palavras.\nTurmas com assunto muito curto: ${turmas}`);
+    return;
+  }
+
   const dados = {
     login: cpf,
     senha: senha,
