@@ -17,7 +17,8 @@
 ## Status por Sistema
 - **ActiveSoft/SIGA** ✅ — funciona pelo site (Render), diário completo validado
 - **Salesiano (TOTVS RM)** ⚠️ — scripts .py locais funcionam; versão web com problema de navegação Angular (token perdido)
-- **SIAE** ⚠️ — funcionou sábado 14/06 (commit `c6f5d2e`); parou após 15+ commits de debug em sequência na segunda 15/06; causa: código alterado incorretamente, não bloqueio de IP; precisa reverter para `c6f5d2e` e testar no PC pessoal com browser visível
+- **SIAE** ⚠️ — funcionou sábado 14/06 (commit `c6f5d2e`); parou após 15+ commits de debug em sequência na segunda 15/06; causa: código alterado incorretamente, não bloqueio de IP; revertido em 17/06 para `c6f5d2e`; precisa testar no PC pessoal com browser visível
+  - **Versão esperada em `/versao`:** `2026-06-14.27` — se o endpoint retornar outra versão, o código não está no estado correto
 - **SESI** 🚧 — em desenvolvimento
 
 ## Infraestrutura
