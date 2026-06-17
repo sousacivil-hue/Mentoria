@@ -246,8 +246,8 @@ async def run_automacao(job_id: str, data: FormData):
             if logado:
                 log.append("✅ Login realizado!")
             else:
-                log.append(f"⚠️ Login pode ter falhado — URL atual: {page.url}")
-                log.append("⚠️ Continuando mesmo assim...")
+                log.append(f"❌ Login falhou — verifique CPF e senha. URL: {page.url}")
+                return
             # clica no card DIÁRIO
             loc = page.locator("a").filter(has_text="DIÁRIO").first
             try:
@@ -1271,7 +1271,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-17.48"}
+    return {"versao": "2026-06-17.49"}
 
 
 @app.post("/ler-foto-notas")
