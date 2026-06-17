@@ -91,6 +91,8 @@ Todo mês reservar 30 min para explorar `github.com/hesreallyhim/awesome-claude-
 - Quando algo funciona localmente mas não no servidor, a diferença está nos dados enviados (formato, máscara, encoding) — não no seletor
 - NUNCA usar `replace_all=True` em edições sem verificar se o padrão existe em outros sistemas no mesmo arquivo
 - Quando o usuário reporta falha, primeiro perguntar "o script local ainda funciona?" — se sim, a diferença está no servidor
+- 17/06/2026: NUNCA assumir anti-bot sem evidência — o problema do SIAE era senha errada no autocomplete do navegador
+- Seletores novos (ex: `#btnConfirmar`, `button[data-target]`) DEVEM ser testados localmente com um script `.py` antes de commitar — evita ciclos de deploy desnecessários
 
 ## Regras para Novos Scripts
 1. Sempre incluir captura de erro com `try/except BaseException` + log em arquivo + `input("ENTER para fechar")`
