@@ -93,6 +93,7 @@ Todo mês reservar 30 min para explorar `github.com/hesreallyhim/awesome-claude-
 - Quando o usuário reporta falha, primeiro perguntar "o script local ainda funciona?" — se sim, a diferença está no servidor
 - 17/06/2026: NUNCA assumir anti-bot sem evidência — o problema do SIAE era senha errada no autocomplete do navegador
 - Seletores novos (ex: `#btnConfirmar`, `button[data-target]`) DEVEM ser testados localmente com um script `.py` antes de commitar — evita ciclos de deploy desnecessários
+- **REGRA INEGOCIÁVEL: NUNCA commitar seletor ou lógica de automação sem o usuário rodar o script .py local e confirmar o output primeiro. Sem exceção. Quebrar essa regra = ciclos desnecessários de deploy que desperdiçam tempo.**
 
 ## Regras para Novos Scripts
 1. Sempre incluir captura de erro com `try/except BaseException` + log em arquivo + `input("ENTER para fechar")`
