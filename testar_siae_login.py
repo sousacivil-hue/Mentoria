@@ -2,8 +2,8 @@ import asyncio
 from playwright.async_api import async_playwright
 
 URL_LOGIN = "https://sso.seduc.se.gov.br/"
-CPF   = "SEU_CPF_AQUI"
-SENHA = "SUA_SENHA_AQUI"
+CPF   = "78962633515"
+SENHA = "130224"
 
 async def main():
     print("=" * 55)
