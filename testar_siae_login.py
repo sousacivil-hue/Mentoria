@@ -1,49 +1,42 @@
-"""
-Teste de login SIAE - roda com browser VISÍVEL para ver o que acontece.
-Execute: python testar_siae_login.py
-"""
 import asyncio
 from playwright.async_api import async_playwright
 
-CPF   = input("Digite seu CPF (só números): ").strip()
-SENHA = input("Digite sua senha: ").strip()
+URL_LOGIN = "https://sso.seduc.se.gov.br/"
+CPF   = "SEU_CPF_AQUI"
+SENHA = "SUA_SENHA_AQUI"
 
 async def main():
+    print("=" * 55)
+    print("  TESTE DE LOGIN SIAE")
+    print("=" * 55)
+
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=False, slow_mo=500)
-        context = await browser.new_context(
-            viewport={"width": 1280, "height": 800},
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/125.0.0.0 Safari/537.36"
-            ),
-        )
-        page = await context.new_page()
-        await page.add_init_script(
-            "Object.defineProperty(navigator, 'webdriver', {get: () => undefined})"
-        )
+        page = await browser.new_page(viewport={"width": 1280, "height": 800})
 
-        print("Abrindo SSO...")
-        await page.goto("https://sso.seduc.se.gov.br/", wait_until="domcontentloaded")
+        print("\nAbrindo SSO...")
+        await page.goto(URL_LOGIN)
         await page.wait_for_timeout(2000)
 
-        print(f"URL atual: {page.url}")
         print("Preenchendo CPF...")
-        await page.locator("input[type='text'], input[type='email']").first.fill(CPF)
+        await page.fill("input[type='text'], input[type='email']", CPF)
         await page.wait_for_timeout(500)
 
         print("Preenchendo senha...")
-        await page.locator("input[type='password']").first.fill(SENHA)
+        await page.fill("input[type='password']", SENHA)
         await page.wait_for_timeout(500)
 
-        print("Pressionando Enter...")
-        await page.locator("input[type='password']").first.press("Enter")
-
+        print("Clicando em Acessar...")
+        await page.locator("button#submit-form").click()
         await page.wait_for_timeout(5000)
-        print(f"URL após login: {page.url}")
 
-        input("\nObserve a tela e pressione ENTER aqui para fechar...")
+        print(f"\nURL apos login: {page.url}")
+        if "sso.seduc.se.gov.br" not in page.url:
+            print("LOGIN OK!")
+        else:
+            print("LOGIN FALHOU - ainda na pagina de login")
+
+        input("\nObserve a tela e pressione ENTER para fechar...")
         await browser.close()
 
 asyncio.run(main())
