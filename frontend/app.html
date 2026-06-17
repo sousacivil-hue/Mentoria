@@ -350,9 +350,27 @@ function coletarAssuntosPorTurma() {
   return resultado;
 }
 
-// Inicia com 2 linhas em branco
-adicionarTurma();
-adicionarTurma();
+function salvarTurmas() {
+  const turmas = [];
+  document.querySelectorAll('#tabela-turmas > div').forEach(div => {
+    const turma = div.querySelector('.campo-turma').value.trim();
+    if (turma) turmas.push(turma);
+  });
+  if (turmas.length > 0) localStorage.setItem('siae_turmas', JSON.stringify(turmas));
+}
+
+function carregarTurmas() {
+  const salvas = localStorage.getItem('siae_turmas');
+  if (salvas) {
+    const turmas = JSON.parse(salvas);
+    turmas.forEach(t => adicionarTurma(t, ''));
+  } else {
+    adicionarTurma();
+    adicionarTurma();
+  }
+}
+
+carregarTurmas();
 
 // Mostra a versão do backend no cabeçalho
 fetch(`${BACKEND_URL}/versao`).then(r => r.json())
@@ -377,6 +395,7 @@ async function executar() {
 
   if (!cpf || !senha) { alert('Preencha CPF e senha.'); return; }
   if (!Object.values(opcoes).some(v => v)) { alert('Selecione pelo menos uma ação.'); return; }
+  salvarTurmas();
 
   if (opcoes.notas && !document.getElementById('nota-valor').value.trim()) {
     alert('Informe a nota a ser lançada.'); return;
