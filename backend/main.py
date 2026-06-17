@@ -313,6 +313,14 @@ async def run_automacao(job_id: str, data: FormData):
                     met = page.locator("textarea").nth(1)
                     if await met.count() > 0:
                         await met.fill(METODOLOGIA)
+                    try:
+                        await page.locator("button[data-target='#lista']").click(timeout=3000)
+                        await page.wait_for_timeout(1500)
+                        await page.locator("button#btnConfirmar, button:has-text('CONFIRMAR'), button:has-text('Confirmar')").first.click(timeout=5000)
+                        await page.wait_for_timeout(1500)
+                        log.append("✅ Frequência registrada")
+                    except Exception as ef:
+                        log.append(f"⚠️ Frequência: {ef}")
                     salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar')").first
                     await salvar.click()
                     await page.wait_for_timeout(3000)
@@ -390,6 +398,14 @@ async def run_automacao(job_id: str, data: FormData):
                     met = page.locator("textarea").nth(1)
                     if await met.count() > 0:
                         await met.fill(METODOLOGIA)
+                    try:
+                        await page.locator("button[data-target='#lista']").click(timeout=3000)
+                        await page.wait_for_timeout(1500)
+                        await page.locator("button#btnConfirmar, button:has-text('CONFIRMAR'), button:has-text('Confirmar')").first.click(timeout=5000)
+                        await page.wait_for_timeout(1500)
+                        log.append("✅ Frequência registrada")
+                    except Exception as ef:
+                        log.append(f"⚠️ Frequência: {ef}")
                     salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar')").first
                     await salvar.click()
                     await page.wait_for_timeout(3000)
@@ -1253,7 +1269,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-17.46"}
+    return {"versao": "2026-06-17.47"}
 
 
 @app.post("/ler-foto-notas")
