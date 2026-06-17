@@ -1,8 +1,7 @@
-# SIAE — Teste de Frequência
-# Roda no PC, abre o Chrome visível e testa o botão de frequência
-# Coloque na pasta diario_auto na Área de Trabalho
+# SIAE — Teste completo: preencher + frequência + salvar
+# Roda no PC com Chrome visível para diagnosticar problemas
 
-import builtins, traceback
+import builtins, traceback, re
 from pathlib import Path
 from datetime import datetime
 
@@ -20,13 +19,15 @@ builtins.print = print
 
 LOGIN = "789.626.335-15"
 SENHA = "130224"
+CONTEUDO_TESTE = "TESTE AUTOMATICO — pode apagar"
+METODOLOGIA_TESTE = "Aula expositiva dialogada com resolução de exercícios."
 URL_AULAS = "https://siae.seduc.se.gov.br/siae.diario/Aula/Aulas"
 
 try:
     from playwright.sync_api import sync_playwright
 
     print("=" * 55)
-    print("SIAE — Teste do botão FREQUÊNCIA")
+    print("SIAE — Teste completo: preencher + frequência + salvar")
     print("=" * 55)
 
     with sync_playwright() as pw:
@@ -46,7 +47,6 @@ try:
         page.goto(URL_AULAS)
         page.wait_for_timeout(3000)
 
-        # Pega o primeiro botão registrar disponível
         botoes = page.evaluate("""
             () => {
                 const btns = document.querySelectorAll('button.btn-primary[onclick^="registrar"]');
@@ -68,66 +68,75 @@ try:
             browser.close()
             exit()
 
-        import re
         aula_id = re.search(r"\d+", botoes).group()
         print(f"\n⏳ Abrindo aula ID {aula_id}...")
         page.goto(f"https://siae.seduc.se.gov.br/siae.diario/Aula/Registrar/{aula_id}")
         page.wait_for_timeout(3000)
+        print(f"✅ URL: {page.url}")
 
-        # Conta textareas
-        n = page.locator("textarea").count()
-        print(f"\n📋 Textareas na página: {n}")
-        for i in range(n):
-            t = page.locator("textarea").nth(i)
-            print(f"  [{i}] name='{t.get_attribute('name') or ''}' id='{t.get_attribute('id') or ''}' visível={t.is_visible()}")
+        # ── PREENCHER CONTEUDO ────────────────────────────
+        print("\n✍️ Preenchendo Objeto de Conhecimento...")
+        campo = page.locator("#Ministrada_Conteudo")
+        if campo.count() > 0:
+            campo.fill(CONTEUDO_TESTE)
+            print(f"  ✅ Preenchido: '{campo.input_value()}'")
+        else:
+            print("  ❌ #Ministrada_Conteudo NÃO encontrado!")
 
-        # Conta inputs
-        ni = page.locator("input:not([type='hidden'])").count()
-        print(f"\n📋 Inputs na página: {ni}")
-        for i in range(ni):
-            t = page.locator("input:not([type='hidden'])").nth(i)
-            print(f"  [{i}] type='{t.get_attribute('type') or ''}' name='{t.get_attribute('name') or ''}' id='{t.get_attribute('id') or ''}' placeholder='{t.get_attribute('placeholder') or ''}' visível={t.is_visible()}")
+        # ── PREENCHER METODOLOGIA ─────────────────────────
+        print("\n✍️ Preenchendo Metodologia...")
+        met = page.locator("#Ministrada_Metodologia")
+        if met.count() > 0:
+            met.fill(METODOLOGIA_TESTE)
+            print(f"  ✅ Preenchido: '{met.input_value()}'")
+        else:
+            print("  ❌ #Ministrada_Metodologia NÃO encontrado!")
 
-        # Conta selects
-        ns = page.locator("select").count()
-        print(f"\n📋 Selects na página: {ns}")
-        for i in range(ns):
-            t = page.locator("select").nth(i)
-            print(f"  [{i}] name='{t.get_attribute('name') or ''}' id='{t.get_attribute('id') or ''}' visível={t.is_visible()}")
-
-        # Conta divs contenteditable
-        nc = page.locator("[contenteditable='true']").count()
-        print(f"\n📋 ContentEditable na página: {nc}")
-        for i in range(nc):
-            t = page.locator("[contenteditable='true']").nth(i)
-            print(f"  [{i}] id='{t.get_attribute('id') or ''}' class='{t.get_attribute('class') or ''}' visível={t.is_visible()}")
-
-        # HTML dos labels para mapear campos
-        labels = page.evaluate("""
-            () => Array.from(document.querySelectorAll('label')).map(l => l.innerText.trim())
-        """)
-        print(f"\n📋 Labels na página: {labels}")
-
-        # Verifica botão FREQUÊNCIA
-        freq = page.locator("button:has-text('FREQUÊNCIA'), button:has-text('Frequência')")
-        n_freq = freq.count()
-        print(f"\n🔘 Botões FREQUÊNCIA encontrados: {n_freq}")
-        for i in range(n_freq):
-            btn = freq.nth(i)
-            print(f"  [{i}] texto='{btn.inner_text()}' visível={btn.is_visible()} class='{btn.get_attribute('class')}'")
-
-        if n_freq > 0:
-            print("\n🖱️ Clicando em FREQUÊNCIA...")
+        # ── FREQUÊNCIA ───────────────────────────────────
+        print("\n🖱️ Clicando em FREQUÊNCIA...")
+        freq = page.locator("button:has-text('FREQUÊNCIA')")
+        if freq.count() > 0:
             freq.first.click()
             page.wait_for_timeout(2000)
+            confirmar = page.locator("#btnConfirmar.btn-success")
+            if confirmar.count() > 0:
+                confirmar.click()
+                page.wait_for_timeout(1500)
+                print("  ✅ Frequência confirmada!")
+            else:
+                print("  ❌ #btnConfirmar.btn-success não encontrado após abrir modal")
+                page.keyboard.press("Escape")
+                page.wait_for_timeout(500)
+        else:
+            print("  ⚠️ Botão FREQUÊNCIA não encontrado")
 
-            # Verifica #btnConfirmar
-            confirmar = page.locator("#btnConfirmar")
-            n_conf = confirmar.count()
-            print(f"\n✅ #btnConfirmar encontrados: {n_conf}")
-            for i in range(n_conf):
-                btn = confirmar.nth(i)
-                print(f"  [{i}] texto='{btn.inner_text()}' visível={btn.is_visible()} class='{btn.get_attribute('class')}'")
+        # ── SALVAR ───────────────────────────────────────
+        print("\n💾 Procurando botão SALVAR...")
+        salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar')")
+        n_salvar = salvar.count()
+        print(f"  Botões salvar encontrados: {n_salvar}")
+        for i in range(n_salvar):
+            btn = salvar.nth(i)
+            print(f"  [{i}] texto='{btn.inner_text().strip()}' visível={btn.is_visible()} enabled={btn.is_enabled()}")
+
+        if n_salvar > 0:
+            print("  🖱️ Clicando em SALVAR...")
+            salvar.first.click()
+            page.wait_for_timeout(3000)
+            print(f"  URL após salvar: {page.url}")
+
+            # Verifica se voltou para listagem ou se há erro
+            if "Aulas" in page.url or "Home" in page.url:
+                print("  ✅ Redirecionou — provavelmente salvou!")
+            else:
+                print("  ⚠️ Não redirecionou — verificar se há erro na tela")
+                # Captura mensagens de erro
+                erros = page.evaluate("""
+                    () => Array.from(document.querySelectorAll('.alert, .validation-summary-errors, .field-validation-error'))
+                         .map(e => e.innerText.trim()).filter(t => t)
+                """)
+                if erros:
+                    print(f"  ❌ Erros na página: {erros}")
 
         print(f"\n📄 Log salvo em: {LOG_FILE}")
         input("\nENTER para fechar o Chrome...")
