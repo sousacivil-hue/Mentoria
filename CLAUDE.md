@@ -83,6 +83,13 @@ Todo mês reservar 30 min para explorar `github.com/hesreallyhim/awesome-claude-
 
 **Histórico de quebras:**
 - 15/06/2026: SIAE login quebrou após 15+ commits de debug em sequência. Commit funcionando antes: `c6f5d2e`
+- 17/06/2026: Causa raiz identificada — script local usava CPF com máscara `789.626.335-15`, site enviava sem máscara `78962633515`. Corrigido na v2026-06-17.46.
+
+**Lições aprendidas:**
+- Sempre comparar o script local que funciona com o código do servidor linha por linha antes de fazer qualquer mudança
+- Quando algo funciona localmente mas não no servidor, a diferença está nos dados enviados (formato, máscara, encoding) — não no seletor
+- NUNCA usar `replace_all=True` em edições sem verificar se o padrão existe em outros sistemas no mesmo arquivo
+- Quando o usuário reporta falha, primeiro perguntar "o script local ainda funciona?" — se sim, a diferença está no servidor
 
 ## Regras para Novos Scripts
 1. Sempre incluir captura de erro com `try/except BaseException` + log em arquivo + `input("ENTER para fechar")`
