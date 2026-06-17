@@ -358,7 +358,7 @@ async def run_automacao(job_id: str, data: FormData):
                         if await freq_btn.count() > 0:
                             await freq_btn.first.click(timeout=3000)
                             await page.wait_for_timeout(1500)
-                            await page.locator("#btnConfirmar").first.click(timeout=5000)
+                            await page.locator("#btnConfirmar.btn-success").click(timeout=5000)
                             await page.wait_for_timeout(1500)
                             log.append("✅ Frequência registrada")
                     except Exception as ef:
@@ -450,7 +450,7 @@ async def run_automacao(job_id: str, data: FormData):
                         if await freq_btn.count() > 0:
                             await freq_btn.first.click(timeout=3000)
                             await page.wait_for_timeout(1500)
-                            await page.locator("#btnConfirmar").first.click(timeout=5000)
+                            await page.locator("#btnConfirmar.btn-success").click(timeout=5000)
                             await page.wait_for_timeout(1500)
                             log.append("✅ Frequência registrada")
                     except Exception as ef:
@@ -1322,7 +1322,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-17.58"}
+    return {"versao": "2026-06-17.59"}
 
 
 @app.post("/ler-foto-notas")

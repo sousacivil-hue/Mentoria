@@ -79,7 +79,14 @@ try:
         print(f"\n📋 Textareas na página: {n}")
         for i in range(n):
             t = page.locator("textarea").nth(i)
-            print(f"  [{i}] placeholder='{t.get_attribute('placeholder') or ''}' visível={t.is_visible()}")
+            print(f"  [{i}] name='{t.get_attribute('name') or ''}' id='{t.get_attribute('id') or ''}' visível={t.is_visible()}")
+
+        # Conta inputs
+        ni = page.locator("input:not([type='hidden'])").count()
+        print(f"\n📋 Inputs na página: {ni}")
+        for i in range(ni):
+            t = page.locator("input:not([type='hidden'])").nth(i)
+            print(f"  [{i}] type='{t.get_attribute('type') or ''}' name='{t.get_attribute('name') or ''}' id='{t.get_attribute('id') or ''}' placeholder='{t.get_attribute('placeholder') or ''}' visível={t.is_visible()}")
 
         # Verifica botão FREQUÊNCIA
         freq = page.locator("button:has-text('FREQUÊNCIA'), button:has-text('Frequência')")
