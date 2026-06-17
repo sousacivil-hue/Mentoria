@@ -231,10 +231,6 @@
           <span class="icone">📋</span>
           <span class="label">Aulas Solicitadas + Chamada</span>
         </div>
-        <div class="opcao" onclick="toggleOpcao(this, 'chamada')">
-          <span class="icone">✅</span>
-          <span class="label">Só Chamada</span>
-        </div>
         <div class="opcao" onclick="toggleOpcao(this, 'notas')">
           <span class="icone">🔢</span>
           <span class="label">Lançar Notas</span>
@@ -311,7 +307,7 @@
 <script>
 const BACKEND_URL = location.protocol === 'file:' ? 'http://localhost:8000' : '';
 
-const opcoes = { aulas: true, solicitadas: false, chamada: false, notas: false };
+const opcoes = { aulas: true, solicitadas: false, notas: false };
 let linhaCount = 0;
 
 function toggleOpcao(el, key) {

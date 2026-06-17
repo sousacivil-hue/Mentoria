@@ -238,39 +238,21 @@ async def run_automacao(job_id: str, data: FormData):
         log.append("🔐 Fazendo login no SIAE...")
         await page.goto(URL_LOGIN, wait_until="domcontentloaded", timeout=60000)
         await page.wait_for_timeout(2000)
-        log.append(f"📍 URL após goto: {page.url}")
-        log.append(f"📄 Título: {await page.title()}")
 
         logado = False
         try:
-            # CPF precisa de máscara: 78962633515 → 789.626.335-15
             cpf = re.sub(r'\D', '', data.login)
             login_fmt = f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:11]}" if len(cpf) == 11 else data.login
-            log.append(f"🔑 CPF formatado: {login_fmt[:7]}***")
-
-            seletor_encontrado = await page.wait_for_selector("#user-login, input[type='text']", timeout=15000)
-            log.append(f"✅ Campo login encontrado: {await seletor_encontrado.get_attribute('id') or await seletor_encontrado.get_attribute('type')}")
-
-            n_inputs = await page.locator("input").count()
-            log.append(f"📋 Total de inputs na página: {n_inputs}")
-
+            await page.wait_for_selector("#user-login, input[type='text']", timeout=15000)
             await page.fill("#user-login", login_fmt)
-            val_login = await page.input_value("#user-login")
-            log.append(f"✍️ CPF preenchido: {val_login[:7]}***")
-
             await page.wait_for_timeout(300)
             await page.fill("#user-password", data.senha)
-            val_senha = await page.input_value("#user-password")
-            log.append(f"✍️ Senha preenchida: {'*' * len(val_senha)} ({len(val_senha)} chars)")
-
             await page.wait_for_timeout(300)
-            log.append("🖱️ Pressionando Enter...")
             await page.keyboard.press("Enter")
 
-            for i in range(20):
+            for _ in range(20):
                 await page.wait_for_timeout(1000)
                 url_atual = page.url
-                log.append(f"⏳ [{i+1}s] URL: {url_atual}")
                 if url_atual.rstrip("/").endswith("/sistemas"):
                     logado = True
                     break
@@ -281,7 +263,7 @@ async def run_automacao(job_id: str, data: FormData):
             if logado:
                 log.append("✅ Login realizado!")
             else:
-                log.append(f"❌ Login falhou após 20s. URL final: {page.url}")
+                log.append(f"❌ Login falhou. URL: {page.url}")
                 return
             # clica no card DIÁRIO
             loc = page.locator("a").filter(has_text="DIÁRIO").first
@@ -295,7 +277,6 @@ async def run_automacao(job_id: str, data: FormData):
             siae_page = next((p for p in paginas if "siae.seduc" in p.url), None)
             if siae_page:
                 page = siae_page
-                log.append(f"📓 SIAE aberto: {page.url}")
         except Exception as e:
             log.append(f"❌ Erro no login: {e}")
             return
@@ -520,66 +501,6 @@ async def run_automacao(job_id: str, data: FormData):
                 log.append(f"⚠️ Erro na presença {chamada_num}: {e}")
             await page.goto(URL_AULAS, wait_until="domcontentloaded", timeout=30000)
             await page.wait_for_timeout(2000)
-
-        # ---- SÓ CHAMADA ----
-        if data.opcoes.get("chamada"):
-            log.append("✅ Iniciando chamadas...")
-            await page.goto(URL_AULAS)
-            await page.wait_for_timeout(3000)
-
-            async def selecionar_solicitadas():
-                try:
-                    radio = page.locator("label:has-text('Solicitada') input[type=radio]")
-                    if await radio.count() > 0:
-                        await radio.first.click(force=True)
-                        await page.wait_for_timeout(1500)
-                except Exception:
-                    pass
-
-            await selecionar_solicitadas()
-            ja_feitos = set()
-            chamada_num = 0
-            while True:
-                await page.wait_for_timeout(1000)
-                botoes = await page.evaluate("""
-                    () => {
-                        const result = [];
-                        const btns = document.querySelectorAll('button[onclick*="carregarListaDePresenca"]');
-                        for (const btn of btns) {
-                            const tr = btn.closest('tr');
-                            if (!tr) continue;
-                            const tds = tr.querySelectorAll('td');
-                            const objeto = tds[2] ? tds[2].innerText.trim() : '';
-                            const onclick = btn.getAttribute('onclick') || '';
-                            if (objeto && objeto !== '-') {
-                                result.push({onclick});
-                            }
-                        }
-                        return result;
-                    }
-                """)
-                pendentes = [b for b in botoes if b["onclick"] not in ja_feitos]
-                if not pendentes:
-                    log.append("✅ Chamadas: todas confirmadas!")
-                    break
-                alvo = pendentes[0]
-                onclick = alvo["onclick"]
-                ja_feitos.add(onclick)
-                try:
-                    btn = page.locator(f"button[onclick='{onclick}']").first
-                    await btn.click()
-                    await page.wait_for_selector("#lista.in, #lista[style*='display: block']", timeout=8000)
-                    await page.wait_for_timeout(1000)
-                    await page.locator("#btnConfirmar").click()
-                    await page.wait_for_timeout(2000)
-                    chamada_num += 1
-                    log.append(f"✅ Chamada {chamada_num} confirmada!")
-                    await page.goto(URL_AULAS)
-                    await page.wait_for_timeout(2000)
-                    await selecionar_solicitadas()
-                except Exception as e:
-                    log.append(f"⚠️ Erro na chamada: {e}")
-                    break
 
         # ---- NOTAS ----
         if data.opcoes.get("notas") and data.nota:
@@ -1328,7 +1249,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-17.61"}
+    return {"versao": "2026-06-17.62"}
 
 
 @app.post("/ler-foto-notas")
