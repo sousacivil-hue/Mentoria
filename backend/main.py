@@ -235,22 +235,39 @@ async def run_automacao(job_id: str, data: FormData):
         log.append("🔐 Fazendo login no SIAE...")
         await page.goto(URL_LOGIN, wait_until="domcontentloaded", timeout=60000)
         await page.wait_for_timeout(2000)
+        log.append(f"📍 URL após goto: {page.url}")
+        log.append(f"📄 Título: {await page.title()}")
 
         logado = False
         try:
             # CPF precisa de máscara: 78962633515 → 789.626.335-15
             cpf = re.sub(r'\D', '', data.login)
             login_fmt = f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:11]}" if len(cpf) == 11 else data.login
-            await page.wait_for_selector("#user-login, input[type='text']", timeout=15000)
+            log.append(f"🔑 CPF formatado: {login_fmt[:7]}***")
+
+            seletor_encontrado = await page.wait_for_selector("#user-login, input[type='text']", timeout=15000)
+            log.append(f"✅ Campo login encontrado: {await seletor_encontrado.get_attribute('id') or await seletor_encontrado.get_attribute('type')}")
+
+            n_inputs = await page.locator("input").count()
+            log.append(f"📋 Total de inputs na página: {n_inputs}")
+
             await page.fill("#user-login", login_fmt)
+            val_login = await page.input_value("#user-login")
+            log.append(f"✍️ CPF preenchido: {val_login[:7]}***")
+
             await page.wait_for_timeout(300)
             await page.fill("#user-password", data.senha)
+            val_senha = await page.input_value("#user-password")
+            log.append(f"✍️ Senha preenchida: {'*' * len(val_senha)} ({len(val_senha)} chars)")
+
             await page.wait_for_timeout(300)
+            log.append("🖱️ Pressionando Enter...")
             await page.keyboard.press("Enter")
 
-            for _ in range(20):
+            for i in range(20):
                 await page.wait_for_timeout(1000)
                 url_atual = page.url
+                log.append(f"⏳ [{i+1}s] URL: {url_atual}")
                 if url_atual.rstrip("/").endswith("/sistemas"):
                     logado = True
                     break
@@ -261,7 +278,7 @@ async def run_automacao(job_id: str, data: FormData):
             if logado:
                 log.append("✅ Login realizado!")
             else:
-                log.append(f"❌ Login falhou — verifique CPF e senha. URL: {page.url}")
+                log.append(f"❌ Login falhou após 20s. URL final: {page.url}")
                 return
             # clica no card DIÁRIO
             loc = page.locator("a").filter(has_text="DIÁRIO").first
@@ -1289,7 +1306,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-17.54"}
+    return {"versao": "2026-06-17.55"}
 
 
 @app.post("/ler-foto-notas")
