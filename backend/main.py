@@ -348,12 +348,19 @@ async def run_automacao(job_id: str, data: FormData):
                     met = page.locator("textarea").nth(1)
                     if await met.count() > 0:
                         await met.fill(METODOLOGIA)
+                    # justificativa — aparece em aulas com atraso
+                    just = page.locator("textarea").nth(3)
+                    if await just.count() > 0 and await just.is_visible():
+                        await just.fill("Instabilidade no sistema")
+                    # frequência — botão na própria tela de registro
                     try:
-                        await page.locator("button[data-target='#lista']").click(timeout=3000)
-                        await page.wait_for_timeout(1500)
-                        await page.locator("button#btnConfirmar, button:has-text('CONFIRMAR'), button:has-text('Confirmar')").first.click(timeout=5000)
-                        await page.wait_for_timeout(1500)
-                        log.append("✅ Frequência registrada")
+                        freq_btn = page.locator("button:has-text('FREQUÊNCIA'), button:has-text('Frequência')")
+                        if await freq_btn.count() > 0:
+                            await freq_btn.first.click(timeout=3000)
+                            await page.wait_for_timeout(1500)
+                            await page.locator("#btnConfirmar").click(timeout=5000)
+                            await page.wait_for_timeout(1500)
+                            log.append("✅ Frequência registrada")
                     except Exception as ef:
                         log.append(f"⚠️ Frequência: {ef}")
                     salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar')").first
@@ -433,12 +440,17 @@ async def run_automacao(job_id: str, data: FormData):
                     met = page.locator("textarea").nth(1)
                     if await met.count() > 0:
                         await met.fill(METODOLOGIA)
+                    just = page.locator("textarea").nth(3)
+                    if await just.count() > 0 and await just.is_visible():
+                        await just.fill("Instabilidade no sistema")
                     try:
-                        await page.locator("button[data-target='#lista']").click(timeout=3000)
-                        await page.wait_for_timeout(1500)
-                        await page.locator("button#btnConfirmar, button:has-text('CONFIRMAR'), button:has-text('Confirmar')").first.click(timeout=5000)
-                        await page.wait_for_timeout(1500)
-                        log.append("✅ Frequência registrada")
+                        freq_btn = page.locator("button:has-text('FREQUÊNCIA'), button:has-text('Frequência')")
+                        if await freq_btn.count() > 0:
+                            await freq_btn.first.click(timeout=3000)
+                            await page.wait_for_timeout(1500)
+                            await page.locator("#btnConfirmar").click(timeout=5000)
+                            await page.wait_for_timeout(1500)
+                            log.append("✅ Frequência registrada")
                     except Exception as ef:
                         log.append(f"⚠️ Frequência: {ef}")
                     salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar')").first
@@ -1306,7 +1318,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-17.55"}
+    return {"versao": "2026-06-17.56"}
 
 
 @app.post("/ler-foto-notas")
