@@ -59,7 +59,7 @@ Ficam na pasta `diario_auto` na Área de Trabalho do professor.
 - [ ] Active: automatizar navegação completa (Digitação de notas → turma → fase → Consultar)
 - [ ] Frequência (Active): clicar nas colunas P → Gravar → Próximo
 - [ ] UptimeRobot: configurar ping a cada 5 min para evitar hibernação do Render
-- [ ] Cronômetro: recalibrar estimativa de tempo (está descalibrado)
+- [ ] Cronômetro: recalibrar estimativa de tempo (está descalibrado) + mostrar tempo médio real de execução por sistema (SIAE, Active, etc.)
 
 ## Ritual Mensal — Exploração de Ferramentas
 Todo mês reservar 30 min para explorar `github.com/hesreallyhim/awesome-claude-code` e avaliar o que vale instalar para o SóDigita. Categorias prioritárias: MCP (integrações), Hooks (segurança), Skills (produtividade).
