@@ -141,7 +141,8 @@ def _normalizar(texto: str) -> str:
     return texto.replace("º", "").replace("ª", "")
 
 
-def get_conteudo(serie: str, assuntos_proprios: list[str], assuntos_por_turma: dict[str, str] | None = None) -> str:
+def get_conteudo(serie: str, assuntos_proprios: list[str], assuntos_por_turma: dict[str, str] | None = None) -> str | None:
+    # Retorna None se nenhum assunto configurado → aula será pulada
     # dict turma→assunto: aceita formas triviais — "6" (6º ano), "3b" (3ª série B),
     # "eja", "mat digital", "exp mat" (abreviações casam com início das palavras)
     if assuntos_por_turma:
@@ -168,6 +169,8 @@ def get_conteudo(serie: str, assuntos_proprios: list[str], assuntos_por_turma: d
             palavras = ident_norm.split()
             if all(re.search(rf"\b{re.escape(p)}", serie_norm) for p in palavras):
                 return assunto
+        # turma não tem assunto configurado → pula
+        return None
 
     if assuntos_proprios:
         chave = serie[:6]
@@ -304,6 +307,7 @@ async def run_automacao(job_id: str, data: FormData):
             await page.wait_for_timeout(3000)
 
             aula_num = 0
+            ja_visitados: set[str] = set()
             while True:
                 await page.wait_for_timeout(1000)
                 botoes = await page.evaluate("""
@@ -336,6 +340,16 @@ async def run_automacao(job_id: str, data: FormData):
                 aula_id = match.group(1)
                 serie = alvo["serie"]
                 conteudo = get_conteudo(serie, data.assuntos, data.assuntos_por_turma)
+
+                if not conteudo:
+                    log.append(f"⏭️ Pulando (sem assunto): {serie[:40]}")
+                    await page.evaluate(f"""
+                        () => {{
+                            const btn = document.querySelector('button[onclick="registrar({aula_id})"]');
+                            if (btn) btn.closest('tr').remove();
+                        }}
+                    """)
+                    continue
 
                 log.append(f"⏳ Aula {aula_num + 1}: {serie[:40]}")
                 await page.goto(f"https://siae.seduc.se.gov.br/siae.diario/Aula/Registrar/{aula_id}")
@@ -1314,7 +1328,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-17.60"}
+    return {"versao": "2026-06-17.61"}
 
 
 @app.post("/ler-foto-notas")
