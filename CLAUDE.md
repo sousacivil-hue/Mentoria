@@ -59,6 +59,7 @@ Ficam na pasta `diario_auto` na Área de Trabalho do professor.
 - [ ] Active: automatizar navegação completa (Digitação de notas → turma → fase → Consultar)
 - [ ] Frequência (Active): clicar nas colunas P → Gravar → Próximo
 - [ ] UptimeRobot: configurar ping a cada 5 min para evitar hibernação do Render
+- [ ] SIAE: mostrar só as turmas do dia (segunda vs sexta são diferentes) — por enquanto todas aparecem, professor ignora as que não têm aula
 - [ ] Cronômetro: recalibrar estimativa de tempo (está descalibrado) + mostrar tempo médio real de execução por sistema (SIAE, Active, etc.)
 
 ## Ritual Mensal — Exploração de Ferramentas
