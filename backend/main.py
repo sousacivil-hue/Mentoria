@@ -229,16 +229,21 @@ async def run_automacao(job_id: str, data: FormData):
             # CPF precisa de máscara: 78962633515 → 789.626.335-15
             cpf = re.sub(r'\D', '', data.login)
             login_fmt = f"{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:11]}" if len(cpf) == 11 else data.login
-            await page.wait_for_selector("input[type='text'], input[type='email'], input[type='number']", timeout=15000)
-            await page.locator("input[type='text'], input[type='email'], input[type='number']").first.fill(login_fmt)
-            await page.wait_for_timeout(500)
-            await page.locator("input[type='password']").first.fill(data.senha)
-            await page.wait_for_timeout(500)
-            # tenta botão; se não achar, usa Enter
+            await page.wait_for_selector("#user-login, input[type='text'], input[type='email']", timeout=15000)
+            campo_login = page.locator("#user-login").first if await page.locator("#user-login").count() > 0 else page.locator("input[type='text'], input[type='email']").first
+            await campo_login.click()
+            await campo_login.fill("")
+            await campo_login.type(login_fmt, delay=80)
+            await page.wait_for_timeout(400)
+            campo_senha = page.locator("#user-password").first if await page.locator("#user-password").count() > 0 else page.locator("input[type='password']").first
+            await campo_senha.click()
+            await campo_senha.fill("")
+            await campo_senha.type(data.senha, delay=80)
+            await page.wait_for_timeout(400)
             try:
                 await page.locator("button#submit-form").click(timeout=5000)
             except Exception:
-                await page.locator("input[type='password']").first.press("Enter")
+                await campo_senha.press("Enter")
 
             for _ in range(20):
                 await page.wait_for_timeout(1000)
@@ -1281,7 +1286,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-17.51"}
+    return {"versao": "2026-06-17.52"}
 
 
 @app.post("/ler-foto-notas")
