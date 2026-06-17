@@ -88,6 +88,26 @@ try:
             t = page.locator("input:not([type='hidden'])").nth(i)
             print(f"  [{i}] type='{t.get_attribute('type') or ''}' name='{t.get_attribute('name') or ''}' id='{t.get_attribute('id') or ''}' placeholder='{t.get_attribute('placeholder') or ''}' visível={t.is_visible()}")
 
+        # Conta selects
+        ns = page.locator("select").count()
+        print(f"\n📋 Selects na página: {ns}")
+        for i in range(ns):
+            t = page.locator("select").nth(i)
+            print(f"  [{i}] name='{t.get_attribute('name') or ''}' id='{t.get_attribute('id') or ''}' visível={t.is_visible()}")
+
+        # Conta divs contenteditable
+        nc = page.locator("[contenteditable='true']").count()
+        print(f"\n📋 ContentEditable na página: {nc}")
+        for i in range(nc):
+            t = page.locator("[contenteditable='true']").nth(i)
+            print(f"  [{i}] id='{t.get_attribute('id') or ''}' class='{t.get_attribute('class') or ''}' visível={t.is_visible()}")
+
+        # HTML dos labels para mapear campos
+        labels = page.evaluate("""
+            () => Array.from(document.querySelectorAll('label')).map(l => l.innerText.trim())
+        """)
+        print(f"\n📋 Labels na página: {labels}")
+
         # Verifica botão FREQUÊNCIA
         freq = page.locator("button:has-text('FREQUÊNCIA'), button:has-text('Frequência')")
         n_freq = freq.count()
