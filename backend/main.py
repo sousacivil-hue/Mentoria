@@ -207,16 +207,8 @@ async def run_automacao(job_id: str, data: FormData):
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
-        context = await browser.new_context(
-            viewport={"width": 1400, "height": 900},
-            user_agent=(
-                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/125.0.0.0 Safari/537.36"
-            ),
-        )
+        context = await browser.new_context(viewport={"width": 1400, "height": 900})
         page = await context.new_page()
-        await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
 
         log.append("🔐 Fazendo login no SIAE...")
         await page.goto(URL_LOGIN, wait_until="domcontentloaded", timeout=60000)
@@ -226,7 +218,7 @@ async def run_automacao(job_id: str, data: FormData):
         try:
             await page.locator("input[type='text'], input[type='email']").first.fill(data.login)
             await page.locator("input[type='password']").first.fill(data.senha)
-            await page.locator("input[type='password']").first.press("Enter")
+            await page.keyboard.press("Enter")
 
             for _ in range(20):
                 await page.wait_for_timeout(1000)
@@ -240,22 +232,22 @@ async def run_automacao(job_id: str, data: FormData):
 
             if logado:
                 log.append("✅ Login realizado!")
+                await page.wait_for_timeout(4000)
+                # clica no card DIÁRIO
+                loc = page.locator("a").filter(has_text="DIÁRIO").first
+                try:
+                    await loc.click(timeout=5000)
+                except Exception:
+                    pass
+                await page.wait_for_timeout(4000)
+                # pega aba do SIAE (pode ter aberto nova aba)
+                paginas = context.pages
+                siae_page = next((p for p in paginas if "siae.seduc" in p.url), None)
+                if siae_page:
+                    page = siae_page
+                    log.append(f"📓 SIAE aberto: {page.url}")
             else:
-                log.append(f"⚠️ Login pode ter falhado — URL atual: {page.url}")
-                log.append("⚠️ Continuando mesmo assim...")
-            # clica no card DIÁRIO
-            loc = page.locator("a").filter(has_text="DIÁRIO").first
-            try:
-                await loc.click(timeout=5000)
-            except Exception:
-                pass
-            await page.wait_for_timeout(4000)
-            # pega aba do SIAE (pode ter aberto nova aba)
-            paginas = context.pages
-            siae_page = next((p for p in paginas if "siae.seduc" in p.url), None)
-            if siae_page:
-                page = siae_page
-                log.append(f"📓 SIAE aberto: {page.url}")
+                log.append("⚠️ Login pode ter falhado — continuando mesmo assim...")
         except Exception as e:
             log.append(f"⚠️ Erro no login: {e}")
 
@@ -1250,7 +1242,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-15.45"}
+    return {"versao": "2026-06-14.27"}
 
 
 @app.post("/ler-foto-notas")
