@@ -362,7 +362,9 @@ async def run_automacao(job_id: str, data: FormData):
                             await page.wait_for_timeout(1500)
                             log.append("✅ Frequência registrada")
                     except Exception as ef:
-                        log.append(f"⚠️ Frequência: {ef}")
+                        log.append(f"⚠️ Frequência (investigar localmente): {type(ef).__name__}")
+                        await page.keyboard.press("Escape")
+                        await page.wait_for_timeout(500)
                     salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar')").first
                     await salvar.click()
                     await page.wait_for_timeout(3000)
@@ -452,7 +454,9 @@ async def run_automacao(job_id: str, data: FormData):
                             await page.wait_for_timeout(1500)
                             log.append("✅ Frequência registrada")
                     except Exception as ef:
-                        log.append(f"⚠️ Frequência: {ef}")
+                        log.append(f"⚠️ Frequência (investigar localmente): {type(ef).__name__}")
+                        await page.keyboard.press("Escape")
+                        await page.wait_for_timeout(500)
                     salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar')").first
                     await salvar.click()
                     await page.wait_for_timeout(3000)
@@ -1318,7 +1322,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-17.57"}
+    return {"versao": "2026-06-17.58"}
 
 
 @app.post("/ler-foto-notas")
