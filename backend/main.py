@@ -202,8 +202,10 @@ METODOLOGIA = "Aula expositiva dialogada com resolução de exercícios."
 async def run_automacao(job_id: str, data: FormData):
     from playwright.async_api import async_playwright
 
+    import time as _time
     log = jobs[job_id]
     _indices.clear()
+    _inicio = _time.time()
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
@@ -539,7 +541,9 @@ async def run_automacao(job_id: str, data: FormData):
             # Por ora registramos a intenção no log
             log.append("⚠️ Para notas: navegue até a tela de notas no SIAE e use o siae_notas.py")
 
-        log.append(f"🎉 Automação concluída!")
+        _elapsed = int(_time.time() - _inicio)
+        _min, _seg = divmod(_elapsed, 60)
+        log.append(f"🎉 Automação concluída em {_min}min {_seg}s!")
         log.append("__CONCLUIDO__")
         await browser.close()
 
@@ -1277,7 +1281,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-17.50"}
+    return {"versao": "2026-06-17.51"}
 
 
 @app.post("/ler-foto-notas")
