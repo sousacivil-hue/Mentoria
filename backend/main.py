@@ -342,19 +342,16 @@ async def run_automacao(job_id: str, data: FormData):
                 await page.wait_for_timeout(3000)
 
                 try:
-                    obj = page.locator("textarea").nth(0)
-                    await obj.wait_for(timeout=6000)
-                    await obj.fill(conteudo)
-                    met = page.locator("textarea").nth(1)
-                    if await met.count() > 0:
-                        await met.fill(METODOLOGIA)
-                    # justificativa — aparece em aulas com atraso
-                    just = page.locator("textarea").nth(3)
+                    await page.locator("#Ministrada_Conteudo").wait_for(timeout=6000)
+                    await page.locator("#Ministrada_Conteudo").fill(conteudo)
+                    await page.locator("#Ministrada_Metodologia").fill(METODOLOGIA)
+                    # justificativa — só aparece em aulas com atraso
+                    just = page.locator("input[name='Ministrada.Justificativa'], textarea[name='Ministrada.Justificativa']")
                     if await just.count() > 0 and await just.is_visible():
                         await just.fill("Instabilidade no sistema")
-                    # frequência — botão na própria tela de registro
+                    # frequência
                     try:
-                        freq_btn = page.locator("button:has-text('FREQUÊNCIA'), button:has-text('Frequência')")
+                        freq_btn = page.locator("button:has-text('FREQUÊNCIA')")
                         if await freq_btn.count() > 0:
                             await freq_btn.first.click(timeout=3000)
                             await page.wait_for_timeout(1500)
@@ -362,11 +359,10 @@ async def run_automacao(job_id: str, data: FormData):
                             await page.wait_for_timeout(1500)
                             log.append("✅ Frequência registrada")
                     except Exception as ef:
-                        log.append(f"⚠️ Frequência (investigar localmente): {type(ef).__name__}")
+                        log.append(f"⚠️ Frequência: {type(ef).__name__}")
                         await page.keyboard.press("Escape")
                         await page.wait_for_timeout(500)
-                    salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar')").first
-                    await salvar.click()
+                    await page.locator("button:has-text('SALVAR'), button:has-text('Salvar')").first.click()
                     await page.wait_for_timeout(3000)
                     aula_num += 1
                     log.append(f"✅ Salva: {conteudo[:50]}")
@@ -436,17 +432,14 @@ async def run_automacao(job_id: str, data: FormData):
                 await page.wait_for_timeout(3000)
 
                 try:
-                    obj = page.locator("textarea").nth(0)
-                    await obj.wait_for(timeout=6000)
-                    await obj.fill(conteudo)
-                    met = page.locator("textarea").nth(1)
-                    if await met.count() > 0:
-                        await met.fill(METODOLOGIA)
-                    just = page.locator("textarea").nth(3)
+                    await page.locator("#Ministrada_Conteudo").wait_for(timeout=6000)
+                    await page.locator("#Ministrada_Conteudo").fill(conteudo)
+                    await page.locator("#Ministrada_Metodologia").fill(METODOLOGIA)
+                    just = page.locator("input[name='Ministrada.Justificativa'], textarea[name='Ministrada.Justificativa']")
                     if await just.count() > 0 and await just.is_visible():
                         await just.fill("Instabilidade no sistema")
                     try:
-                        freq_btn = page.locator("button:has-text('FREQUÊNCIA'), button:has-text('Frequência')")
+                        freq_btn = page.locator("button:has-text('FREQUÊNCIA')")
                         if await freq_btn.count() > 0:
                             await freq_btn.first.click(timeout=3000)
                             await page.wait_for_timeout(1500)
@@ -454,11 +447,10 @@ async def run_automacao(job_id: str, data: FormData):
                             await page.wait_for_timeout(1500)
                             log.append("✅ Frequência registrada")
                     except Exception as ef:
-                        log.append(f"⚠️ Frequência (investigar localmente): {type(ef).__name__}")
+                        log.append(f"⚠️ Frequência: {type(ef).__name__}")
                         await page.keyboard.press("Escape")
                         await page.wait_for_timeout(500)
-                    salvar = page.locator("button:has-text('SALVAR'), button:has-text('Salvar')").first
-                    await salvar.click()
+                    await page.locator("button:has-text('SALVAR'), button:has-text('Salvar')").first.click()
                     await page.wait_for_timeout(3000)
                     aula_num += 1
                     log.append(f"✅ Salva: {conteudo[:50]}")
@@ -1322,7 +1314,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-17.59"}
+    return {"versao": "2026-06-17.60"}
 
 
 @app.post("/ler-foto-notas")
