@@ -208,7 +208,14 @@ async def run_automacao(job_id: str, data: FormData):
     _inicio = _time.time()
 
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+        browser = await pw.chromium.launch(
+            headless=True,
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+            ],
+        )
         context = await browser.new_context(
             viewport={"width": 1400, "height": 900},
             user_agent=(
@@ -218,7 +225,12 @@ async def run_automacao(job_id: str, data: FormData):
             ),
         )
         page = await context.new_page()
-        await page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        await page.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+            Object.defineProperty(navigator, 'plugins', {get: () => [1,2,3,4,5]});
+            Object.defineProperty(navigator, 'languages', {get: () => ['pt-BR','pt','en-US','en']});
+            window.chrome = {runtime: {}};
+        """)
 
         log.append("🔐 Fazendo login no SIAE...")
         await page.goto(URL_LOGIN, wait_until="domcontentloaded", timeout=60000)
@@ -1286,7 +1298,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
 
 @app.get("/versao")
 async def versao():
-    return {"versao": "2026-06-17.52"}
+    return {"versao": "2026-06-17.53"}
 
 
 @app.post("/ler-foto-notas")
