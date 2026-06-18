@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SóDigita — Chat Robô</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: sans-serif; background: #111b21; color: #e9edef; height: 100vh; display: flex; flex-direction: column; }
+
+  header { background: #202c33; padding: 16px 20px; display: flex; align-items: center; gap: 12px; }
+  header img { width: 40px; height: 40px; border-radius: 50%; background: #00a884; display: flex; align-items: center; justify-content: center; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: #00a884; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .header-info h2 { font-size: 16px; font-weight: 500; }
+  .header-info p { font-size: 13px; color: #8696a0; }
+
+  #mensagens { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+
+  .balao { max-width: 65%; padding: 8px 12px; border-radius: 8px; font-size: 14px; line-height: 1.5; position: relative; }
+  .balao.usuario { background: #005c4b; align-self: flex-end; border-radius: 8px 0 8px 8px; }
+  .balao.robo { background: #202c33; align-self: flex-start; border-radius: 0 8px 8px 8px; }
+  .balao .hora { font-size: 11px; color: #8696a0; text-align: right; margin-top: 4px; }
+
+  .digitando { background: #202c33; align-self: flex-start; border-radius: 0 8px 8px 8px; padding: 12px 16px; }
+  .digitando span { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #8696a0; animation: bounce 1.2s infinite; margin: 0 2px; }
+  .digitando span:nth-child(2) { animation-delay: 0.2s; }
+  .digitando span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+
+  .tag-registrado { background: #00a884; color: white; font-size: 12px; padding: 3px 8px; border-radius: 12px; display: inline-block; margin-bottom: 4px; }
+
+  footer { background: #202c33; padding: 12px 16px; display: flex; gap: 10px; align-items: center; }
+  #input { flex: 1; background: #2a3942; border: none; border-radius: 8px; padding: 12px 16px; color: #e9edef; font-size: 15px; outline: none; }
+  #input::placeholder { color: #8696a0; }
+  button { background: #00a884; border: none; border-radius: 50%; width: 44px; height: 44px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  button svg { fill: white; }
+
+  .numero-select { background: #2a3942; border: none; border-radius: 8px; padding: 8px 12px; color: #e9edef; font-size: 13px; cursor: pointer; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="avatar">🤖</div>
+  <div class="header-info">
+    <h2>Diário pelo WhatsApp</h2>
+    <p>SóDigita — Assistente</p>
+  </div>
+  <select class="numero-select" id="numero" style="margin-left: auto;">
+    <option value="5579998746693">Prof. Luth (79 99874-6693)</option>
+    <option value="5511999999999">Outro professor</option>
+  </select>
+</header>
+
+<div id="mensagens"></div>
+
+<footer>
+  <input id="input" type="text" placeholder="Digite uma mensagem..." autocomplete="off" />
+  <button onclick="enviar()">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+      <path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"/>
+    </svg>
+  </button>
+</footer>
+
+<script>
+const API = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+let historico = [];
+
+function hora() {
+  return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function addMsg(texto, tipo, tag = null) {
+  const div = document.createElement('div');
+  div.className = `balao ${tipo}`;
+  if (tag) div.innerHTML = `<span class="tag-registrado">${tag}</span><br>`;
+  div.innerHTML += texto.replace(/\n/g, '<br>');
+  div.innerHTML += `<div class="hora">${hora()}</div>`;
+  document.getElementById('mensagens').appendChild(div);
+  document.getElementById('mensagens').scrollTop = 9999;
+}
+
+function addDigitando() {
+  const div = document.createElement('div');
+  div.className = 'digitando';
+  div.id = 'digitando';
+  div.innerHTML = '<span></span><span></span><span></span>';
+  document.getElementById('mensagens').appendChild(div);
+  document.getElementById('mensagens').scrollTop = 9999;
+  return div;
+}
+
+async function enviar() {
+  const input = document.getElementById('input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+
+  const numero = document.getElementById('numero').value;
+  addMsg(msg, 'usuario');
+
+  const digitando = addDigitando();
+
+  try {
+    const res = await fetch(`${API}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ numero, mensagem: msg, historico })
+    });
+    const data = await res.json();
+    digitando.remove();
+
+    historico = data.historico || [];
+
+    const tag = data.registrar ? `✅ Registrando: ${data.registrar.turma}º ano — ${data.registrar.conteudo}` : null;
+    addMsg(data.resposta, 'robo', tag);
+
+  } catch (e) {
+    digitando.remove();
+    addMsg('❌ Erro ao conectar com o servidor.', 'robo');
+  }
+}
+
+document.getElementById('input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') enviar();
+});
+
+// Mensagem inicial
+setTimeout(() => {
+  addMsg('👋 Olá! Digite uma mensagem para testar o robô.', 'robo');
+}, 300);
+</script>
+</body>
+</html>
