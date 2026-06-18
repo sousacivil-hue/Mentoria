@@ -132,7 +132,7 @@ function monitorarJob(jobId) {
   logDiv.style.whiteSpace = 'pre-wrap';
   logDiv.style.background = '#1a2a1a';
   logDiv.style.borderLeft = '3px solid #00a884';
-  logDiv.innerHTML = '⚙️ Iniciando automação SIAE...\n';
+  logDiv.innerHTML = '⚙️ Iniciando automação...\n';
   document.getElementById('mensagens').appendChild(logDiv);
   document.getElementById('mensagens').scrollTop = 9999;
 
@@ -144,10 +144,7 @@ function monitorarJob(jobId) {
       logDiv.innerHTML += `<div class="hora">${hora()}</div>`;
     } else if (e.data.startsWith('📸 SCREENSHOT:')) {
       const nome = e.data.replace('📸 SCREENSHOT:', '').trim();
-      const img = document.createElement('img');
-      img.src = `${API}/screenshot/${nome}`;
-      img.style.cssText = 'max-width:100%;border-radius:6px;margin-top:8px;display:block;';
-      logDiv.appendChild(img);
+      logDiv.innerHTML += `<img src="${API}/screenshot/${nome}" style="max-width:100%;border-radius:6px;margin-top:8px;display:block;">`;
       document.getElementById('mensagens').scrollTop = 9999;
     } else {
       logDiv.innerHTML += e.data + '\n';

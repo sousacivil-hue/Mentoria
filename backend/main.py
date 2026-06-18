@@ -2639,7 +2639,7 @@ PROFESSORES = {
     },
 }
 
-SYSTEM_PROMPT = """Você é o assistente do SóDigita, um serviço que registra automaticamente aulas no sistema escolar SIAE.
+SYSTEM_PROMPT = """Você é o assistente do SóDigita, um serviço que registra automaticamente aulas no sistema escolar do professor.
 
 Seu trabalho é:
 1. Cumprimentar o professor pelo nome de forma simpática
