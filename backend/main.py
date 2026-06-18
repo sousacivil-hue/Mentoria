@@ -2641,7 +2641,10 @@ PROFESSORES = {
         "escola": "arqui",
         "professor": "MARCOS ANTÔNIO PASSOS CHAGAS",
         "senha": "Chagas",
-        "turmas": ["TURMA A", "TURMA B"],
+        "turmas": [
+            {"value": "017A031", "label": "Terceira Série/Ensino Médio - TURMA A - Física"},
+            {"value": "017B031", "label": "Terceira Série/Ensino Médio - TURMA B - Física"},
+        ],
     },
 }
 
@@ -2700,27 +2703,21 @@ async def chat(data: ChatMsg):
             sistema = professor.get("sistema", "siae")
 
             if sistema == "infodat":
-                turmas_data = await _descobrir_turmas_infodat(
-                    professor["escola"], professor["professor"], professor["senha"]
+                todas_turmas = professor["turmas"]
+                turmas_match = [t for t in todas_turmas if turma.upper() in t["label"].upper()]
+                if not turmas_match:
+                    turmas_match = todas_turmas
+                hoje = __import__("datetime").date.today().strftime("%d/%m/%Y")
+                entradas = [{"data": hoje, "turma_value": t["value"], "num_aulas": "2", "conteudo": conteudo} for t in turmas_match]
+                form_inf = InfodatFormData(
+                    escola=professor["escola"],
+                    professor=professor["professor"],
+                    senha=professor["senha"],
+                    entradas=entradas,
                 )
-                if "erro" in turmas_data:
-                    resposta += f"\n⚠️ {turmas_data['erro']}"
-                else:
-                    todas_turmas = turmas_data.get("turmas", [])
-                    turmas_match = [t for t in todas_turmas if turma.upper() in t["label"].upper()]
-                    if not turmas_match:
-                        turmas_match = todas_turmas
-                    hoje = __import__("datetime").date.today().strftime("%d/%m/%Y")
-                    entradas = [{"data": hoje, "turma_value": t["value"], "num_aulas": "2", "conteudo": conteudo} for t in turmas_match]
-                    form_inf = InfodatFormData(
-                        escola=professor["escola"],
-                        professor=professor["professor"],
-                        senha=professor["senha"],
-                        entradas=entradas,
-                    )
-                    job_id = str(uuid.uuid4())
-                    jobs[job_id] = []
-                    asyncio.create_task(run_infodat(job_id, form_inf))
+                job_id = str(uuid.uuid4())
+                jobs[job_id] = []
+                asyncio.create_task(run_infodat(job_id, form_inf))
             else:
                 # SIAE
                 turmas_match = [t for t in professor["turmas"] if turma.lower() in t.lower()]
