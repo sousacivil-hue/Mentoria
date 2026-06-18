@@ -7,6 +7,7 @@ RUN pip install --no-cache-dir --upgrade -r backend/requirements.txt
 
 COPY backend/ backend/
 COPY frontend/ frontend/
+COPY CLAUDE.md CLAUDE.md
 
 WORKDIR /app/backend
 CMD uvicorn main:app --host 0.0.0.0 --port $PORT
