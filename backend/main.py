@@ -2607,6 +2607,76 @@ async def progresso(job_id: str, request: Request):
     return StreamingResponse(stream(), media_type="text/event-stream")
 
 
+# ---- Robô conversacional (Claude) ----
+
+PROFESSORES = {
+    "5579998746693": {"nome": "Professor", "sistema": "siae"},
+}
+
+SYSTEM_PROMPT = """Você é o assistente do SóDigita, um serviço que registra automaticamente aulas no sistema escolar SIAE.
+
+Seu trabalho é:
+1. Cumprimentar o professor pelo nome de forma simpática
+2. Perguntar quais aulas ele quer registrar hoje
+3. Quando ele informar uma aula (ex: "7º ano — Revisão para Avaliação"), confirmar que vai registrar
+4. Após registrar, perguntar se há mais aulas
+5. Encerrar a conversa de forma cordial quando ele terminar
+
+Regras:
+- Seja sempre simpático, breve e profissional
+- Quando o professor informar uma aula, responda EXATAMENTE neste formato JSON antes da mensagem:
+  REGISTRAR:{"turma": "7", "conteudo": "Revisão para Avaliação"}
+- Se o professor mandar saudação, responda cumprimentando e perguntando as aulas do dia
+- Fale sempre em português brasileiro
+- Nunca invente conteúdos — use exatamente o que o professor disse"""
+
+
+class ChatMsg(BaseModel):
+    numero: str
+    mensagem: str
+    historico: list[dict] = []
+
+
+@app.post("/chat")
+async def chat(data: ChatMsg):
+    import anthropic as _anthropic
+
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"resposta": "❌ API do Claude não configurada."}
+
+    professor = PROFESSORES.get(data.numero, {"nome": "Professor", "sistema": "siae"})
+
+    historico = data.historico + [{"role": "user", "content": data.mensagem}]
+
+    client = _anthropic.Anthropic(api_key=api_key)
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=500,
+        system=SYSTEM_PROMPT.replace("Professor", professor["nome"]),
+        messages=historico,
+    )
+
+    resposta = response.content[0].text
+
+    # Verifica se tem aula para registrar
+    registrar_match = re.search(r"REGISTRAR:(\{.*?\})", resposta)
+    if registrar_match:
+        try:
+            dados_aula = json.loads(registrar_match.group(1))
+            resposta = resposta.replace(registrar_match.group(0), "").strip()
+        except Exception:
+            dados_aula = None
+    else:
+        dados_aula = None
+
+    return {
+        "resposta": resposta,
+        "historico": historico + [{"role": "assistant", "content": resposta}],
+        "registrar": dados_aula,
+    }
+
+
 # ---- Servir o site (frontend) pelo mesmo servidor ----
 from fastapi.staticfiles import StaticFiles
 
