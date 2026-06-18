@@ -2663,8 +2663,14 @@ async def chat(data: ChatMsg):
 
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={api_key}"
     req = _urllib.Request(url, data=payload, headers={"Content-Type": "application/json"})
-    with _urllib.urlopen(req) as r:
-        result = json.loads(r.read())
+    try:
+        with _urllib.urlopen(req, timeout=30) as r:
+            result = json.loads(r.read())
+    except Exception as e:
+        codigo = getattr(e, 'code', 0)
+        if codigo == 429:
+            return {"resposta": "⏳ Muitas mensagens em pouco tempo. Aguarde alguns segundos e tente novamente.", "historico": data.historico}
+        return {"resposta": f"❌ Erro ao chamar IA: {codigo}", "historico": data.historico}
 
     resposta = result["candidates"][0]["content"]["parts"][0]["text"]
 
