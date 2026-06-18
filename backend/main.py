@@ -2686,7 +2686,10 @@ class ManagerMsg(BaseModel):
     mensagem: str
     historico: list[dict] = []
 
-_CLAUDE_MD = open(os.path.join(os.path.dirname(__file__), "../CLAUDE.md")).read()
+try:
+    _CLAUDE_MD = open(os.path.join(os.path.dirname(__file__), "../CLAUDE.md")).read()
+except Exception:
+    _CLAUDE_MD = "Documento de contexto não encontrado."
 
 MANAGER_PROMPT = f"""Você é o gerente de projetos do SóDigita, um SaaS que automatiza o preenchimento de diários escolares para professores brasileiros via WhatsApp e web.
 
