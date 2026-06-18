@@ -2639,40 +2639,26 @@ class ChatMsg(BaseModel):
 
 @app.post("/chat")
 async def chat(data: ChatMsg):
-    import urllib.request as _urllib
+    import anthropic as _anthropic
 
-    api_key = os.environ.get("GEMINI_API_KEY")
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
-        return {"resposta": "❌ API do Gemini não configurada."}
+        return {"resposta": "❌ API do Claude não configurada.", "historico": data.historico}
 
     professor = PROFESSORES.get(data.numero, {"nome": "Professor", "sistema": "siae"})
-
     historico = data.historico + [{"role": "user", "content": data.mensagem}]
 
-    # Monta histórico no formato Gemini
-    gemini_contents = []
-    for msg in historico:
-        role = "user" if msg["role"] == "user" else "model"
-        gemini_contents.append({"role": role, "parts": [{"text": msg["content"]}]})
-
-    payload = json.dumps({
-        "system_instruction": {"parts": [{"text": SYSTEM_PROMPT.replace("Professor", professor["nome"])}]},
-        "contents": gemini_contents,
-        "generationConfig": {"maxOutputTokens": 500}
-    }).encode()
-
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
-    req = _urllib.Request(url, data=payload, headers={"Content-Type": "application/json"})
     try:
-        with _urllib.urlopen(req, timeout=30) as r:
-            result = json.loads(r.read())
+        client = _anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=500,
+            system=SYSTEM_PROMPT.replace("Professor", professor["nome"]),
+            messages=historico,
+        )
+        resposta = response.content[0].text
     except Exception as e:
-        codigo = getattr(e, 'code', 0)
-        if codigo == 429:
-            return {"resposta": "⏳ Muitas mensagens em pouco tempo. Aguarde alguns segundos e tente novamente.", "historico": data.historico}
-        return {"resposta": f"❌ Erro ao chamar IA: {codigo}", "historico": data.historico}
-
-    resposta = result["candidates"][0]["content"]["parts"][0]["text"]
+        return {"resposta": f"❌ Erro: {str(e)[:100]}", "historico": data.historico}
 
     # Verifica se tem aula para registrar
     registrar_match = re.search(r"REGISTRAR:(\{.*?\})", resposta)
