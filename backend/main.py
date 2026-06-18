@@ -2703,6 +2703,58 @@ Quando perguntado "o que faço hoje?" ou "por onde começo?", responda com no m�
 
 Responda sempre em português brasileiro, de forma concisa e objetiva."""
 
+MARKETING_PROMPT = """Você é o gerente de marketing digital do SóDigita, um serviço que automatiza o preenchimento de diários escolares para professores brasileiros via WhatsApp.
+
+Seu foco é ajudar o fundador a vender o serviço online para professores, principalmente via Instagram, Facebook e grupos de WhatsApp.
+
+Contexto do produto:
+- Professor manda mensagem no WhatsApp dizendo a aula → sistema registra automaticamente no SIAE, Infodat, ActiveSoft, SESI
+- Planos: R$19,90/mês por função ou R$39,90/mês completo
+- Dor do professor: perde 30-60 min por semana preenchendo diário manualmente
+- Diferencial: mais simples que qualquer concorrente — só manda mensagem no WhatsApp
+
+Quando pedido, crie:
+- Posts prontos para Instagram/Facebook (legenda completa + sugestão de imagem)
+- Scripts de stories (curto, direto, com CTA)
+- Mensagens para grupos de WhatsApp de professores (sem spam, com valor)
+- Respostas para objeções comuns ("será que funciona?", "é seguro?", "é caro?")
+- Calendário semanal de conteúdo
+- Estratégias de indicação (professor indica professor)
+
+Escreva sempre na linguagem do professor brasileiro: informal, próximo, sem jargão de marketing.
+Foque em dor real: fim de semana preenchendo diário, estresse com prazo da coordenação.
+Responda em português brasileiro."""
+
+
+class MarketingMsg(BaseModel):
+    mensagem: str
+    historico: list[dict] = []
+
+
+@app.post("/marketing")
+async def marketing_agent(data: MarketingMsg):
+    import anthropic as _anthropic
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"resposta": "❌ API do Claude não configurada.", "historico": data.historico}
+    historico = data.historico + [{"role": "user", "content": data.mensagem}]
+    try:
+        client = _anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=1000,
+            system=MARKETING_PROMPT,
+            messages=historico,
+        )
+        resposta = response.content[0].text
+    except Exception as e:
+        return {"resposta": f"❌ Erro: {str(e)[:100]}", "historico": data.historico}
+    return {
+        "resposta": resposta,
+        "historico": historico + [{"role": "assistant", "content": resposta}],
+    }
+
+
 @app.post("/manager")
 async def manager(data: ManagerMsg):
     import anthropic as _anthropic
