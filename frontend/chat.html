@@ -138,7 +138,7 @@ function monitorarJob(jobId) {
 
   const es = new EventSource(`${API}/progresso/${jobId}`);
   es.onmessage = e => {
-    if (e.data === '__FIM__') {
+    if (e.data === '__FIM__' || e.data === '__CONCLUIDO__') {
       es.close();
       logDiv.innerHTML += '\n✅ Concluído.';
       logDiv.innerHTML += `<div class="hora">${hora()}</div>`;
