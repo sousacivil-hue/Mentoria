@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SóDigita — CEO IA</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: sans-serif; background: #080808; color: #e9edef; height: 100vh; display: flex; flex-direction: column; }
+
+  header { background: #111; padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #222; }
+  .avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #6c63ff, #e91e8c, #16a34a); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .header-info h2 { font-size: 16px; font-weight: 600; color: #fff; }
+  .header-info p { font-size: 13px; color: #8696a0; }
+  .gerentes { margin-left: auto; display: flex; gap: 8px; font-size: 12px; }
+  .gerente-tag { padding: 4px 10px; border-radius: 12px; font-size: 11px; }
+  .g-proj { background: #1a1a2e; color: #a78bfa; }
+  .g-mkt  { background: #1a0a2e; color: #f472b6; }
+  .g-neg  { background: #0a1f0a; color: #4ade80; }
+
+  #mensagens { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
+
+  .balao { max-width: 80%; padding: 10px 14px; border-radius: 10px; font-size: 14px; line-height: 1.6; }
+  .balao.usuario { background: #1a1a1a; align-self: flex-end; border-radius: 10px 0 10px 10px; }
+  .balao.ceo { background: #111; align-self: flex-start; border-radius: 0 10px 10px 10px; border-left: 3px solid #fff; white-space: pre-wrap; }
+  .balao.ceo em { color: #8696a0; font-style: normal; font-size: 12px; }
+  .balao .hora { font-size: 11px; color: #8696a0; text-align: right; margin-top: 6px; }
+  .balao.ceo strong { color: #e9edef; }
+
+  .digitando { background: #111; align-self: flex-start; border-radius: 0 10px 10px 10px; padding: 12px 16px; border-left: 3px solid #fff; }
+  .digitando span { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #fff; animation: bounce 1.2s infinite; margin: 0 2px; }
+  .digitando span:nth-child(2) { animation-delay: 0.2s; }
+  .digitando span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%, 60%, 100% { transform: translateY(0); } 30% { transform: translateY(-6px); } }
+
+  footer { background: #111; padding: 12px 16px; display: flex; gap: 10px; align-items: center; border-top: 1px solid #222; }
+  #input { flex: 1; background: #080808; border: 1px solid #222; border-radius: 8px; padding: 12px 16px; color: #e9edef; font-size: 15px; outline: none; }
+  #input:focus { border-color: #555; }
+  #input::placeholder { color: #8696a0; }
+  button { background: #fff; border: none; border-radius: 50%; width: 44px; height: 44px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  button svg { fill: #080808; }
+
+  #sugestoes { padding: 8px 20px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .sugestao { background: #111; border: 1px solid #222; border-radius: 8px; padding: 8px 14px; font-size: 13px; color: #aaa; cursor: pointer; }
+  .sugestao:hover { border-color: #555; color: #fff; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="avatar">👑</div>
+  <div class="header-info">
+    <h2>CEO — SóDigita</h2>
+    <p>Coordena Projetos · Marketing · Negócios</p>
+  </div>
+  <div class="gerentes">
+    <span class="gerente-tag g-proj">🔧 Projetos</span>
+    <span class="gerente-tag g-mkt">📣 Marketing</span>
+    <span class="gerente-tag g-neg">📈 Negócios</span>
+  </div>
+</header>
+
+<div id="mensagens"></div>
+
+<div id="sugestoes">
+  <span class="sugestao" onclick="enviarSugestao(this)">O que priorizo essa semana?</span>
+  <span class="sugestao" onclick="enviarSugestao(this)">Como chego a 50 clientes pagantes?</span>
+  <span class="sugestao" onclick="enviarSugestao(this)">Qual o maior risco do negócio agora?</span>
+  <span class="sugestao" onclick="enviarSugestao(this)">Plano para os próximos 90 dias</span>
+</div>
+
+<footer>
+  <input id="input" type="text" placeholder="Pergunta estratégica..." autocomplete="off" />
+  <button onclick="enviar()">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+      <path d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"/>
+    </svg>
+  </button>
+</footer>
+
+<script>
+const API = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+let historico = [];
+
+function hora() {
+  return new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function addMsg(texto, tipo) {
+  const div = document.createElement('div');
+  div.className = `balao ${tipo}`;
+  let html = texto
+    .replace(/\*(Consultei:.*?)\*/g, '<em>$1</em>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+  div.innerHTML = html + `<div class="hora">${hora()}</div>`;
+  document.getElementById('mensagens').appendChild(div);
+  document.getElementById('mensagens').scrollTop = 9999;
+}
+
+function addDigitando() {
+  const div = document.createElement('div');
+  div.className = 'digitando';
+  div.id = 'digitando';
+  div.innerHTML = '<span></span><span></span><span></span>';
+  document.getElementById('mensagens').appendChild(div);
+  document.getElementById('mensagens').scrollTop = 9999;
+  return div;
+}
+
+async function enviar() {
+  const input = document.getElementById('input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  document.getElementById('sugestoes').style.display = 'none';
+  addMsg(msg, 'usuario');
+  const digitando = addDigitando();
+  try {
+    const res = await fetch(`${API}/ceo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mensagem: msg, historico })
+    });
+    const data = await res.json();
+    digitando.remove();
+    historico = data.historico || [];
+    addMsg(data.resposta, 'ceo');
+  } catch (e) {
+    digitando.remove();
+    addMsg('❌ Erro ao conectar.', 'ceo');
+  }
+}
+
+function enviarSugestao(el) {
+  document.getElementById('input').value = el.textContent;
+  enviar();
+}
+
+document.getElementById('input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') enviar();
+});
+
+setTimeout(() => {
+  addMsg('👑 Olá, Luth.\n\nSou o CEO do SóDigita — coordeno seus três gerentes: Projetos, Marketing e Negócios.\n\nFaça uma pergunta estratégica e eu consulto quem for necessário para dar uma resposta consolidada.', 'ceo');
+}, 300);
+</script>
+</body>
+</html>

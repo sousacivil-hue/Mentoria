@@ -2756,6 +2756,107 @@ async def negocios_agent(data: NegociosMsg):
     }
 
 
+# ---- CEO IA — coordena os três gerentes ----
+
+class CEOMsg(BaseModel):
+    mensagem: str
+    historico: list[dict] = []
+
+
+async def _consultar_especialista(prompt_sistema: str, pergunta: str, api_key: str) -> str:
+    import anthropic as _anthropic
+    client = _anthropic.Anthropic(api_key=api_key)
+    response = client.messages.create(
+        model="claude-haiku-4-5-20251001",
+        max_tokens=600,
+        system=prompt_sistema,
+        messages=[{"role": "user", "content": pergunta}],
+    )
+    return response.content[0].text
+
+
+CEO_PROMPT = """Você é o CEO do SóDigita, um SaaS que automatiza o preenchimento de diários escolares para professores brasileiros via WhatsApp.
+
+Você coordena três gerentes especializados:
+- PROJETOS: responsável pelo desenvolvimento técnico e priorização de tarefas
+- MARKETING: responsável por posts, conteúdo e prospecção de professores
+- NEGÓCIOS: responsável por estratégia, metas financeiras e escala até 2027
+
+Quando o fundador (Luth) fizer uma pergunta:
+1. Decida quais gerentes precisam ser consultados (pode ser 1, 2 ou todos os 3)
+2. Você receberá as respostas de cada um
+3. Consolide numa resposta única, coesa e acionável
+
+Responda sempre em português brasileiro, de forma direta e prática.
+Indique claramente quando uma decisão envolve trade-offs entre áreas."""
+
+
+@app.post("/ceo")
+async def ceo_agent(data: CEOMsg):
+    import anthropic as _anthropic
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"resposta": "❌ API do Claude não configurada.", "historico": data.historico}
+
+    historico = data.historico + [{"role": "user", "content": data.mensagem}]
+
+    try:
+        client = _anthropic.Anthropic(api_key=api_key)
+
+        # Passo 1: CEO decide quais especialistas consultar
+        roteamento = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=200,
+            system="Você decide quais especialistas consultar para responder a pergunta. Responda APENAS com uma lista separada por vírgula com os especialistas necessários: PROJETOS, MARKETING, NEGOCIOS. Exemplo: PROJETOS,NEGOCIOS",
+            messages=[{"role": "user", "content": data.mensagem}],
+        ).content[0].text.upper()
+
+        # Passo 2: Consulta os especialistas em paralelo
+        tarefas = []
+        nomes = []
+        if "PROJETOS" in roteamento:
+            tarefas.append(_consultar_especialista(MANAGER_PROMPT, data.mensagem, api_key))
+            nomes.append("PROJETOS")
+        if "MARKETING" in roteamento:
+            tarefas.append(_consultar_especialista(MARKETING_PROMPT, data.mensagem, api_key))
+            nomes.append("MARKETING")
+        if "NEGOCIOS" in roteamento:
+            tarefas.append(_consultar_especialista(NEGOCIOS_PROMPT, data.mensagem, api_key))
+            nomes.append("NEGÓCIOS")
+
+        if not tarefas:
+            tarefas.append(_consultar_especialista(MANAGER_PROMPT, data.mensagem, api_key))
+            nomes.append("PROJETOS")
+
+        respostas = await asyncio.gather(*tarefas)
+
+        # Passo 3: CEO consolida
+        contexto_especialistas = "\n\n".join(
+            f"=== {nome} ===\n{resp}" for nome, resp in zip(nomes, respostas)
+        )
+        consolidado = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=800,
+            system=CEO_PROMPT,
+            messages=[
+                {"role": "user", "content": data.mensagem},
+                {"role": "assistant", "content": f"Consultei meus gerentes. Aqui estão as visões deles:\n\n{contexto_especialistas}"},
+                {"role": "user", "content": "Agora consolide numa resposta única e acionável para o fundador."},
+            ],
+        ).content[0].text
+
+        especialistas_usados = ", ".join(nomes)
+        resposta_final = f"*Consultei: {especialistas_usados}*\n\n{consolidado}"
+
+    except Exception as e:
+        return {"resposta": f"❌ Erro: {str(e)[:100]}", "historico": data.historico}
+
+    return {
+        "resposta": resposta_final,
+        "historico": historico + [{"role": "assistant", "content": resposta_final}],
+    }
+
+
 MARKETING_PROMPT = """Você é o gerente de marketing digital do SóDigita, um serviço que automatiza o preenchimento de diários escolares para professores brasileiros via WhatsApp.
 
 Seu foco é ajudar o fundador a vender o serviço online para professores, principalmente via Instagram, Facebook e grupos de WhatsApp.
