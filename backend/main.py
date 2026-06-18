@@ -2443,12 +2443,18 @@ async def run_infodat(job_id: str, data: InfodatFormData):
                 await page.wait_for_timeout(3000)
                 gravadas += 1
                 log.append(f"   ✅ Gravado!")
-                # Screenshot de confirmação
+                # Screenshot da listagem do diário como confirmação
                 try:
                     import os as _os
                     _os.makedirs("/tmp/screenshots", exist_ok=True)
                     shot_path = f"/tmp/screenshots/{job_id}_{i}.png"
-                    await page.screenshot(path=shot_path, clip={"x": 0, "y": 0, "width": 900, "height": 250})
+                    await page.goto(f"{INFODAT_BASE}/diario.php", wait_until="domcontentloaded", timeout=20000)
+                    await page.wait_for_timeout(1500)
+                    tabela = page.locator("table").first
+                    if await tabela.count() > 0:
+                        await tabela.screenshot(path=shot_path)
+                    else:
+                        await page.screenshot(path=shot_path, clip={"x": 0, "y": 0, "width": 1000, "height": 400})
                     log.append(f"   📸 SCREENSHOT:{job_id}_{i}.png")
                 except Exception:
                     pass
