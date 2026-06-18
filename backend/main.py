@@ -2322,69 +2322,73 @@ async def run_infodat(job_id: str, data: InfodatFormData):
         # ── LOGIN ────────────────────────────────────────────────────────────
         log.append("🔐 Fazendo login no Infodat...")
         for tentativa_login in range(3):
-          try:
-            await page.goto(f"{INFODAT_BASE}/login.php", wait_until="domcontentloaded", timeout=60000)
-            await page.wait_for_timeout(500)
-            await page.locator("select#escola").select_option(value=data.escola)
-            await page.evaluate(
-                "document.querySelector('select#escola').dispatchEvent(new Event('change'))"
-            )
-            await page.wait_for_function(
-                "document.querySelector('select#professor').options.length > 1",
-                timeout=20000,
-            )
-            opcoes = await page.evaluate("""
-                () => Array.from(document.querySelector('select#professor').options)
-                    .filter(o => o.value)
-                    .map(o => ({value: o.value, text: o.text.trim()}))
-            """)
-            palavras = _sem_acento(data.professor).split()
-            valor_prof = None
-            for opt in opcoes:
-                texto = _sem_acento(opt["text"])
-                if all(p in texto for p in palavras):
-                    valor_prof = opt["value"]
-                    log.append(f"✅ Professor encontrado: {opt['text']}")
-                    break
-            if valor_prof:
-                await page.locator("select#professor").select_option(value=valor_prof)
-            else:
-                log.append(f"⚠️ Professor não encontrado na lista. Opções: {[o['text'] for o in opcoes[:5]]}")
-                await page.locator("select#professor").select_option(index=1)
-            await page.evaluate(
-                "document.querySelector('select#professor').dispatchEvent(new Event('change'))"
-            )
-            await page.wait_for_timeout(1000)
-            await page.locator("input[type='password']").first.fill(data.senha)
-            await page.wait_for_timeout(500)
-            await page.evaluate("document.querySelector('form').submit()")
-
-            for _ in range(120):
+            try:
+                await page.goto(f"{INFODAT_BASE}/login.php", wait_until="domcontentloaded", timeout=60000)
                 await page.wait_for_timeout(500)
-                if "login.php" not in page.url:
-                    break
+                await page.locator("select#escola").select_option(value=data.escola)
+                await page.evaluate(
+                    "document.querySelector('select#escola').dispatchEvent(new Event('change'))"
+                )
+                await page.wait_for_function(
+                    "document.querySelector('select#professor').options.length > 1",
+                    timeout=20000,
+                )
+                opcoes = await page.evaluate("""
+                    () => Array.from(document.querySelector('select#professor').options)
+                        .filter(o => o.value)
+                        .map(o => ({value: o.value, text: o.text.trim()}))
+                """)
+                palavras = _sem_acento(data.professor).split()
+                valor_prof = None
+                for opt in opcoes:
+                    texto = _sem_acento(opt["text"])
+                    if all(p in texto for p in palavras):
+                        valor_prof = opt["value"]
+                        log.append(f"✅ Professor encontrado: {opt['text']}")
+                        break
+                if valor_prof:
+                    await page.locator("select#professor").select_option(value=valor_prof)
+                else:
+                    log.append(f"⚠️ Professor não encontrado. Opções: {[o['text'] for o in opcoes[:5]]}")
+                    await page.locator("select#professor").select_option(index=1)
+                await page.evaluate(
+                    "document.querySelector('select#professor').dispatchEvent(new Event('change'))"
+                )
+                await page.wait_for_timeout(1000)
+                await page.locator("input[type='password']").first.fill(data.senha)
+                await page.wait_for_timeout(500)
+                await page.evaluate("document.querySelector('form').submit()")
 
-            if "login.php" in page.url:
-                if tentativa_login < 2:
-                    log.append(f"⚠️ Login falhou, tentando novamente ({tentativa_login + 2}/3)...")
+                for _ in range(120):
+                    await page.wait_for_timeout(500)
+                    if "login.php" not in page.url:
+                        break
+
+                if "login.php" in page.url:
+                    if tentativa_login < 2:
+                        log.append(f"⚠️ Login falhou, tentando novamente ({tentativa_login + 2}/3)...")
+                        await asyncio.sleep(5)
+                        continue
+                    log.append("❌ Login não aceito após 3 tentativas.")
+                    if data.numero:
+                        notificacoes.setdefault(data.numero, []).append("❌ Não consegui registrar suas aulas — login falhou 3 vezes. Tente novamente mais tarde.")
+                    log.append("__ERRO__")
+                    log.append("__CONCLUIDO__")
                     await browser.close()
+                    return
+
+                log.append("✅ Login realizado!")
+                break
+            except Exception as e:
+                log.append(f"❌ ERRO no login: {e}")
+                if tentativa_login < 2:
+                    log.append(f"⚠️ Tentando novamente ({tentativa_login + 2}/3)...")
                     await asyncio.sleep(5)
                     continue
-                log.append("❌ Login não aceito após 3 tentativas.")
-                if data.numero:
-                    notificacoes.setdefault(data.numero, []).append("❌ Não consegui registrar suas aulas — login falhou 3 vezes. Tente novamente mais tarde.")
                 log.append("__ERRO__")
                 log.append("__CONCLUIDO__")
                 await browser.close()
                 return
-
-            log.append("✅ Login realizado!")
-        except Exception as e:
-            log.append(f"❌ ERRO no login: {e}")
-            log.append("__ERRO__")
-            log.append("__CONCLUIDO__")
-            await browser.close()
-            return
 
         # ── ABRE DIÁRIO ONLINE ────────────────────────────────────────────────
         log.append("📓 Abrindo Diário Online...")
