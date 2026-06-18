@@ -2448,7 +2448,7 @@ async def run_infodat(job_id: str, data: InfodatFormData):
                     import os as _os
                     _os.makedirs("/tmp/screenshots", exist_ok=True)
                     shot_path = f"/tmp/screenshots/{job_id}_{i}.png"
-                    await page.screenshot(path=shot_path, full_page=False)
+                    await page.screenshot(path=shot_path, clip={"x": 0, "y": 0, "width": 900, "height": 250})
                     log.append(f"   📸 SCREENSHOT:{job_id}_{i}.png")
                 except Exception:
                     pass
