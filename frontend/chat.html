@@ -112,14 +112,45 @@ async function enviar() {
     digitando.remove();
 
     historico = data.historico || [];
+    addMsg(data.resposta, 'robo');
 
-    const tag = data.registrar ? `✅ Registrando: ${data.registrar.turma}º ano — ${data.registrar.conteudo}` : null;
-    addMsg(data.resposta, 'robo', tag);
+    if (data.job_id) {
+      monitorarJob(data.job_id);
+    }
 
   } catch (e) {
     digitando.remove();
     addMsg('❌ Erro ao conectar com o servidor.', 'robo');
   }
+}
+
+function monitorarJob(jobId) {
+  const logDiv = document.createElement('div');
+  logDiv.className = 'balao robo';
+  logDiv.style.fontFamily = 'monospace';
+  logDiv.style.fontSize = '12px';
+  logDiv.style.whiteSpace = 'pre-wrap';
+  logDiv.style.background = '#1a2a1a';
+  logDiv.style.borderLeft = '3px solid #00a884';
+  logDiv.innerHTML = '⚙️ Iniciando automação SIAE...\n';
+  document.getElementById('mensagens').appendChild(logDiv);
+  document.getElementById('mensagens').scrollTop = 9999;
+
+  const es = new EventSource(`${API}/progresso/${jobId}`);
+  es.onmessage = e => {
+    if (e.data === '__FIM__') {
+      es.close();
+      logDiv.innerHTML += '\n✅ Concluído.';
+      logDiv.innerHTML += `<div class="hora">${hora()}</div>`;
+    } else {
+      logDiv.innerHTML += e.data + '\n';
+      document.getElementById('mensagens').scrollTop = 9999;
+    }
+  };
+  es.onerror = () => {
+    es.close();
+    logDiv.innerHTML += '\n⚠️ Conexão encerrada.';
+  };
 }
 
 document.getElementById('input').addEventListener('keydown', e => {
