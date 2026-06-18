@@ -4,3 +4,4 @@ playwright==1.49.0
 pydantic
 python-multipart
 anthropic
+supabase

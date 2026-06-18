@@ -3,6 +3,18 @@ import json
 import os
 import re
 import unicodedata
+
+# ── Supabase ──────────────────────────────────────────────────────────────────
+def _get_supabase():
+    url = os.environ.get("SUPABASE_URL", "https://niqgrzvaqfocpoemtwio.supabase.co")
+    key = os.environ.get("SUPABASE_SECRET_KEY")
+    if not key:
+        return None
+    try:
+        from supabase import create_client
+        return create_client(url, key)
+    except Exception:
+        return None
 import uuid
 from typing import AsyncGenerator
 
@@ -2465,6 +2477,19 @@ async def run_infodat(job_id: str, data: InfodatFormData):
                 notificacoes.setdefault(data.numero, []).append(f"✅ {gravadas} aula(s) registrada(s) com sucesso!")
             else:
                 notificacoes.setdefault(data.numero, []).append(f"⚠️ {gravadas} de {len(data.entradas)} aulas registradas. Verifique o sistema.")
+        # Salva métrica no Supabase
+        try:
+            sb = _get_supabase()
+            if sb:
+                sb.table("metricas_automacoes").insert({
+                    "sistema": "infodat",
+                    "professor": data.professor,
+                    "total": len(data.entradas),
+                    "gravadas": gravadas,
+                    "sucesso": gravadas == len(data.entradas),
+                }).execute()
+        except Exception:
+            pass
         log.append("__CONCLUIDO__")
         await browser.close()
 
@@ -2847,6 +2872,18 @@ async def ceo_agent(data: CEOMsg):
 
         especialistas_usados = ", ".join(nomes)
         resposta_final = f"*Consultei: {especialistas_usados}*\n\n{consolidado}"
+
+        # Salva memória no Supabase
+        try:
+            sb = _get_supabase()
+            if sb:
+                sb.table("sessoes_claudia").insert({
+                    "pergunta": data.mensagem,
+                    "resposta": resposta_final,
+                    "especialistas": especialistas_usados,
+                }).execute()
+        except Exception:
+            pass
 
     except Exception as e:
         return {"resposta": f"❌ Erro: {str(e)[:100]}", "historico": data.historico}
