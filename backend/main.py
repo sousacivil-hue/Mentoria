@@ -2661,7 +2661,7 @@ async def chat(data: ChatMsg):
         "generationConfig": {"maxOutputTokens": 500}
     }).encode()
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
     req = _urllib.Request(url, data=payload, headers={"Content-Type": "application/json"})
     try:
         with _urllib.urlopen(req, timeout=30) as r:
