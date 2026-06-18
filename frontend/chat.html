@@ -147,7 +147,15 @@ function monitorarJob(jobId) {
       const foto = document.createElement('div');
       foto.className = 'balao robo';
       foto.style.padding = '4px';
-      foto.innerHTML = `<img src="${API}/screenshot/${nome}" style="max-width:100%;border-radius:6px;display:block;"><div class="hora">${hora()}</div>`;
+      const img = document.createElement('img');
+      img.style.cssText = 'max-width:100%;border-radius:6px;display:block;';
+      img.onload = () => { document.getElementById('mensagens').scrollTop = 9999; };
+      img.src = `${API}/screenshot/${nome}?t=${Date.now()}`;
+      const h = document.createElement('div');
+      h.className = 'hora';
+      h.textContent = hora();
+      foto.appendChild(img);
+      foto.appendChild(h);
       document.getElementById('mensagens').appendChild(foto);
       document.getElementById('mensagens').scrollTop = 9999;
     } else {
