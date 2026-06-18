@@ -2610,7 +2610,12 @@ async def progresso(job_id: str, request: Request):
 # ---- Robô conversacional (Claude) ----
 
 PROFESSORES = {
-    "5579998746693": {"nome": "Professor", "sistema": "siae"},
+    "5579998746693": {
+        "nome": "Luth",
+        "login": "789.626.335-15",
+        "senha": "130224",
+        "turmas": ["6", "7", "3b", "financeira", "mat digital b", "mat digital a", "exp mat", "etapa"],
+    },
 }
 
 SYSTEM_PROMPT = """Você é o assistente do SóDigita, um serviço que registra automaticamente aulas no sistema escolar SIAE.
@@ -2662,19 +2667,32 @@ async def chat(data: ChatMsg):
 
     # Verifica se tem aula para registrar
     registrar_match = re.search(r"REGISTRAR:(\{.*?\})", resposta)
+    job_id = None
     if registrar_match:
         try:
             dados_aula = json.loads(registrar_match.group(1))
             resposta = resposta.replace(registrar_match.group(0), "").strip()
-        except Exception:
-            dados_aula = None
-    else:
-        dados_aula = None
+
+            # Dispara automação SIAE
+            turma = dados_aula.get("turma", "")
+            conteudo = dados_aula.get("conteudo", "")
+            form = FormData(
+                login=professor["login"],
+                senha=professor["senha"],
+                opcoes={"aulas": True, "solicitadas": False, "notas": False},
+                modo_conteudo="proprio",
+                assuntos_por_turma={t: conteudo for t in professor["turmas"] if turma.lower() in t.lower()},
+            )
+            job_id = str(uuid.uuid4())
+            jobs[job_id] = []
+            asyncio.create_task(run_automacao(job_id, form))
+        except Exception as ex:
+            resposta += f"\n⚠️ Erro ao iniciar registro: {str(ex)[:80]}"
 
     return {
         "resposta": resposta,
         "historico": historico + [{"role": "assistant", "content": resposta}],
-        "registrar": dados_aula,
+        "job_id": job_id,
     }
 
 
