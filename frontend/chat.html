@@ -142,6 +142,13 @@ function monitorarJob(jobId) {
       es.close();
       logDiv.innerHTML += '\n✅ Concluído.';
       logDiv.innerHTML += `<div class="hora">${hora()}</div>`;
+    } else if (e.data.startsWith('📸 SCREENSHOT:')) {
+      const nome = e.data.replace('📸 SCREENSHOT:', '').trim();
+      const img = document.createElement('img');
+      img.src = `${API}/screenshot/${nome}`;
+      img.style.cssText = 'max-width:100%;border-radius:6px;margin-top:8px;display:block;';
+      logDiv.appendChild(img);
+      document.getElementById('mensagens').scrollTop = 9999;
     } else {
       logDiv.innerHTML += e.data + '\n';
       document.getElementById('mensagens').scrollTop = 9999;

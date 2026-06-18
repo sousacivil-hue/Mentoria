@@ -2443,6 +2443,15 @@ async def run_infodat(job_id: str, data: InfodatFormData):
                 await page.wait_for_timeout(3000)
                 gravadas += 1
                 log.append(f"   ✅ Gravado!")
+                # Screenshot de confirmação
+                try:
+                    import os as _os
+                    _os.makedirs("/tmp/screenshots", exist_ok=True)
+                    shot_path = f"/tmp/screenshots/{job_id}_{i}.png"
+                    await page.screenshot(path=shot_path, full_page=False)
+                    log.append(f"   📸 SCREENSHOT:{job_id}_{i}.png")
+                except Exception:
+                    pass
             except Exception as e:
                 log.append(f"   ⚠️ Erro: {e}")
 
@@ -2739,6 +2748,15 @@ async def chat(data: ChatMsg):
 
 # ---- Servir o site (frontend) pelo mesmo servidor ----
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+@app.get("/screenshot/{nome}")
+async def ver_screenshot(nome: str):
+    path = f"/tmp/screenshots/{nome}"
+    if not os.path.exists(path):
+        return {"erro": "Screenshot não encontrado"}
+    return FileResponse(path, media_type="image/png")
+
 
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
 if os.path.isdir(FRONTEND_DIR):
