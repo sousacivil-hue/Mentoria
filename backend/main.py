@@ -2458,8 +2458,7 @@ class InfodatLoginData(BaseModel):
     valor_prof: str | None = None
 
 
-@app.post("/turmas-infodat")
-async def turmas_infodat(data: InfodatLoginData):
+async def _descobrir_turmas_infodat(escola: str, professor: str, senha: str, valor_prof: str | None = None) -> dict:
     from playwright.async_api import async_playwright
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
@@ -2482,7 +2481,7 @@ async def turmas_infodat(data: InfodatLoginData):
                     await page.wait_for_timeout(5000)
 
             await page.wait_for_timeout(500)
-            await page.locator("select#escola").select_option(value=data.escola)
+            await page.locator("select#escola").select_option(value=escola)
             await page.evaluate(
                 "document.querySelector('select#escola').dispatchEvent(new Event('change'))"
             )
@@ -2496,25 +2495,25 @@ async def turmas_infodat(data: InfodatLoginData):
                     .map(o => ({value: o.value, text: o.text.trim()}))
             """)
             valores_validos = {o["value"] for o in opcoes}
-            if data.valor_prof and data.valor_prof in valores_validos:
-                valor_prof = data.valor_prof
+            if valor_prof and valor_prof in valores_validos:
+                vp = valor_prof
             else:
-                palavras = _sem_acento(data.professor).split()
-                valor_prof = None
+                palavras = _sem_acento(professor).split()
+                vp = None
                 for opt in opcoes:
                     texto = _sem_acento(opt["text"])
                     if all(p in texto for p in palavras):
-                        valor_prof = opt["value"]
+                        vp = opt["value"]
                         break
-                if not valor_prof:
+                if not vp:
                     nomes = [o["text"] for o in opcoes[:5]]
-                    return {"erro": f"Professor não encontrado. Tente com outro trecho do nome. Exemplos da lista: {nomes}"}
-            await page.locator("select#professor").select_option(value=valor_prof)
+                    return {"erro": f"Professor não encontrado. Exemplos: {nomes}"}
+            await page.locator("select#professor").select_option(value=vp)
             await page.evaluate(
                 "document.querySelector('select#professor').dispatchEvent(new Event('change'))"
             )
             await page.wait_for_timeout(1000)
-            await page.locator("input[type='password']").first.fill(data.senha)
+            await page.locator("input[type='password']").first.fill(senha)
             await page.wait_for_timeout(500)
             await page.evaluate("document.querySelector('form').submit()")
             for _ in range(120):
@@ -2537,11 +2536,16 @@ async def turmas_infodat(data: InfodatLoginData):
                         .map(o => ({ value: o.value, label: o.text.trim() }));
                 }
             """)
-            return {"turmas": turmas, "valor_prof": valor_prof}
+            return {"turmas": turmas, "valor_prof": vp}
         except Exception as e:
             return {"erro": str(e)}
         finally:
             await browser.close()
+
+
+@app.post("/turmas-infodat")
+async def turmas_infodat(data: InfodatLoginData):
+    return await _descobrir_turmas_infodat(data.escola, data.professor, data.senha, data.valor_prof)
 
 
 @app.post("/executar-infodat")
@@ -2618,9 +2622,11 @@ PROFESSORES = {
     },
     "5579998746694": {
         "nome": "Marcos",
-        "login": "789.626.335-15",
-        "senha": "130224",
-        "turmas": ["6", "7", "3b", "financeira", "mat digital b", "mat digital a", "exp mat", "etapa"],
+        "sistema": "infodat",
+        "escola": "arqui",
+        "professor": "MARCOS ANTÔNIO PASSOS CHAGAS",
+        "senha": "Chagas",
+        "turmas": ["TURMA A", "TURMA B"],
     },
 }
 
@@ -2680,24 +2686,47 @@ async def chat(data: ChatMsg):
             dados_aula = json.loads(registrar_match.group(1))
             resposta = resposta.replace(registrar_match.group(0), "").strip()
 
-            # Dispara automação SIAE
             turma = dados_aula.get("turma", "")
             conteudo = dados_aula.get("conteudo", "")
-            # Mapeia todas as turmas do professor com o conteúdo informado
-            # Se turma específica foi informada, filtra; senão usa todas
-            turmas_match = [t for t in professor["turmas"] if turma.lower() in t.lower()]
-            if not turmas_match:
-                turmas_match = professor["turmas"]
-            form = FormData(
-                login=professor["login"],
-                senha=professor["senha"],
-                opcoes={"aulas": True, "solicitadas": False, "notas": False},
-                modo_conteudo="proprio",
-                assuntos_por_turma={t: conteudo for t in turmas_match},
-            )
-            job_id = str(uuid.uuid4())
-            jobs[job_id] = []
-            asyncio.create_task(run_automacao(job_id, form))
+            sistema = professor.get("sistema", "siae")
+
+            if sistema == "infodat":
+                turmas_data = await _descobrir_turmas_infodat(
+                    professor["escola"], professor["professor"], professor["senha"]
+                )
+                if "erro" in turmas_data:
+                    resposta += f"\n⚠️ {turmas_data['erro']}"
+                else:
+                    todas_turmas = turmas_data.get("turmas", [])
+                    turmas_match = [t for t in todas_turmas if turma.upper() in t["label"].upper()]
+                    if not turmas_match:
+                        turmas_match = todas_turmas
+                    hoje = __import__("datetime").date.today().strftime("%d/%m/%Y")
+                    entradas = [{"data": hoje, "turma_value": t["value"], "num_aulas": "2", "conteudo": conteudo} for t in turmas_match]
+                    form_inf = InfodatFormData(
+                        escola=professor["escola"],
+                        professor=professor["professor"],
+                        senha=professor["senha"],
+                        entradas=entradas,
+                    )
+                    job_id = str(uuid.uuid4())
+                    jobs[job_id] = []
+                    asyncio.create_task(run_infodat(job_id, form_inf))
+            else:
+                # SIAE
+                turmas_match = [t for t in professor["turmas"] if turma.lower() in t.lower()]
+                if not turmas_match:
+                    turmas_match = professor["turmas"]
+                form = FormData(
+                    login=professor["login"],
+                    senha=professor["senha"],
+                    opcoes={"aulas": True, "solicitadas": False, "notas": False},
+                    modo_conteudo="proprio",
+                    assuntos_por_turma={t: conteudo for t in turmas_match},
+                )
+                job_id = str(uuid.uuid4())
+                jobs[job_id] = []
+                asyncio.create_task(run_automacao(job_id, form))
         except Exception as ex:
             resposta += f"\n⚠️ Erro ao iniciar registro: {str(ex)[:80]}"
 
