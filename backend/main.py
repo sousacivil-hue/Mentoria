@@ -2717,7 +2717,11 @@ async def chat(data: ChatMsg):
             resposta = resposta.replace(registrar_match.group(0), "").strip()
 
             turma = dados_aula.get("turma", "")
-            conteudo = dados_aula.get("conteudo", "")
+            conteudo = dados_aula.get("conteudo", "").strip()
+            if conteudo:
+                conteudo = conteudo[0].upper() + conteudo[1:]
+                if not conteudo.endswith("."):
+                    conteudo += "."
             sistema = professor.get("sistema", "siae")
 
             if sistema == "infodat":
