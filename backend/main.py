@@ -2677,12 +2677,17 @@ async def chat(data: ChatMsg):
             # Dispara automação SIAE
             turma = dados_aula.get("turma", "")
             conteudo = dados_aula.get("conteudo", "")
+            # Mapeia todas as turmas do professor com o conteúdo informado
+            # Se turma específica foi informada, filtra; senão usa todas
+            turmas_match = [t for t in professor["turmas"] if turma.lower() in t.lower()]
+            if not turmas_match:
+                turmas_match = professor["turmas"]
             form = FormData(
                 login=professor["login"],
                 senha=professor["senha"],
                 opcoes={"aulas": True, "solicitadas": False, "notas": False},
                 modo_conteudo="proprio",
-                assuntos_por_turma={t: conteudo for t in professor["turmas"] if turma.lower() in t.lower()},
+                assuntos_por_turma={t: conteudo for t in turmas_match},
             )
             job_id = str(uuid.uuid4())
             jobs[job_id] = []
