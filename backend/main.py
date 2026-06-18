@@ -2639,25 +2639,34 @@ class ChatMsg(BaseModel):
 
 @app.post("/chat")
 async def chat(data: ChatMsg):
-    import anthropic as _anthropic
+    import urllib.request as _urllib
 
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        return {"resposta": "❌ API do Claude não configurada."}
+        return {"resposta": "❌ API do Gemini não configurada."}
 
     professor = PROFESSORES.get(data.numero, {"nome": "Professor", "sistema": "siae"})
 
     historico = data.historico + [{"role": "user", "content": data.mensagem}]
 
-    client = _anthropic.Anthropic(api_key=api_key)
-    response = client.messages.create(
-        model="claude-haiku-4-5-20251001",
-        max_tokens=500,
-        system=SYSTEM_PROMPT.replace("Professor", professor["nome"]),
-        messages=historico,
-    )
+    # Monta histórico no formato Gemini
+    gemini_contents = []
+    for msg in historico:
+        role = "user" if msg["role"] == "user" else "model"
+        gemini_contents.append({"role": role, "parts": [{"text": msg["content"]}]})
 
-    resposta = response.content[0].text
+    payload = json.dumps({
+        "system_instruction": {"parts": [{"text": SYSTEM_PROMPT.replace("Professor", professor["nome"])}]},
+        "contents": gemini_contents,
+        "generationConfig": {"maxOutputTokens": 500}
+    }).encode()
+
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+    req = _urllib.Request(url, data=payload, headers={"Content-Type": "application/json"})
+    with _urllib.urlopen(req) as r:
+        result = json.loads(r.read())
+
+    resposta = result["candidates"][0]["content"]["parts"][0]["text"]
 
     # Verifica se tem aula para registrar
     registrar_match = re.search(r"REGISTRAR:(\{.*?\})", resposta)
