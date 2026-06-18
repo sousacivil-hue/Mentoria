@@ -2616,6 +2616,12 @@ PROFESSORES = {
         "senha": "130224",
         "turmas": ["6", "7", "3b", "financeira", "mat digital b", "mat digital a", "exp mat", "etapa"],
     },
+    "5579998746694": {
+        "nome": "Marcos",
+        "login": "789.626.335-15",
+        "senha": "130224",
+        "turmas": ["6", "7", "3b", "financeira", "mat digital b", "mat digital a", "exp mat", "etapa"],
+    },
 }
 
 SYSTEM_PROMPT = """Você é o assistente do SóDigita, um serviço que registra automaticamente aulas no sistema escolar SIAE.
