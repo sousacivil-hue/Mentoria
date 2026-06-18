@@ -2447,22 +2447,12 @@ async def run_infodat(job_id: str, data: InfodatFormData):
                 await page.wait_for_timeout(3000)
                 gravadas += 1
                 log.append(f"   ✅ Gravado!")
-                # Screenshot só da linha de hoje no diário
+                # Screenshot da confirmação logo após salvar
                 try:
                     import os as _os
-                    from datetime import date as _date
                     _os.makedirs("/tmp/screenshots", exist_ok=True)
                     shot_path = f"/tmp/screenshots/{job_id}_{i}.png"
-                    hoje_str = _date.today().strftime("%d/%m/%Y")
-                    await page.goto(f"{INFODAT_BASE}/diario.php", wait_until="domcontentloaded", timeout=20000)
-                    await page.wait_for_timeout(2000)
-                    # Filtra por hoje via URL ou localiza a linha
-                    linha = page.locator(f"tr:has-text('{hoje_str}')").first
-                    if await linha.count() > 0:
-                        await linha.screenshot(path=shot_path)
-                    else:
-                        # Fallback: primeira linha da tabela
-                        await page.locator("table tr").nth(1).screenshot(path=shot_path)
+                    await page.screenshot(path=shot_path, clip={"x": 0, "y": 0, "width": 1000, "height": 300})
                     log.append(f"   📸 SCREENSHOT:{job_id}_{i}.png")
                 except Exception:
                     pass
