@@ -2296,6 +2296,7 @@ class InfodatFormData(BaseModel):
     senha: str
     entradas: list[InfodatEntrada]
     alunos_falta: list[str] = []  # partes do nome em maiúsculo
+    numero: str = ""    # WhatsApp do professor para notificação
 
 
 INFODAT_BASE = "https://www.sigmawd.com.br/infodat/professor"
@@ -2320,18 +2321,10 @@ async def run_infodat(job_id: str, data: InfodatFormData):
 
         # ── LOGIN ────────────────────────────────────────────────────────────
         log.append("🔐 Fazendo login no Infodat...")
-        for tentativa in range(3):
-            try:
-                await page.goto(f"{INFODAT_BASE}/login.php",
-                                wait_until="domcontentloaded", timeout=60000)
-                break
-            except Exception as e:
-                log.append(f"  ⚠️ Tentativa {tentativa + 1} falhou: {e.__class__.__name__}")
-                await page.wait_for_timeout(5000)
-
-        await page.wait_for_timeout(500)
-
-        try:
+        for tentativa_login in range(3):
+          try:
+            await page.goto(f"{INFODAT_BASE}/login.php", wait_until="domcontentloaded", timeout=60000)
+            await page.wait_for_timeout(500)
             await page.locator("select#escola").select_option(value=data.escola)
             await page.evaluate(
                 "document.querySelector('select#escola').dispatchEvent(new Event('change'))"
@@ -2372,7 +2365,14 @@ async def run_infodat(job_id: str, data: InfodatFormData):
                     break
 
             if "login.php" in page.url:
-                log.append("❌ ERRO: login não aceito — verifique professor e senha.")
+                if tentativa_login < 2:
+                    log.append(f"⚠️ Login falhou, tentando novamente ({tentativa_login + 2}/3)...")
+                    await browser.close()
+                    await asyncio.sleep(5)
+                    continue
+                log.append("❌ Login não aceito após 3 tentativas.")
+                if data.numero:
+                    notificacoes.setdefault(data.numero, []).append("❌ Não consegui registrar suas aulas — login falhou 3 vezes. Tente novamente mais tarde.")
                 log.append("__ERRO__")
                 log.append("__CONCLUIDO__")
                 await browser.close()
@@ -2462,6 +2462,11 @@ async def run_infodat(job_id: str, data: InfodatFormData):
                 log.append(f"   ⚠️ Erro: {e}")
 
         log.append(f"\n✅ CONCLUÍDO! Aulas gravadas: {gravadas}/{len(data.entradas)}")
+        if data.numero:
+            if gravadas == len(data.entradas):
+                notificacoes.setdefault(data.numero, []).append(f"✅ {gravadas} aula(s) registrada(s) com sucesso!")
+            else:
+                notificacoes.setdefault(data.numero, []).append(f"⚠️ {gravadas} de {len(data.entradas)} aulas registradas. Verifique o sistema.")
         log.append("__CONCLUIDO__")
         await browser.close()
 
@@ -2667,6 +2672,15 @@ class ChatMsg(BaseModel):
     historico: list[dict] = []
 
 
+# Notificações pendentes por professor {numero: [msg, ...]}
+notificacoes: dict[str, list[str]] = {}
+
+
+@app.get("/notificacoes/{numero}")
+async def get_notificacoes(numero: str):
+    msgs = notificacoes.pop(numero, [])
+    return {"mensagens": msgs}
+
 @app.post("/chat")
 async def chat(data: ChatMsg):
     import anthropic as _anthropic
@@ -2714,6 +2728,7 @@ async def chat(data: ChatMsg):
                     professor=professor["professor"],
                     senha=professor["senha"],
                     entradas=entradas,
+                    numero=data.numero,
                 )
                 job_id = str(uuid.uuid4())
                 jobs[job_id] = []

@@ -177,6 +177,16 @@ document.getElementById('input').addEventListener('keydown', e => {
 setTimeout(() => {
   addMsg('👋 Olá! Digite uma mensagem para testar o robô.', 'robo');
 }, 300);
+
+// Polling de notificações
+setInterval(async () => {
+  const numero = document.getElementById('numero').value;
+  try {
+    const res = await fetch(`${API}/notificacoes/${numero}`);
+    const data = await res.json();
+    (data.mensagens || []).forEach(msg => addMsg(msg, 'robo'));
+  } catch (e) {}
+}, 15000);
 </script>
 </body>
 </html>
