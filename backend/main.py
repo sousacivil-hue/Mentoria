@@ -2679,6 +2679,50 @@ async def get_notificacoes(numero: str):
     msgs = notificacoes.pop(numero, [])
     return {"mensagens": msgs}
 
+
+# ---- Gerente de Projetos IA ----
+
+class ManagerMsg(BaseModel):
+    mensagem: str
+    historico: list[dict] = []
+
+_CLAUDE_MD = open(os.path.join(os.path.dirname(__file__), "../CLAUDE.md")).read()
+
+MANAGER_PROMPT = f"""Você é o gerente de projetos do SóDigita, um SaaS que automatiza o preenchimento de diários escolares para professores brasileiros via WhatsApp e web.
+
+Você conhece profundamente o projeto pelo documento abaixo. Sua função é ajudar o fundador (Luth) a tomar decisões, priorizar tarefas, identificar riscos e planejar o desenvolvimento.
+
+Quando perguntado "o que faço hoje?" ou "por onde começo?", responda com no máximo 3 tarefas priorizadas por impacto no negócio. Seja direto e prático.
+
+=== CONTEXTO DO PROJETO ===
+{_CLAUDE_MD}
+=== FIM DO CONTEXTO ===
+
+Responda sempre em português brasileiro, de forma concisa e objetiva."""
+
+@app.post("/manager")
+async def manager(data: ManagerMsg):
+    import anthropic as _anthropic
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        return {"resposta": "❌ API do Claude não configurada.", "historico": data.historico}
+    historico = data.historico + [{"role": "user", "content": data.mensagem}]
+    try:
+        client = _anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=800,
+            system=MANAGER_PROMPT,
+            messages=historico,
+        )
+        resposta = response.content[0].text
+    except Exception as e:
+        return {"resposta": f"❌ Erro: {str(e)[:100]}", "historico": data.historico}
+    return {
+        "resposta": resposta,
+        "historico": historico + [{"role": "assistant", "content": resposta}],
+    }
+
 @app.post("/chat")
 async def chat(data: ChatMsg):
     import anthropic as _anthropic
