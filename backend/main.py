@@ -2969,6 +2969,55 @@ async def manager(data: ManagerMsg):
         "historico": historico + [{"role": "assistant", "content": resposta}],
     }
 
+CADASTRO_PROMPT = """Você é o assistente de cadastro do SoDigita. Seu papel é guiar o professor para se cadastrar no sistema passo a passo, de forma simples e amigável.
+
+Fluxo de cadastro:
+1. Perguntar o nome do professor
+2. Perguntar quantas escolas ele dá aula
+3. Para cada escola:
+   a. Nome da escola
+   b. Sistema usado (SIAE, Infodat, ActiveSoft, Salesiano)
+   c. Login (CPF para SIAE, nome completo para Infodat, usuário para outros)
+   d. Senha
+   e. Quais dias da semana ele está nessa escola
+   f. Quais turmas ele tem nessa escola (ex: 1A, 2B, 3C)
+4. Quando tiver todas as informações, retorne EXATAMENTE este JSON no final da resposta:
+CADASTRO:{"nome":"...","escolas":[{"nome":"...","sistema":"...","login":"...","senha":"...","dias":["segunda","terça"],"turmas":[{"label":"3A","value":"3A"}]}]}
+
+Seja informal, próximo, linguagem de professor brasileiro. Não peça tudo de uma vez — uma pergunta por vez.
+Se o professor já deu uma informação, não pergunte de novo.
+Quando tiver TUDO completo de TODAS as escolas, gere o JSON CADASTRO."""
+
+
+def _buscar_professor_supabase(numero: str):
+    sb = _get_supabase()
+    if not sb:
+        return None
+    try:
+        res = sb.table("professores").select("*").eq("numero_whatsapp", numero).execute()
+        if res.data:
+            return res.data[0]
+        return None
+    except Exception:
+        return None
+
+
+def _salvar_professor_supabase(numero: str, dados: dict):
+    sb = _get_supabase()
+    if not sb:
+        return False
+    try:
+        sb.table("professores").insert({
+            "numero_whatsapp": numero,
+            "nome": dados.get("nome", ""),
+            "escolas": dados.get("escolas", []),
+            "ativo": True,
+        }).execute()
+        return True
+    except Exception:
+        return False
+
+
 @app.post("/chat")
 async def chat(data: ChatMsg):
     import anthropic as _anthropic
@@ -2977,7 +3026,66 @@ async def chat(data: ChatMsg):
     if not api_key:
         return {"resposta": "❌ API do Claude não configurada.", "historico": data.historico}
 
-    professor = PROFESSORES.get(data.numero, {"nome": "Professor", "sistema": "siae"})
+    # Busca professor no dict local ou no Supabase
+    professor = PROFESSORES.get(data.numero)
+    if not professor:
+        professor_sb = _buscar_professor_supabase(data.numero)
+        if professor_sb:
+            # Converte formato Supabase para formato interno
+            escolas = professor_sb.get("escolas", [])
+            if escolas:
+                escola = escolas[0]
+                professor = {
+                    "nome": professor_sb["nome"],
+                    "sistema": escola.get("sistema", "siae"),
+                    "login": escola.get("login", ""),
+                    "senha": escola.get("senha", ""),
+                    "turmas": escola.get("turmas", []),
+                    "escola": escola.get("nome", ""),
+                    "professor": escola.get("login", ""),
+                    "escolas": escolas,
+                }
+
+    # Professor não cadastrado — inicia fluxo de cadastro
+    if not professor:
+        historico = data.historico + [{"role": "user", "content": data.mensagem}]
+        if not data.historico:
+            boas_vindas = "Olá! 👋 Bem-vindo ao *SoDigita*!\n\nVou te cadastrar rapidinho para você nunca mais perder tempo preenchendo diário. 😊\n\nPrimeiro, qual é o seu nome?"
+            return {
+                "resposta": boas_vindas,
+                "historico": [{"role": "assistant", "content": boas_vindas}],
+                "job_id": None,
+                "cadastrando": True,
+            }
+
+        client = _anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=600,
+            system=CADASTRO_PROMPT,
+            messages=historico,
+        )
+        resposta = response.content[0].text
+
+        # Verifica se o cadastro foi concluído
+        cadastro_match = re.search(r"CADASTRO:(\{.*\})", resposta, re.DOTALL)
+        if cadastro_match:
+            try:
+                dados_cadastro = json.loads(cadastro_match.group(1))
+                _salvar_professor_supabase(data.numero, dados_cadastro)
+                resposta = resposta.replace(cadastro_match.group(0), "").strip()
+                resposta += "\n\n✅ Cadastro concluído! Agora é só me mandar a turma e o conteúdo da aula que eu registro pra você. 🚀"
+            except Exception:
+                pass
+
+        return {
+            "resposta": resposta,
+            "historico": historico + [{"role": "assistant", "content": resposta}],
+            "job_id": None,
+            "cadastrando": True,
+        }
+
+    professor = professor or {"nome": "Professor", "sistema": "siae"}
     historico = data.historico + [{"role": "user", "content": data.mensagem}]
 
     try:
