@@ -3025,6 +3025,52 @@ def _buscar_professor_supabase(numero: str):
         return None
 
 
+def _classificar_conversa(historico: list, api_key: str) -> dict:
+    """Usa Claude para classificar o status da conversa e gerar resumo."""
+    try:
+        import anthropic as _anthropic
+        client = _anthropic.Anthropic(api_key=api_key)
+        conversa_texto = "\n".join(
+            f"{'Professor' if m['role']=='user' else 'Robô'}: {m['content']}"
+            for m in historico[-10:]
+        )
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=200,
+            system="""Classifique esta conversa de vendas do SóDigita. Retorne EXATAMENTE este JSON:
+{"status":"cadastrado","nome":"Nome do professor","sistema":"SIAE","resumo":"Uma frase resumindo o que aconteceu"}
+
+Status possíveis:
+- "cadastrado": professor completou o cadastro
+- "lead_quente": interessado, sistema suportado, mas não finalizou
+- "sistema_novo": quer o serviço mas usa sistema não suportado
+- "abandonou": iniciou conversa mas não avançou
+- "fora_escopo": pergunta sem relação com o produto
+
+Retorne APENAS o JSON, sem explicação.""",
+            messages=[{"role": "user", "content": conversa_texto}],
+        )
+        return json.loads(response.content[0].text.strip())
+    except Exception:
+        return {"status": "abandonou", "nome": "", "sistema": "", "resumo": "Erro ao classificar"}
+
+
+def _salvar_conversa_supabase(numero: str, classificacao: dict):
+    sb = _get_supabase()
+    if not sb:
+        return
+    try:
+        sb.table("conversas").upsert({
+            "numero_whatsapp": numero,
+            "nome": classificacao.get("nome", ""),
+            "status": classificacao.get("status", "abandonou"),
+            "sistema": classificacao.get("sistema", ""),
+            "resumo": classificacao.get("resumo", ""),
+        }, on_conflict="numero_whatsapp").execute()
+    except Exception:
+        pass
+
+
 def _salvar_professor_supabase(numero: str, dados: dict):
     sb = _get_supabase()
     if not sb:
@@ -3098,8 +3144,23 @@ async def chat(data: ChatMsg):
                 _salvar_professor_supabase(data.numero, dados_cadastro)
                 resposta = resposta.replace(cadastro_match.group(0), "").strip()
                 resposta += "\n\n✅ Cadastro concluído! Agora é só me mandar a turma e o conteúdo da aula que eu registro pra você. 🚀"
+                _salvar_conversa_supabase(data.numero, {
+                    "status": "cadastrado",
+                    "nome": dados_cadastro.get("nome", ""),
+                    "sistema": dados_cadastro.get("escolas", [{}])[0].get("sistema", ""),
+                    "resumo": f"Professor cadastrou {len(dados_cadastro.get('escolas', []))} escola(s).",
+                })
             except Exception:
                 pass
+        else:
+            # Classifica conversa em background se tiver pelo menos 4 trocas
+            hist_completo = historico + [{"role": "assistant", "content": resposta}]
+            if len(hist_completo) >= 4:
+                try:
+                    classificacao = _classificar_conversa(hist_completo, api_key)
+                    _salvar_conversa_supabase(data.numero, classificacao)
+                except Exception:
+                    pass
 
         return {
             "resposta": resposta,
@@ -3184,6 +3245,30 @@ async def chat(data: ChatMsg):
 # ---- Servir o site (frontend) pelo mesmo servidor ----
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+
+@app.get("/admin/conversas")
+async def admin_conversas():
+    sb = _get_supabase()
+    if not sb:
+        return {"erro": "Supabase não configurado"}
+    try:
+        res = sb.table("conversas").select("*").order("atualizado_em", desc=True).limit(100).execute()
+        return {"conversas": res.data}
+    except Exception as e:
+        return {"erro": str(e)}
+
+
+@app.post("/admin/conversas/{numero}/visto")
+async def marcar_visto(numero: str):
+    sb = _get_supabase()
+    if not sb:
+        return {"ok": False}
+    try:
+        sb.table("conversas").update({"visto": True}).eq("numero_whatsapp", numero).execute()
+        return {"ok": True}
+    except Exception:
+        return {"ok": False}
+
 
 @app.get("/screenshot/{nome}")
 async def ver_screenshot(nome: str):

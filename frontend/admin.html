@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SóDigita — Painel de Conversas</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; }
+
+  header { background: #7C5CFF; color: white; padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; }
+  header h1 { font-size: 20px; font-weight: 700; }
+  header span { font-size: 13px; opacity: 0.8; }
+
+  .filtros { display: flex; gap: 8px; padding: 20px 32px 0; flex-wrap: wrap; }
+  .filtro-btn { padding: 8px 16px; border-radius: 20px; border: 2px solid #e0e0e0; background: white; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
+  .filtro-btn.ativo { border-color: #7C5CFF; color: #7C5CFF; }
+  .filtro-btn:hover { border-color: #7C5CFF; }
+
+  .contador { padding: 16px 32px 8px; font-size: 13px; color: #888; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; padding: 8px 32px 32px; }
+
+  .card { background: white; border-radius: 12px; padding: 20px; border-left: 4px solid #ccc; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .card.cadastrado { border-left-color: #00c853; }
+  .card.lead_quente { border-left-color: #ff6d00; }
+  .card.sistema_novo { border-left-color: #7C5CFF; }
+  .card.abandonou { border-left-color: #bbb; }
+  .card.fora_escopo { border-left-color: #eee; }
+  .card.visto { opacity: 0.5; }
+
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .card-nome { font-size: 15px; font-weight: 700; }
+  .card-status { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; }
+  .status-cadastrado { background: #e8f5e9; color: #2e7d32; }
+  .status-lead_quente { background: #fff3e0; color: #e65100; }
+  .status-sistema_novo { background: #ede7f6; color: #4527a0; }
+  .status-abandonou { background: #f5f5f5; color: #757575; }
+  .status-fora_escopo { background: #fafafa; color: #bbb; }
+
+  .card-sistema { font-size: 12px; color: #888; margin-bottom: 8px; }
+  .card-resumo { font-size: 13px; color: #444; line-height: 1.5; margin-bottom: 14px; }
+  .card-numero { font-size: 11px; color: #bbb; margin-bottom: 12px; }
+
+  .card-actions { display: flex; gap: 8px; }
+  .btn-visto { background: #f0f0f0; border: none; border-radius: 8px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-weight: 600; color: #555; }
+  .btn-visto:hover { background: #e0e0e0; }
+
+  .vazio { text-align: center; padding: 60px; color: #bbb; font-size: 15px; }
+
+  .badge-novo { display: inline-block; background: #ff3d00; color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 8px; margin-left: 6px; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📊 Painel de Conversas</h1>
+  <span id="ultima-atualizacao">Carregando...</span>
+</header>
+
+<div class="filtros">
+  <button class="filtro-btn ativo" onclick="filtrar('todos')">Todos</button>
+  <button class="filtro-btn" onclick="filtrar('lead_quente')">🔥 Lead quente</button>
+  <button class="filtro-btn" onclick="filtrar('sistema_novo')">🆕 Sistema novo</button>
+  <button class="filtro-btn" onclick="filtrar('cadastrado')">✅ Cadastrado</button>
+  <button class="filtro-btn" onclick="filtrar('abandonou')">❓ Abandonou</button>
+  <button class="filtro-btn" onclick="filtrar('fora_escopo')">🚫 Fora do escopo</button>
+</div>
+
+<div class="contador" id="contador"></div>
+<div class="grid" id="grid"></div>
+
+<script>
+const API = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+let todas = [];
+let filtroAtual = 'todos';
+
+const STATUS_LABEL = {
+  cadastrado: '✅ Cadastrado',
+  lead_quente: '🔥 Lead quente',
+  sistema_novo: '🆕 Sistema novo',
+  abandonou: '❓ Abandonou',
+  fora_escopo: '🚫 Fora do escopo',
+};
+
+async function carregar() {
+  try {
+    const res = await fetch(`${API}/admin/conversas`);
+    const data = await res.json();
+    todas = data.conversas || [];
+    renderizar();
+    document.getElementById('ultima-atualizacao').textContent =
+      'Atualizado: ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  } catch(e) {
+    document.getElementById('grid').innerHTML = '<div class="vazio">❌ Erro ao carregar dados</div>';
+  }
+}
+
+function filtrar(status) {
+  filtroAtual = status;
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('ativo'));
+  event.target.classList.add('ativo');
+  renderizar();
+}
+
+function renderizar() {
+  const lista = filtroAtual === 'todos' ? todas : todas.filter(c => c.status === filtroAtual);
+  const pendentes = lista.filter(c => !c.visto);
+
+  document.getElementById('contador').textContent =
+    `${lista.length} conversa(s) — ${pendentes.length} não vista(s)`;
+
+  if (!lista.length) {
+    document.getElementById('grid').innerHTML = '<div class="vazio">Nenhuma conversa aqui ainda.</div>';
+    return;
+  }
+
+  document.getElementById('grid').innerHTML = lista.map(c => `
+    <div class="card ${c.status} ${c.visto ? 'visto' : ''}" id="card-${c.numero_whatsapp}">
+      <div class="card-header">
+        <div class="card-nome">
+          ${c.nome || 'Desconhecido'}
+          ${!c.visto ? '<span class="badge-novo">NOVO</span>' : ''}
+        </div>
+        <span class="card-status status-${c.status}">${STATUS_LABEL[c.status] || c.status}</span>
+      </div>
+      <div class="card-sistema">${c.sistema || 'Sistema não identificado'}</div>
+      <div class="card-resumo">${c.resumo || '—'}</div>
+      <div class="card-numero">${formatarNumero(c.numero_whatsapp)}</div>
+      <div class="card-actions">
+        ${!c.visto ? `<button class="btn-visto" onclick="marcarVisto('${c.numero_whatsapp}')">Marcar como visto</button>` : '<span style="font-size:12px;color:#bbb">Visto ✓</span>'}
+      </div>
+    </div>
+  `).join('');
+}
+
+function formatarNumero(n) {
+  if (!n) return '';
+  return '+' + n.replace(/(\d{2})(\d{2})(\d{5})(\d{4})/, '$1 ($2) $3-$4');
+}
+
+async function marcarVisto(numero) {
+  await fetch(`${API}/admin/conversas/${numero}/visto`, { method: 'POST' });
+  const c = todas.find(x => x.numero_whatsapp === numero);
+  if (c) c.visto = true;
+  renderizar();
+}
+
+carregar();
+setInterval(carregar, 60000);
+</script>
+</body>
+</html>
