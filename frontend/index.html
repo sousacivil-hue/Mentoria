@@ -6,286 +6,144 @@
 <title>SóDigita — Você planeja. Você ensina. A gente só digita.</title>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Segoe UI', Arial, sans-serif; background:#0D1117; color:#E6EAF2; line-height:1.6; }
-  .grad-texto { background:linear-gradient(90deg,#7C5CFF,#00D4AA); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  body { font-family:'Segoe UI', Arial, sans-serif; background:#fff; color:#1a1a1a; line-height:1.6; }
 
-  /* HERO */
-  .hero { max-width:980px; margin:0 auto; padding:70px 24px 50px; text-align:center; }
-  .logo-topo { font-size:20px; font-weight:800; margin-bottom:50px; }
-  .logo-topo .raio { color:#00D4AA; }
-  .hero h1 { font-size:clamp(32px, 6vw, 56px); font-weight:800; line-height:1.15; color:#fff; }
-  .hero .slogan { font-size:clamp(18px, 3vw, 24px); margin-top:22px; color:#8B93A7; }
-  .hero .slogan b { color:#00D4AA; font-weight:700; }
-  .botoes-hero { margin-top:40px; display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
-  .btn { display:inline-block; padding:16px 36px; border-radius:14px; font-size:17px; font-weight:700; text-decoration:none; transition:transform .15s; }
-  .btn:hover { transform:translateY(-2px); }
-  .btn-primario { background:linear-gradient(90deg,#7C5CFF,#00D4AA); color:#0D1117; }
-  .btn-zap { background:#1D2433; color:#E6EAF2; border:1.5px solid #2C3548; }
+  nav { display:flex; align-items:center; justify-content:space-between; padding:24px 48px; border-bottom:1px solid #f0f0f0; }
+  .logo { font-size:18px; font-weight:800; color:#1a1a1a; text-decoration:none; }
+  .logo span { color:#7C5CFF; }
+  .nav-btn { background:#7C5CFF; color:#fff; padding:10px 24px; border-radius:8px; font-size:14px; font-weight:600; text-decoration:none; }
 
-  /* A CONTA */
-  .secao { max-width:980px; margin:0 auto; padding:60px 24px; }
-  .secao h2 { font-size:clamp(24px,4vw,34px); font-weight:800; color:#fff; text-align:center; margin-bottom:14px; }
-  .secao .sub { text-align:center; color:#8B93A7; max-width:640px; margin:0 auto 44px; }
-  .conta { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; }
-  .conta .num { background:#161B26; border:1px solid #232A38; border-radius:16px; padding:30px 22px; text-align:center; }
-  .conta .num .valor { font-size:42px; font-weight:800; }
-  .conta .num .desc { color:#8B93A7; font-size:14px; margin-top:8px; }
+  .hero { max-width:760px; margin:0 auto; padding:100px 24px 80px; text-align:center; }
+  .hero h1 { font-size:clamp(36px,6vw,60px); font-weight:800; line-height:1.1; color:#1a1a1a; letter-spacing:-1px; }
+  .hero h1 span { color:#7C5CFF; }
+  .hero p { font-size:18px; color:#666; margin-top:20px; max-width:520px; margin-left:auto; margin-right:auto; }
+  .hero-btn { display:inline-block; margin-top:40px; background:#7C5CFF; color:#fff; padding:16px 40px; border-radius:10px; font-size:16px; font-weight:700; text-decoration:none; }
+  .hero-btn:hover { background:#6a4de0; }
 
-  /* COMO FUNCIONA */
-  .passos { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:18px; }
-  .passo { background:#161B26; border:1px solid #232A38; border-radius:16px; padding:28px 24px; }
-  .passo .n { width:38px; height:38px; border-radius:12px; background:linear-gradient(135deg,#7C5CFF,#00D4AA); color:#0D1117; font-weight:800; font-size:18px; display:flex; align-items:center; justify-content:center; margin-bottom:16px; }
-  .passo h3 { color:#fff; font-size:18px; margin-bottom:8px; }
-  .passo p { color:#9BA6BC; font-size:14.5px; }
+  .como { max-width:900px; margin:0 auto; padding:80px 24px; }
+  .como h2 { text-align:center; font-size:32px; font-weight:800; margin-bottom:56px; }
+  .passos { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:40px; }
+  .passo { text-align:center; }
+  .passo .num { width:40px; height:40px; border-radius:50%; background:#7C5CFF; color:#fff; font-weight:800; font-size:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
+  .passo h3 { font-size:16px; font-weight:700; margin-bottom:8px; }
+  .passo p { font-size:14px; color:#666; }
 
-  /* CONFIANÇA */
-  .confianca { background:#10151E; border-top:1px solid #1C2330; border-bottom:1px solid #1C2330; }
-  .selos { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:18px; }
-  .selo { display:flex; gap:14px; align-items:flex-start; }
-  .selo .ic { font-size:26px; }
-  .selo b { color:#fff; display:block; margin-bottom:4px; }
-  .selo span { color:#9BA6BC; font-size:14px; }
+  .sistemas { background:#f8f8f8; }
+  .sistemas-inner { max-width:900px; margin:0 auto; padding:80px 24px; }
+  .sistemas-inner h2 { text-align:center; font-size:32px; font-weight:800; margin-bottom:16px; }
+  .sistemas-inner p.sub { text-align:center; color:#666; margin-bottom:48px; }
+  .grid-sistemas { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; }
+  .sistema { background:#fff; border:1px solid #e8e8e8; border-radius:12px; padding:24px; }
+  .sistema h3 { font-size:15px; font-weight:700; margin-bottom:6px; }
+  .sistema p { font-size:13px; color:#888; margin-bottom:16px; }
+  .sistema a { font-size:13px; font-weight:600; color:#7C5CFF; text-decoration:none; }
+  .sistema a:hover { text-decoration:underline; }
 
-  /* SISTEMAS */
-  .sistemas { display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:18px; }
-  .sistema { background:#161B26; border:1px solid #232A38; border-radius:16px; padding:30px; text-align:center; }
-  .sistema h3 { color:#fff; font-size:20px; }
-  .sistema p { color:#8B93A7; font-size:14px; margin:10px 0 22px; }
+  .preco { max-width:480px; margin:0 auto; padding:80px 24px; text-align:center; }
+  .preco h2 { font-size:32px; font-weight:800; margin-bottom:12px; }
+  .preco .sub { color:#666; margin-bottom:40px; }
+  .card-preco { border:2px solid #7C5CFF; border-radius:16px; padding:40px; }
+  .card-preco .badge { display:inline-block; background:#7C5CFF; color:#fff; font-size:12px; font-weight:700; padding:4px 14px; border-radius:20px; margin-bottom:20px; }
+  .card-preco .valor { font-size:52px; font-weight:800; color:#1a1a1a; }
+  .card-preco .valor small { font-size:18px; color:#888; font-weight:400; }
+  .card-preco .desc { color:#666; font-size:14px; margin:12px 0 28px; }
+  .card-preco ul { list-style:none; text-align:left; margin-bottom:32px; }
+  .card-preco li { padding:8px 0; font-size:14px; border-bottom:1px solid #f0f0f0; }
+  .card-preco li::before { content:'✓ '; color:#7C5CFF; font-weight:700; }
+  .card-preco a { display:block; background:#7C5CFF; color:#fff; padding:14px; border-radius:10px; font-weight:700; text-decoration:none; font-size:15px; }
 
-  /* PREÇO */
-  .planos { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:18px; max-width:980px; margin:0 auto; }
-  .plano { background:#161B26; border:1px solid #232A38; border-radius:20px; padding:32px 26px; text-align:center; position:relative; }
-  .plano.destaque { border-color:#7C5CFF; }
-  .plano .badge { position:absolute; top:-14px; left:50%; transform:translateX(-50%); background:linear-gradient(90deg,#7C5CFF,#00D4AA); color:#0D1117; font-size:12px; font-weight:800; padding:4px 16px; border-radius:20px; white-space:nowrap; }
-  .plano h3 { color:#fff; font-size:18px; font-weight:800; margin-bottom:8px; }
-  .plano .inclui { color:#8B93A7; font-size:13px; margin-bottom:18px; min-height:40px; }
-  .plano .valor { font-size:42px; font-weight:800; color:#fff; }
-  .plano .valor small { font-size:16px; color:#8B93A7; font-weight:400; }
-  .plano ul { list-style:none; text-align:left; margin:18px 0 24px; }
-  .plano li { padding:6px 0; color:#C3CAD8; font-size:14px; border-bottom:1px solid #1C2330; }
-  .plano li::before { content:'✓ '; color:#00D4AA; font-weight:700; }
-
-  /* FAQ */
-  .faq-wrap { max-width:780px; margin:0 auto; }
-  .faq-titulo { font-size:clamp(24px,4vw,34px); font-weight:800; color:#fff; text-align:center; margin-bottom:10px; }
-  .faq-sub { text-align:center; color:#8B93A7; margin-bottom:44px; }
-  .faq-destaque { background:linear-gradient(135deg,#12193A,#0D1A2E); border:1.5px solid #2C3F6A; border-radius:20px; padding:36px 40px; margin-bottom:28px; }
-  .faq-destaque .pergunta { font-size:20px; font-weight:800; color:#00D4AA; margin-bottom:18px; }
-  .faq-destaque p { color:#C3CAD8; font-size:15.5px; line-height:1.75; margin-bottom:14px; }
-  .faq-destaque p:last-child { margin-bottom:0; }
-  .faq-destaque .exemplos { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin:20px 0; }
-  .faq-destaque .ex { background:rgba(0,212,170,.07); border:1px solid rgba(0,212,170,.2); border-radius:12px; padding:16px 18px; }
-  .faq-destaque .ex .area { font-size:12px; color:#00D4AA; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
-  .faq-destaque .ex .desc { color:#C3CAD8; font-size:13.5px; line-height:1.5; }
-  .faq-item { background:#161B26; border:1px solid #232A38; border-radius:16px; padding:24px 28px; margin-bottom:14px; }
-  .faq-item .pergunta { font-size:16px; font-weight:700; color:#fff; margin-bottom:10px; }
-  .faq-item p { color:#9BA6BC; font-size:14.5px; line-height:1.65; }
-
-  /* ANÚNCIO + RODAPÉ */
-  #anuncio { max-width:720px; margin:30px auto; min-height:90px; border:1px dashed rgba(255,255,255,.12); border-radius:12px; display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,.25); font-size:13px; }
-  footer { text-align:center; padding:40px 24px 50px; color:#5B6478; font-size:14px; }
-  footer a { color:#00D4AA; text-decoration:none; }
+  footer { text-align:center; padding:40px 24px; color:#999; font-size:13px; border-top:1px solid #f0f0f0; }
+  footer a { color:#7C5CFF; text-decoration:none; }
 </style>
 </head>
 <body>
 
+<nav>
+  <a class="logo" href="#">Só<span>Digita</span></a>
+  <a class="nav-btn" href="https://wa.me/5579991075326" target="_blank">Falar no WhatsApp</a>
+</nav>
+
 <div class="hero">
-  <div class="logo-topo">✏️ <span class="grad-texto">SóDigita</span> <span class="raio">⚡</span></div>
-  <h1>São <span class="grad-texto">450 aulas</span> para registrar<br>nesse bimestre.</h1>
-  <p class="slogan">Ou <b>um clique</b>. Você planeja. Você ensina. <b>A gente só digita.</b></p>
-  <div class="botoes-hero">
-    <a class="btn btn-primario" href="#sistemas">Testar grátis em 1 turma 🎁</a>
-    <a class="btn btn-zap" href="https://wa.me/5579991075326" target="_blank">💬 Falar no WhatsApp</a>
-  </div>
+  <h1>Diário preenchido.<br><span>Sem você digitar.</span></h1>
+  <p>Você manda o conteúdo da aula pelo WhatsApp. O robô registra no sistema em 30 segundos.</p>
+  <a class="hero-btn" href="https://wa.me/5579991075326?text=Quero%20testar%20o%20S%C3%B3Digita!" target="_blank">Testar grátis agora</a>
 </div>
 
-<div class="secao" style="text-align:center; padding-bottom:0;">
-  <div style="max-width:680px; margin:0 auto; background:#161B26; border:1px solid #232A38; border-radius:20px; padding:40px 36px;">
-    <div style="font-size:38px; margin-bottom:20px;">😴</div>
-    <blockquote style="font-size:clamp(20px,3vw,28px); font-weight:700; color:#fff; line-height:1.4; font-style:italic;">
-      "Eu escolho sempre a pessoa preguiçosa para fazer um trabalho difícil. Porque ela vai encontrar a maneira mais fácil de fazê-lo."
-    </blockquote>
-    <p style="color:#C9A227; font-weight:700; margin-top:18px; font-size:16px;">— Bill Gates</p>
-    <p style="color:#8B93A7; margin-top:14px; font-size:15px;">Professor com 450 aulas pra registrar todo bimestre? <span style="color:#00D4AA; font-weight:700;">Seja a pessoa certa.</span></p>
-  </div>
-</div>
-
-<div class="secao">
-  <h2>Faça a conta</h2>
-  <p class="sub">Um professor com carga cheia (45 aulas semanais) gasta isso por bimestre só digitando o diário:</p>
-  <div class="conta">
-    <div class="num"><div class="valor grad-texto">450</div><div class="desc">registros de aula por bimestre — data, conteúdo e chamada</div></div>
-    <div class="num"><div class="valor grad-texto">15h</div><div class="desc">de digitação — quase 3 dias de trabalho, geralmente no domingo</div></div>
-    <div class="num"><div class="valor grad-texto">20min</div><div class="desc">é quanto o Automatizador leva para transferir tudo</div></div>
-  </div>
-</div>
-
-<div class="secao">
+<div class="como">
   <h2>Como funciona</h2>
-  <p class="sub">O conteúdo é sempre seu. O sistema apenas leva o seu planejamento até o diário oficial — linha por linha, na data certa.</p>
   <div class="passos">
-    <div class="passo"><div class="n">1</div><h3>Você informa seu planejamento</h3><p>Cole a lista de conteúdos do seu planejamento bimestral — ou peça uma sugestão alinhada à BNCC para editar como quiser.</p></div>
-    <div class="passo"><div class="n">2</div><h3>Você revisa e confirma</h3><p>Antes de qualquer registro, você vê a lista completa de datas e conteúdos. Nada entra no diário sem a sua aprovação.</p></div>
-    <div class="passo"><div class="n">3</div><h3>A gente digita por você</h3><p>O sistema entra no diário oficial e transfere seu planejamento, aula por aula, enquanto você acompanha em tempo real.</p></div>
-  </div>
-</div>
-
-<div class="confianca">
-  <div class="secao">
-    <h2>Feito para o professor — e para a coordenação</h2>
-    <p class="sub">Diário em dia, alinhado ao planejamento aprovado. Coordenador nenhum reclama disso.</p>
-    <div class="selos">
-      <div class="selo"><div class="ic">🔒</div><div><b>Sua senha não é salva</b><span>Usada apenas durante a execução, nunca armazenada.</span></div></div>
-      <div class="selo"><div class="ic">📋</div><div><b>O conteúdo é sempre seu</b><span>O sistema transfere o seu planejamento — não inventa nada.</span></div></div>
-      <div class="selo"><div class="ic">👀</div><div><b>Você vê tudo acontecendo</b><span>Acompanhe cada aula sendo registrada, em tempo real.</span></div></div>
-      <div class="selo"><div class="ic">📅</div><div><b>Calendário inteligente</b><span>Feriados, emendas e sábados letivos de Sergipe já considerados.</span></div></div>
+    <div class="passo">
+      <div class="num">1</div>
+      <h3>Você informa a aula</h3>
+      <p>Manda turma, data e conteúdo pelo WhatsApp — do jeito que você já faz no seu planejamento.</p>
+    </div>
+    <div class="passo">
+      <div class="num">2</div>
+      <h3>O robô entra no sistema</h3>
+      <p>Com suas credenciais, acessa o diário oficial e preenche campo por campo.</p>
+    </div>
+    <div class="passo">
+      <div class="num">3</div>
+      <h3>Você recebe a confirmação</h3>
+      <p>Em 30 segundos o diário está preenchido e você recebe a confirmação.</p>
     </div>
   </div>
 </div>
 
-<div class="secao" id="sistemas">
-  <h2>Escolha o seu sistema</h2>
-  <p class="sub">Atendemos os sistemas usados pelas redes de Sergipe:</p>
-  <div class="sistemas">
-    <div class="sistema">
-      <h3>🏛️ SIAE — Rede Estadual</h3>
-      <p>Professores da rede estadual de Sergipe (SEDUC). Aulas, chamada e notas.</p>
-      <a class="btn btn-primario" href="app.html">Começar agora</a>
-    </div>
-    <div class="sistema">
-      <h3>🏫 ActiveSoft / SIGA</h3>
-      <p>Vita, Jardins, COESI, Futuro Feliz e outras escolas que usam ActiveSoft.</p>
-      <a class="btn btn-primario" href="active.html">Começar agora</a>
-    </div>
-    <div class="sistema">
-      <h3>📕 SESI — Portal Educacional</h3>
-      <p>Professores da rede SESI (Totvs/Corpore.Net). Plano de aula completo.</p>
-      <a class="btn btn-primario" href="sesi.html">Começar agora</a>
-    </div>
-    <div class="sistema">
-      <h3>📘 Totvs RM — Portal do Professor</h3>
-      <p>Colégios que usam o sistema Totvs RM (Salesiano e outros). Diário de classe e plano de aula.</p>
-      <a class="btn btn-primario" href="salesiano.html">Começar agora</a>
-    </div>
-    <div class="sistema">
-      <h3>📗 Infodat — Diário Online</h3>
-      <p>Colégios que usam o sistema Infodat (sigmawd.com.br). Diário e notas.</p>
-      <a class="btn btn-primario" href="infodat.html">Começar agora</a>
-    </div>
-  </div>
-</div>
-
-<div class="secao">
-  <h2>Planos e preços</h2>
-  <p class="sub">Escolha só o que você precisa — ou leve tudo pela metade do preço.</p>
-  <div class="planos">
-    <div class="plano">
-      <h3>📓 Diário</h3>
-      <p class="inclui">Preenchimento automático do diário de classe</p>
-      <div class="valor">R$ 19,90<small>/mês</small></div>
-      <ul>
-        <li>Turmas ilimitadas</li>
-        <li>Calendário com feriados automáticos</li>
-        <li>Sugestão de tópicos (BNCC)</li>
-      </ul>
-      <a class="btn btn-primario" style="width:100%;display:block;" href="https://wa.me/5579991075326?text=Quero%20o%20plano%20Di%C3%A1rio%20do%20S%C3%B3Digita!" target="_blank">Assinar</a>
-    </div>
-    <div class="plano">
-      <h3>🔢 Notas</h3>
-      <p class="inclui">Lançamento automático de notas por turma</p>
-      <div class="valor">R$ 19,90<small>/mês</small></div>
-      <ul>
-        <li>Regra de média configurável</li>
-        <li>Lista de exceções por aluno</li>
-        <li>Pula quem já tem nota</li>
-      </ul>
-      <a class="btn btn-primario" style="width:100%;display:block;" href="https://wa.me/5579991075326?text=Quero%20o%20plano%20Notas%20do%20S%C3%B3Digita!" target="_blank">Assinar</a>
-    </div>
-    <div class="plano">
-      <h3>📋 Faltas</h3>
-      <p class="inclui">Registro automático de frequência</p>
-      <div class="valor">R$ 19,90<small>/mês</small></div>
-      <ul>
-        <li>Marca presença em todas as colunas</li>
-        <li>Grava e avança automaticamente</li>
-        <li>Turmas ilimitadas</li>
-      </ul>
-      <a class="btn btn-primario" style="width:100%;display:block;" href="https://wa.me/5579991075326?text=Quero%20o%20plano%20Faltas%20do%20S%C3%B3Digita!" target="_blank">Assinar</a>
-    </div>
-    <div class="plano destaque">
-      <div class="badge">🔥 Mais popular</div>
-      <h3>⚡ Completo</h3>
-      <p class="inclui">Diário + Notas + Faltas — tudo automatizado</p>
-      <div class="valor">R$ 39,90<small>/mês</small></div>
-      <ul>
-        <li>Tudo dos 3 planos acima</li>
-        <li>Economia de R$ 19,80/mês</li>
-        <li>Suporte prioritário no WhatsApp</li>
-      </ul>
-      <a class="btn btn-primario" style="width:100%;display:block;" href="https://wa.me/5579991075326?text=Quero%20o%20plano%20Completo%20do%20S%C3%B3Digita!" target="_blank">Assinar agora</a>
-    </div>
-  </div>
-</div>
-
-<!-- FAQ -->
-<div class="secao">
-  <div class="faq-wrap">
-    <h2 class="faq-titulo">É seguro usar automação?</h2>
-    <p class="faq-sub">Uma dúvida comum — e uma resposta simples.</p>
-
-    <div class="faq-destaque">
-      <div class="pergunta">🤖 Automatizar o próprio trabalho é uma prática estabelecida e legítima</div>
-      <p>
-        O SóDigita faz exatamente o que um professor faria manualmente: acessa o sistema com as próprias credenciais, preenche os campos e clica em salvar. A diferença é que leva segundos, não horas.
-      </p>
-      <p>
-        Essa prática de automação de tarefas repetitivas é usada todos os dias por profissionais de diversas áreas no Brasil:
-      </p>
-      <div class="exemplos">
-        <div class="ex">
-          <div class="area">⚖️ Área Jurídica</div>
-          <div class="desc">Escritórios de advocacia automatizam protocolos, consultas de processos e petições nos portais dos tribunais (TJ, TRF, STJ).</div>
-        </div>
-        <div class="ex">
-          <div class="area">💰 Contabilidade</div>
-          <div class="desc">Contadores usam robôs para enviar declarações, consultar certidões e acessar o e-CAC da Receita Federal em nome de clientes.</div>
-        </div>
-        <div class="ex">
-          <div class="area">🏥 Saúde</div>
-          <div class="desc">Clínicas e hospitais automatizam o preenchimento de prontuários eletrônicos, agendamentos e registros no sistema CFM.</div>
-        </div>
-        <div class="ex">
-          <div class="area">🏫 Educação</div>
-          <div class="desc">Secretarias escolares usam automação para exportar relatórios, preencher formulários do MEC/INEP e migrar dados entre sistemas.</div>
-        </div>
+<div class="sistemas">
+  <div class="sistemas-inner">
+    <h2>Sistemas suportados</h2>
+    <p class="sub">Escolha o sistema da sua escola.</p>
+    <div class="grid-sistemas">
+      <div class="sistema">
+        <h3>SIAE — Rede Estadual</h3>
+        <p>Professores da rede estadual de Sergipe (SEDUC).</p>
+        <a href="chat.html">Começar →</a>
       </div>
-      <p>
-        Em nenhum desses casos houve responsabilização legal pelo uso de automação no próprio trabalho. <strong style="color:#fff;">O profissional tem pleno direito de usar ferramentas que agilizem suas tarefas — da mesma forma que usa o copiar e colar, atalhos de teclado ou qualquer outro recurso.</strong>
-      </p>
-    </div>
-
-    <div class="faq-item">
-      <div class="pergunta">🔐 O que acontece com minha senha?</div>
-      <p>Sua senha é usada apenas no momento da automação, direto na memória do servidor, e descartada imediatamente. Ela nunca é gravada em banco de dados, arquivo ou log. Nós nem conseguimos vê-la.</p>
-    </div>
-
-    <div class="faq-item">
-      <div class="pergunta">📋 O conteúdo preenchido é responsabilidade minha?</div>
-      <p>Sim. O SóDigita digita exatamente o que você informou. Você continua sendo o autor do diário — nós somos só o teclado.</p>
-    </div>
-
-    <div class="faq-item">
-      <div class="pergunta">🏫 A escola pode me punir por usar o SóDigita?</div>
-      <p>Não há base legal para isso. Você está cumprindo sua obrigação de preencher o diário — só com mais eficiência. O resultado final no sistema é idêntico ao que você faria manualmente.</p>
+      <div class="sistema">
+        <h3>ActiveSoft / SIGA</h3>
+        <p>Vita, Jardins, COESI, Futuro Feliz e outras escolas.</p>
+        <a href="active.html">Começar →</a>
+      </div>
+      <div class="sistema">
+        <h3>Infodat</h3>
+        <p>Colégios que usam o sistema Infodat (sigmawd.com.br).</p>
+        <a href="chat.html">Começar →</a>
+      </div>
+      <div class="sistema">
+        <h3>Totvs RM — Salesiano</h3>
+        <p>Colégios que usam o portal Totvs RM.</p>
+        <a href="salesiano.html">Começar →</a>
+      </div>
+      <div class="sistema">
+        <h3>SESI — Portal Educacional</h3>
+        <p>Professores da rede SESI.</p>
+        <a href="sesi.html">Começar →</a>
+      </div>
     </div>
   </div>
 </div>
 
-<div id="anuncio">Espaço publicitário</div>
+<div class="preco">
+  <h2>Simples assim</h2>
+  <p class="sub">Um preço. Tudo incluído.</p>
+  <div class="card-preco">
+    <div class="badge">Oferta de fundador</div>
+    <div class="valor">R$ 9,90<small>/mês</small></div>
+    <p class="desc">Para os primeiros 50 professores. Depois sobe para R$19,90.</p>
+    <ul>
+      <li>Diário preenchido automaticamente</li>
+      <li>Turmas ilimitadas</li>
+      <li>Confirmação por WhatsApp</li>
+      <li>Suporte direto com o criador</li>
+    </ul>
+    <a href="https://wa.me/5579991075326?text=Quero%20assinar%20o%20S%C3%B3Digita!" target="_blank">Garantir minha vaga</a>
+  </div>
+</div>
 
 <footer>
-  ✏️ SóDigita ⚡ — Você planeja. Você ensina. A gente só digita.<br>
-  💬 WhatsApp: <a href="https://wa.me/5579991075326">(79) 99107-5326</a>
+  SóDigita — Você planeja. Você ensina. A gente só digita.<br><br>
+  <a href="https://wa.me/5579991075326">💬 (79) 99107-5326</a>
 </footer>
 
 </body>
