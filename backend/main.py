@@ -2978,7 +2978,7 @@ Fluxo de cadastro:
 2. Perguntar quantas escolas ele dá aula
 3. Para cada escola:
    a. Nome da escola
-   b. Sistema usado (SIAE, Infodat, ActiveSoft, Salesiano)
+   b. Sistema usado — pergunte qual plataforma digital a escola usa para o diário: SIAE (rede estadual), Infodat (sigmawd.com.br), ActiveSoft/SIGA, ou Totvs RM (usado pelo Salesiano e outras escolas privadas)
    c. Login (CPF para SIAE, nome completo para Infodat, usuário para outros)
    d. Senha
    e. Quais dias da semana ele está nessa escola
