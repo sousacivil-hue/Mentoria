@@ -3115,18 +3115,9 @@ async def chat(data: ChatMsg):
                     "escolas": escolas,
                 }
 
-    # Professor não cadastrado — inicia fluxo de cadastro
+    # Professor não cadastrado — inicia fluxo de vendas + cadastro
     if not professor:
         historico = data.historico + [{"role": "user", "content": data.mensagem}]
-        if not data.historico:
-            boas_vindas = "Olá! 👋 Bem-vindo ao *SoDigita*!\n\nVou te cadastrar rapidinho para você nunca mais perder tempo preenchendo diário. 😊\n\nPrimeiro, qual é o seu nome?"
-            return {
-                "resposta": boas_vindas,
-                "historico": [{"role": "assistant", "content": boas_vindas}],
-                "job_id": None,
-                "cadastrando": True,
-            }
-
         client = _anthropic.Anthropic(api_key=api_key)
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
