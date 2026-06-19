@@ -3062,6 +3062,48 @@ async def ver_screenshot(nome: str):
     return FileResponse(path, media_type="image/png")
 
 
+class DesignMsg(BaseModel):
+    descricao: str
+
+@app.post("/design")
+async def design_agent(data: DesignMsg):
+    gemini_key = os.environ.get("GEMINI_API_KEY")
+    if not gemini_key:
+        return {"erro": "GEMINI_API_KEY não configurada"}
+    try:
+        import httpx, base64
+        prompt = f"""Crie uma imagem para post de Instagram do SóDigita, um app que automatiza o preenchimento de diário escolar para professores brasileiros.
+Estilo: minimalista, fundo roxo (#7C5CFF) ou branco, tipografia moderna e limpa.
+Cores: roxo #7C5CFF, verde-água #00D4AA, branco.
+Formato: quadrado 1080x1080px.
+Descrição do post: {data.descricao}"""
+
+        async with httpx.AsyncClient(timeout=60) as client:
+            resp = await client.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key={gemini_key}",
+                json={
+                    "contents": [{"parts": [{"text": prompt}]}],
+                    "generationConfig": {"responseModalities": ["TEXT", "IMAGE"]}
+                }
+            )
+        result = resp.json()
+        parts = result.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+        for part in parts:
+            if "inlineData" in part:
+                img_b64 = part["inlineData"]["data"]
+                mime = part["inlineData"]["mimeType"]
+                img_path = f"/tmp/screenshots/design_{uuid.uuid4().hex[:8]}.png"
+                os.makedirs("/tmp/screenshots", exist_ok=True)
+                with open(img_path, "wb") as f:
+                    f.write(base64.b64decode(img_b64))
+                nome = os.path.basename(img_path)
+                return {"imagem": f"/screenshot/{nome}", "mime": mime}
+        texto = " ".join(p.get("text", "") for p in parts if "text" in p)
+        return {"texto": texto, "aviso": "Imagem não gerada — Gemini retornou só texto"}
+    except Exception as e:
+        return {"erro": str(e)}
+
+
 FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend")
 if os.path.isdir(FRONTEND_DIR):
     app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
