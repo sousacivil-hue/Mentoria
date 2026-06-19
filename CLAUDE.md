@@ -90,6 +90,11 @@ Todo mês reservar 30 min para explorar `github.com/hesreallyhim/awesome-claude-
 - **claude-mem** — instalado em 16/06/2026, testar por 15 dias. Relatório em 01/07/2026: ajudou a lembrar contexto? Reduziu erros?
 - **Supabase** — a instalar. Vai servir para: memória entre sessões da Cláudia (CEO IA), métricas das automações (quantas rodaram, taxa de sucesso), histórico de professores e conversas.
 
+## Automação de Marketing — Roadmap
+- [ ] Gemini gera imagem a partir de descrição do post (endpoint /design — em desenvolvimento)
+- [ ] Meta Business Suite API: postagem automática no Instagram (requer conta business aprovada)
+- [ ] Fluxo completo: descreve → IA gera imagem → agenda → posta sozinho
+
 ## Próximas Integrações Planejadas
 - [ ] Supabase: criar projeto, configurar tabelas (sessoes_claudia, metricas_automacoes, professores)
 - [ ] Cláudia: memória persistente entre conversas usando Supabase
