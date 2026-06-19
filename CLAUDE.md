@@ -5,14 +5,14 @@
 - Automatiza: preenchimento de diário, lançamento de notas e registro de frequência
 - Cliente: professor individual (não escola)
 - Tecnologia: Python + Playwright (headless Chromium) + FastAPI + SSE
+- Canal principal: WhatsApp ou site
 
 ## Planos e Preços
 | Plano | Inclui | Preço |
 |-------|--------|-------|
 | Diário | Preenchimento do diário de classe | R$ 19,90/mês |
-| Notas | Lançamento de notas | R$ 19,90/mês |
-| Faltas | Registro de frequência | R$ 19,90/mês |
 | Completo | Diário + Notas + Faltas | R$ 39,90/mês |
+| Fundador (50 primeiros) | Tudo incluído | R$ 9,90/mês para sempre |
 
 ## Status por Sistema
 - **ActiveSoft/SIGA** ✅ — funciona pelo site (Render), diário completo validado
@@ -24,82 +24,106 @@
 ## Infraestrutura
 - **Render.com** (free plan) — hospeda o backend FastAPI + Playwright
 - **Domínio:** sodigita.com.br apontado para o Render
+- **UptimeRobot** ✅ — configurado, ping a cada 5 min para evitar hibernação
+- **Supabase** ✅ — projeto "Sodigita" criado, tabelas criadas, chave configurada no Render
 - **Branch de desenvolvimento:** `claude/quirky-hamilton-4pm1s`
 - **Branch principal:** `main`
 - Deploy automático a cada push (Docker + Playwright/Chromium, ~5 min)
 
 ## Arquivos Principais
-- `backend/main.py` — toda a lógica de automação (SIAE, Active, Salesiano, Infodat, SESI) + endpoints de chat/CEO/gerentes
+- `backend/main.py` — toda a lógica de automação (SIAE, Active, Salesiano, Infodat, SESI) + endpoints de chat/CEO/gerentes/design
+- `frontend/index.html` — landing page redesenhada (minimalista, fundo branco)
+- `frontend/logo.png` — logo oficial com fundo branco
 - `frontend/active.html` — tela do ActiveSoft
 - `frontend/salesiano.html` — tela do Salesiano
-- `frontend/index.html` — landing page / home
 - `frontend/chat.html` — chat WhatsApp simulado para professores registrarem aulas
 - `frontend/ceo.html` — Cláudia, CEO IA que coordena os 3 gerentes
 - `frontend/manager.html` — Gerente de Projetos IA
 - `frontend/marketing.html` — Gerente de Marketing IA
 - `frontend/negocios.html` — Gerente de Negócios IA
-- `Notas_Active.py` — script standalone de notas (ActiveSoft, roda local)
-- `Historia_Otavio_1ano.py` / `preencher_diario.py` — script standalone do Salesiano (roda local)
 
-## Decisões de Negócio (18/06/2026)
+## Decisões de Negócio (19/06/2026)
 - Foco atual: SIAE + Infodat via chat/WhatsApp
 - Mercado estimado: ~43.500 professores em sistemas compatíveis
-- Preço: R$19,90/mês por sistema ou R$39,90/mês completo
-- Primeiros clientes: R$9,90/mês (desconto 50%) para os 50 primeiros
+- Preço fundador: R$9,90/mês para os 50 primeiros (depois R$19,90)
 - Canal de aquisição: grupos WhatsApp de professores + Instagram + indicação
 - Meta curto prazo: 50 clientes pagantes antes de contratar funcionário
 - B2C direto (professor individual) como foco principal por ora
-- Cláudia (CEO IA) é o ponto central de gestão — coordena projetos, marketing e negócios
+- **Lançamento oficial: agosto 2026** — professores voltam das férias
+- Sazonalidade: produto ativo fev–out, pausa nov–jan (diários fecham)
+- Sem plano anual — evita ter que devolver dinheiro se cancelar
+- Sem automação de seguidores no Instagram — risco de ban
+- Concorrência: **nenhuma direta** — ninguém faz automação via WhatsApp nos sistemas existentes para professor individual
 
-## Scripts Standalone (rodam no PC do professor)
-Ficam na pasta `diario_auto` na Área de Trabalho do professor.
-- Dois cliques para rodar (não precisa de terminal)
-- Sempre incluir: captura de erro com log (`notas_log.txt`, `erro_notas.log`) e `input()` no final para janela não fechar
-- Login automático já embutido
+## Identidade Visual
+- **Logo:** S com gradiente roxo (#7C5CFF) → verde-água (#00D4AA), texto "SóDigita" em cinza escuro
+- **Cores:** roxo #7C5CFF, verde-água #00D4AA, fundo branco
+- **Nome nos vídeos/anúncios:** `SoDigita` (sem acento — evita distorção de fonte)
+- **Nome no site e logo oficial:** `SóDigita` (com acento)
+- **Tamanho do logo:** 400x120px, fundo branco, PNG
 
-## Credenciais Conhecidas (apenas para scripts locais)
-- **Vita (ActiveSoft):** `Luth5824` / `Luth1801@` — URL: `https://siga01.activesoft.com.br/login/?instituicao=COLEGIOVITA`
-- **Salesiano:** URL base: `https://portalprdsalesianos.rm.cloudtotvs.com.br/FrameHTML/web/app/edu/PortalDoProfessor/#/login`
+## Marketing — Produzido em 19/06/2026
+- 13 ideias de anúncios (Reels 15s) criadas — estilo antes/depois emocional
+- Briefings de design para cada anúncio
+- Calendário de conteúdo julho 2026 completo
+- 2 posts prontos para o feed do Instagram
+- Script de stories (4 partes)
+- Script de abordagem para professores no WhatsApp
+- Prompts para Gemini gerar os Reels (estilo vídeo 1 — professora no sofá)
 
-## Decisões Técnicas Importantes
-- Angular (Salesiano) usa hash routing — NUNCA usar `page.goto()` após login, usar `window.location.hash`
-- ActiveSoft recarrega iframe após cada "Gravar" — re-adquirir frame a cada aula
-- Após Gravar no Active: esperar `networkidle` (12s timeout) + 5s extra
-- Campos de login: IDs únicos por sistema para evitar colisão (`active_usuario`, `active_senha`)
-- SSE timeout: 60s no frontend para recuperar conexões caídas
-- Form persistence: localStorage para todos os campos (exceto senha)
+### Prompts dos Reels (estilo base):
+> *"Create a 15-second Instagram Reels video. Scene 1 (0-5s): A tired Brazilian teacher sitting on a couch on Sunday night, yellow lamp light, laptop open showing a school system. White bold text overlay: 'Mais um domingo no diário?' Scene 2 (5-10s): Close up of hand holding smartphone, opening WhatsApp, typing a quick message. Dark background, phone light illuminating the face. Scene 3 (10-15s): Phone screen showing green ✅ and text 'Diário preenchido!'. Fade to purple background (#7C5CFF) with SoDigita logo centered. Bold white sans-serif font throughout. Soft positive background music in the style of Red Hot Chili Peppers — funky guitar riff, energetic but not aggressive, instrumental only, no lyrics. Realistic cinematic style, warm Brazilian home atmosphere."*
 
-## Pendências Técnicas
-- [ ] Salesiano: navegação automática login → plano de aula (Angular token perdido com goto)
-- [ ] Active: "Execution context destroyed" após Gravar (ainda ocorre ocasionalmente)
-- [ ] Active: automatizar navegação completa (Digitação de notas → turma → fase → Consultar)
-- [ ] Frequência (Active): clicar nas colunas P → Gravar → Próximo
-- [ ] UptimeRobot: configurar ping a cada 5 min para evitar hibernação do Render
-- [ ] SIAE: mostrar só as turmas do dia (segunda vs sexta são diferentes)
-- [ ] Cronômetro: recalibrar estimativa de tempo
-- [ ] Supabase: memória persistente da Cláudia + métricas de automações
-- [ ] WhatsApp API: conectar robô ao WhatsApp real (Evolution API ou Z-API)
-- [ ] Professor com múltiplas escolas: suportar perfil com SIAE em uma escola e Infodat em outra
-- [ ] Registro de múltiplos dias: professor esqueceu 3 dias → robô pede datas e registra todos
-- [ ] Screenshot: substituir por texto formatado em produção (imagem é cara com muitos usuários)
+**Variações de personagem:**
+- Anúncio 1: professora no sofá, domingo à noite
+- Anúncio 2: professora jovem na escrivaninha
+- Anúncio 3: professor homem mais velho em sala de aula
 
-## Ritual Mensal — Exploração de Ferramentas
-Todo mês reservar 30 min para explorar `github.com/hesreallyhim/awesome-claude-code` e avaliar o que vale instalar para o SóDigita. Categorias prioritárias: MCP (integrações), Hooks (segurança), Skills (produtividade).
+## Script de Abordagem — WhatsApp
+**Para professor conhecido:**
+> "Oi [nome]! Tô testando uma coisa que fiz e quero tua opinião honesta. Criei um robô que preenche o diário escolar automaticamente pelo WhatsApp — você manda o conteúdo da aula e ele registra no sistema pra você. Usa [SIAE/Infodat], certo? Me deixa te mostrar funcionando?"
 
-## Ferramentas Instaladas
-- **claude-mem** — instalado em 16/06/2026, testar por 15 dias. Relatório em 01/07/2026: ajudou a lembrar contexto? Reduziu erros?
-- **Supabase** — a instalar. Vai servir para: memória entre sessões da Cláudia (CEO IA), métricas das automações (quantas rodaram, taxa de sucesso), histórico de professores e conversas.
+**Para grupo de professores:**
+> "Professores, desenvolvi uma ferramenta que preenche o diário escolar automático pelo WhatsApp. Você manda o conteúdo da aula, a gente registra no sistema. Funciona com SIAE e Infodat. Tô abrindo pra 50 professores com preço de fundador — R$9,90/mês. Quem quiser testar grátis essa semana, me chama no privado."
+
+## Metas de Receita
+| Mês | Clientes | MRR |
+|---|---|---|
+| Ago 2026 | 25 | R$ 247 |
+| Set 2026 | 50 | R$ 495 |
+| Out 2026 | 80 | R$ 1.590 |
+| Fev 2027 | 100+ | R$ 1.990+ |
+| Q3/Q4 2027 | 500 | R$ 12.500 |
 
 ## Automação de Marketing — Roadmap
-- [ ] Gemini gera imagem a partir de descrição do post (endpoint /design — em desenvolvimento)
+- [ ] Gemini gera imagem/vídeo a partir de descrição do post (endpoint /design — em desenvolvimento)
 - [ ] Meta Business Suite API: postagem automática no Instagram (requer conta business aprovada)
 - [ ] Fluxo completo: descreve → IA gera imagem → agenda → posta sozinho
 
 ## Próximas Integrações Planejadas
-- [ ] Supabase: criar projeto, configurar tabelas (sessoes_claudia, metricas_automacoes, professores)
-- [ ] Cláudia: memória persistente entre conversas usando Supabase
+- [ ] Z-API: conectar robô ao WhatsApp real (~R$50/mês)
+- [ ] Cláudia: memória persistente entre conversas usando Supabase ✅ código pronto, aguarda teste
 - [ ] Dashboard: métricas reais das automações (total rodadas, taxa de sucesso, por sistema)
-- [ ] WhatsApp API (Evolution API ou Z-API): conectar robô do chat ao WhatsApp real
+- [ ] Fila de automações: evitar sobrecarga com 50+ usuários simultâneos
+- [ ] Professor com múltiplas escolas: suportar perfil com SIAE em uma escola e Infodat em outra
+
+## Pendências Técnicas
+- [ ] Salesiano: navegação automática login → plano de aula (Angular token perdido com goto)
+- [ ] Active: "Execution context destroyed" após Gravar (ainda ocorre ocasionalmente)
+- [ ] SIAE: mostrar só as turmas do dia (segunda vs sexta são diferentes)
+- [ ] Screenshot: substituir por texto formatado em produção (imagem é cara com muitos usuários)
+- [ ] Migrar Render para plano pago quando chegar em 20 clientes (~$7/mês)
+- [ ] Artigo científico sobre automação na burocracia docente — coletar dados desde já no Supabase
+
+## Ritual Mensal — Exploração de Ferramentas
+Todo mês reservar 30 min para explorar `github.com/hesreallyhim/awesome-claude-code` e avaliar o que vale instalar para o SóDigita. Categorias prioritárias: MCP (integrações), Hooks (segurança), Skills (produtividade).
+Próxima avaliação: **01/07/2026** — relatório claude-mem (ajudou? reduziu erros?)
+
+## Ferramentas Instaladas
+- **claude-mem** — instalado em 16/06/2026, testar por 15 dias. Relatório em 01/07/2026
+- **Supabase** ✅ — instalado 18/06/2026. Tabelas: sessoes_claudia, metricas_automacoes
+- **UptimeRobot** ✅ — instalado 19/06/2026
+- **Gemini API** ✅ — chave configurada no Render (endpoint /design em desenvolvimento)
 
 ## ⚠️ Regras de Segurança — Lição Aprendida em 15/06/2026
 
@@ -113,7 +137,6 @@ Todo mês reservar 30 min para explorar `github.com/hesreallyhim/awesome-claude-
 
 **Se o usuário pedir para voltar ao código anterior:**
 - Usar `git revert <hash>` ou `git checkout <hash> -- arquivo` — NUNCA reescrever manualmente
-- O commit que funcionava fica registrado no status do sistema (ver seção acima)
 
 **Histórico de quebras:**
 - 15/06/2026: SIAE login quebrou após 15+ commits de debug em sequência. Commit funcionando antes: `c6f5d2e`
@@ -121,12 +144,8 @@ Todo mês reservar 30 min para explorar `github.com/hesreallyhim/awesome-claude-
 
 **Lições aprendidas:**
 - Sempre comparar o script local que funciona com o código do servidor linha por linha antes de fazer qualquer mudança
-- Quando algo funciona localmente mas não no servidor, a diferença está nos dados enviados (formato, máscara, encoding) — não no seletor
 - NUNCA usar `replace_all=True` em edições sem verificar se o padrão existe em outros sistemas no mesmo arquivo
-- Quando o usuário reporta falha, primeiro perguntar "o script local ainda funciona?" — se sim, a diferença está no servidor
-- 17/06/2026: NUNCA assumir anti-bot sem evidência — o problema do SIAE era senha errada no autocomplete do navegador
-- Seletores novos (ex: `#btnConfirmar`, `button[data-target]`) DEVEM ser testados localmente com um script `.py` antes de commitar — evita ciclos de deploy desnecessários
-- **REGRA INEGOCIÁVEL: NUNCA commitar seletor ou lógica de automação sem o usuário rodar o script .py local e confirmar o output primeiro. Sem exceção. Quebrar essa regra = ciclos desnecessários de deploy que desperdiçam tempo.**
+- **REGRA INEGOCIÁVEL: NUNCA commitar seletor ou lógica de automação sem o usuário rodar o script .py local e confirmar o output primeiro. Sem exceção.**
 
 ## Regras para Novos Scripts
 1. Sempre incluir captura de erro com `try/except BaseException` + log em arquivo + `input("ENTER para fechar")`
@@ -141,20 +160,20 @@ Todo mês reservar 30 min para explorar `github.com/hesreallyhim/awesome-claude-
 
 ## Registro de Horas e Valor Desenvolvido
 
-> Atualizar a cada sessão de trabalho.
-
 | Data | Descrição | Horas |
 |------|-----------|-------|
 | Antes de 2026-06-13 | ActiveSoft diário + notas + frequência; Salesiano scripts locais; SESI login; infraestrutura Render/Docker; frontend base | ~28h |
-| 2026-06-13 | Infodat completo (login, turmas, diário); fix bugs de acento/AJAX; foto de notas Gemini; abas no Active; FAQ na home; loading animado; sábados letivos Infodat; resumo de aulas em tempo real; Salesiano → Totvs RM | ~17h |
-| 2026-06-14/15 | Cache professor Infodat; code review fixes; debug SIAE login (não resolvido); instalação claude-mem | ~4h |
-| 2026-06-18 | Robô conversacional Claude Haiku via chat.html; integração SIAE+Infodat pelo chat; retry login; screenshot de confirmação; notificações assíncronas; normalização de conteúdo (maiúscula+ponto); Cláudia CEO + 3 gerentes IA (projetos/marketing/negócios); plano de negócios e análise de mercado | ~8h |
-| **TOTAL** | | **~57h** |
+| 2026-06-13 | Infodat completo; fix bugs; foto de notas Gemini; abas no Active; FAQ; loading animado; sábados letivos; Salesiano → Totvs RM | ~17h |
+| 2026-06-14/15 | Cache professor Infodat; code review fixes; debug SIAE login; instalação claude-mem | ~4h |
+| 2026-06-18 | Robô conversacional; integração SIAE+Infodat pelo chat; retry login; screenshot; notificações; Cláudia CEO + 3 gerentes IA | ~8h |
+| 2026-06-19 | Supabase configurado; UptimeRobot; redesign site; logo; 13 anúncios; calendário marketing; plano de negócios; metas de receita | ~6h |
+| **TOTAL** | | **~63h** |
 
 ### Valor de mercado estimado
 | Perfil | Valor/hora | Total |
 |--------|-----------|-------|
-| Dev júnior | R$ 50/h | R$ 2.250 |
-| Dev pleno | R$ 100/h | R$ 4.500 |
-| Dev sênior | R$ 200/h | R$ 9.000 |
-| Agência | R$ 300/h | R$ 13.500 |
+| Dev júnior | R$ 50/h | R$ 3.150 |
+| Dev pleno | R$ 100/h | R$ 6.300 |
+| Dev sênior | R$ 200/h | R$ 12.600 |
+| Agência | R$ 300/h | R$ 18.900 |
+
