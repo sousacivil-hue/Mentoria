@@ -3080,26 +3080,24 @@ Descrição do post: {data.descricao}"""
 
         async with httpx.AsyncClient(timeout=60) as client:
             resp = await client.post(
-                f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key={gemini_key}",
+                f"https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key={gemini_key}",
                 json={
-                    "contents": [{"parts": [{"text": prompt}]}],
-                    "generationConfig": {"responseModalities": ["TEXT", "IMAGE"]}
+                    "instances": [{"prompt": prompt}],
+                    "parameters": {"sampleCount": 1, "aspectRatio": "1:1"}
                 }
             )
         result = resp.json()
-        parts = result.get("candidates", [{}])[0].get("content", {}).get("parts", [])
-        for part in parts:
-            if "inlineData" in part:
-                img_b64 = part["inlineData"]["data"]
-                mime = part["inlineData"]["mimeType"]
-                img_path = f"/tmp/screenshots/design_{uuid.uuid4().hex[:8]}.png"
-                os.makedirs("/tmp/screenshots", exist_ok=True)
-                with open(img_path, "wb") as f:
-                    f.write(base64.b64decode(img_b64))
-                nome = os.path.basename(img_path)
-                return {"imagem": f"/screenshot/{nome}", "mime": mime}
-        texto = " ".join(p.get("text", "") for p in parts if "text" in p)
-        return {"texto": texto, "aviso": "Imagem não gerada — Gemini retornou só texto"}
+        predictions = result.get("predictions", [])
+        if predictions:
+            img_b64 = predictions[0].get("bytesBase64Encoded", "")
+            mime = predictions[0].get("mimeType", "image/png")
+            img_path = f"/tmp/screenshots/design_{uuid.uuid4().hex[:8]}.png"
+            os.makedirs("/tmp/screenshots", exist_ok=True)
+            with open(img_path, "wb") as f:
+                f.write(base64.b64decode(img_b64))
+            nome = os.path.basename(img_path)
+            return {"imagem": f"/screenshot/{nome}", "mime": mime}
+        return {"aviso": "Imagem não gerada", "resposta": result}
     except Exception as e:
         return {"erro": str(e)}
 
