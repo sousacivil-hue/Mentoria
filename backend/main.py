@@ -3118,6 +3118,17 @@ async def chat(data: ChatMsg):
     # Professor não cadastrado — inicia fluxo de vendas + cadastro
     if not professor:
         historico = data.historico + [{"role": "user", "content": data.mensagem}]
+
+        # Limite de 10 trocas para evitar conversa infinita
+        if len(historico) > 20:
+            encerramento = "Foi um prazer conversar! 😊 Quando quiser começar a usar o SóDigita, é só chamar. Até logo!"
+            return {
+                "resposta": encerramento,
+                "historico": [],
+                "job_id": None,
+                "cadastrando": False,
+            }
+
         client = _anthropic.Anthropic(api_key=api_key)
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
