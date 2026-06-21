@@ -79,6 +79,38 @@
 - Anúncio 2: professora jovem na escrivaninha
 - Anúncio 3: professor homem mais velho em sala de aula
 
+## Mensagem de Boas-vindas — Professores Beta (gratuito)
+
+> *"[Nome], seja bem-vindo ao SóDigita! 🎉*
+>
+> *Você é um dos nossos primeiros professores e isso significa muito pra gente.*
+>
+> *Estamos em fase de testes e você vai nos ajudar a construir algo que vai devolver o tempo do professor — pra dar aula, não pra ficar na frente do computador.*
+>
+> *Seu acesso é completamente gratuito. Em troca, só pedimos sua opinião honesta.*
+>
+> *Veja o que já funciona e o que vem por aí:*
+>
+> *✅ Diário de classe — já disponível. Manda a turma e o conteúdo, a gente registra.*
+>
+> *🔜 Frequência — em breve. Você manda o nome dos alunos que faltaram, a gente marca no sistema.*
+>
+> *🔜 Notas — em breve. Você manda uma foto da sua lista de notas e a gente lança no sistema, respeitando o formato da sua escola (AV1, AV2, bimestral...).*
+>
+> *Juntos a gente faz o chato por você. 🙏"*
+
+## Script de Abordagem — Grupos de WhatsApp (versão aprovada)
+
+> *"Nós criamos uma automação que leva o que você digita no WhatsApp direto pro seu sistema escolar.*
+>
+> *Diário, frequência e nota — tudo pelo WhatsApp.*
+>
+> *Genuinamente sergipano. Feito por professores para professores. 👨‍🏫*
+>
+> *SIAE, Infodat, ActiveSoft, Totvs RM. 30 segundos. R$9,90/mês.*
+>
+> *Quem quiser testar grátis, me chama. 👇"*
+
 ## Script de Abordagem — WhatsApp
 **Para professor conhecido:**
 > "Oi [nome]! Tô testando uma coisa que fiz e quero tua opinião honesta. Criei um robô que preenche o diário escolar automaticamente pelo WhatsApp — você manda o conteúdo da aula e ele registra no sistema pra você. Usa [SIAE/Infodat], certo? Me deixa te mostrar funcionando?"
