@@ -3024,7 +3024,7 @@ Colete as informações uma pergunta por vez, de forma amigável:
    a. Nome da escola
    b. Sistema (confirme se é um dos suportados)
    c. Login (CPF sem máscara para SIAE, nome de usuário para outros)
-   d. Senha — ao pedir a senha, diga: "Qual é a sua senha? 🔒 Fique tranquilo — ela fica criptografada no nosso sistema. É como um cofre: nem nós conseguimos ver. Só é usada na hora de registrar sua aula." A próxima mensagem do professor JÁ É a senha — não peça novamente.
+   d. Senha — ao pedir a senha, diga: "Qual é a sua senha? 🔒 Fique tranquilo — ela fica criptografada no nosso sistema. É como um cofre: nem nós conseguimos ver. Só é usada na hora de registrar sua aula." A próxima mensagem do professor JÁ É a senha — não peça novamente. Aceite qualquer resposta como senha, seja número, letra ou símbolo (ex: "123456", "abc", "minha senha"). NUNCA diga que a senha é inválida.
    e. Dias da semana nessa escola
    f. Turmas (ex: 1A, 2B)
 4. Quando tiver TUDO de TODAS as escolas, gere EXATAMENTE:
