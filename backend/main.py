@@ -4,6 +4,32 @@ import os
 import re
 import unicodedata
 
+# ── Criptografia ──────────────────────────────────────────────────────────────
+def _get_fernet():
+    key = os.environ.get("ENCRYPTION_KEY")
+    if not key:
+        return None
+    try:
+        from cryptography.fernet import Fernet
+        return Fernet(key.encode() if isinstance(key, str) else key)
+    except Exception:
+        return None
+
+def _encrypt(valor: str) -> str:
+    f = _get_fernet()
+    if not f or not valor:
+        return valor
+    return f.encrypt(valor.encode()).decode()
+
+def _decrypt(valor: str) -> str:
+    f = _get_fernet()
+    if not f or not valor:
+        return valor
+    try:
+        return f.decrypt(valor.encode()).decode()
+    except Exception:
+        return valor  # já estava descriptografado (dados antigos)
+
 # ── Supabase ──────────────────────────────────────────────────────────────────
 def _get_supabase():
     url = os.environ.get("SUPABASE_URL", "https://niqgrzvaqfocpoemtwio.supabase.co")
@@ -3019,7 +3045,13 @@ def _buscar_professor_supabase(numero: str):
     try:
         res = sb.table("professores").select("*").eq("numero_whatsapp", numero).execute()
         if res.data:
-            return res.data[0]
+            prof = res.data[0]
+            escolas = prof.get("escolas", [])
+            prof["escolas"] = [
+                {**e, "login": _decrypt(e.get("login", "")), "senha": _decrypt(e.get("senha", ""))}
+                for e in escolas
+            ]
+            return prof
         return None
     except Exception:
         return None
@@ -3076,10 +3108,18 @@ def _salvar_professor_supabase(numero: str, dados: dict):
     if not sb:
         return False
     try:
+        escolas = dados.get("escolas", [])
+        escolas_cript = []
+        for e in escolas:
+            escolas_cript.append({
+                **e,
+                "login": _encrypt(e.get("login", "")),
+                "senha": _encrypt(e.get("senha", "")),
+            })
         sb.table("professores").insert({
             "numero_whatsapp": numero,
             "nome": dados.get("nome", ""),
-            "escolas": dados.get("escolas", []),
+            "escolas": escolas_cript,
             "ativo": True,
         }).execute()
         return True
