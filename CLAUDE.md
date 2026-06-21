@@ -118,6 +118,21 @@
 **Para grupo de professores:**
 > "Professores, desenvolvi uma ferramenta que preenche o diário escolar automático pelo WhatsApp. Você manda o conteúdo da aula, a gente registra no sistema. Funciona com SIAE e Infodat. Tô abrindo pra 50 professores com preço de fundador — R$9,90/mês. Quem quiser testar grátis essa semana, me chama no privado."
 
+## Custo de API por Professor
+
+| Item | Valor |
+|------|-------|
+| Modelo usado | Claude Haiku 4.5 |
+| Custo de entrada | US$ 0,80 / 1M tokens |
+| Tokens por conversa (média) | ~1.000 tokens |
+| Custo por conversa | ~US$ 0,001 (< R$ 0,01) |
+| Conversas por professor/mês (estimado) | ~30 |
+| Custo de API por professor/mês | ~US$ 0,03 (< R$ 0,30) |
+| Receita por professor/mês | R$ 9,90 |
+| **Margem de API** | **~97%** |
+
+Referência: US$ 0,45 gasto nos primeiros dias de testes intensivos (junho/2026).
+
 ## Metas de Receita
 | Mês | Clientes | MRR |
 |---|---|---|
