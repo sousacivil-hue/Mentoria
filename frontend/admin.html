@@ -55,7 +55,10 @@
 
 <header>
   <h1>📊 Painel de Conversas</h1>
-  <span id="ultima-atualizacao">Carregando...</span>
+  <div style="display:flex;gap:10px;align-items:center;">
+    <button onclick="configurarTurmasLuth()" style="background:#00a884;border:none;color:white;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">⚙️ Atualizar turmas Prof. Luth</button>
+    <span id="ultima-atualizacao">Carregando...</span>
+  </div>
 </header>
 
 <div class="filtros">
@@ -144,6 +147,31 @@ async function marcarVisto(numero) {
   const c = todas.find(x => x.numero_whatsapp === numero);
   if (c) c.visto = true;
   renderizar();
+}
+
+async function configurarTurmasLuth() {
+  const turmas = [
+    {"label": "6º Ano A", "value": "135983"},
+    {"label": "7º Ano A", "value": "135984"},
+    {"label": "3ª Série B", "value": "137893"},
+    {"label": "3ª Série A", "value": "137892"},
+    {"label": "2ª Série B", "value": "137348"},
+    {"label": "2ª Série A", "value": "135999"},
+    {"label": "1ª Série A", "value": "135995"},
+    {"label": "1ª Etapa", "value": "139474"}
+  ];
+  const dias = ["segunda", "sexta"];
+  try {
+    const res = await fetch(`${API}/admin/professor/turmas`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({numero: '5579998746693', escola_index: 0, turmas, dias})
+    });
+    const data = await res.json();
+    alert(data.mensagem || data.erro);
+  } catch(e) {
+    alert('Erro ao atualizar turmas');
+  }
 }
 
 carregar();

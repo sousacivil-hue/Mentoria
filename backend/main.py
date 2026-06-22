@@ -3294,6 +3294,37 @@ async def chat(data: ChatMsg):
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
+@app.post("/admin/professor/turmas")
+async def atualizar_turmas(data: dict):
+    """Atualiza turmas de uma escola do professor."""
+    sb = _get_supabase()
+    if not sb:
+        return {"erro": "Supabase não configurado"}
+    try:
+        numero = data.get("numero")
+        escola_index = data.get("escola_index", 0)
+        turmas = data.get("turmas", [])
+        dias = data.get("dias", None)
+
+        res = sb.table("professores").select("*").eq("numero_whatsapp", numero).execute()
+        if not res.data:
+            return {"erro": "Professor não encontrado"}
+
+        prof = res.data[0]
+        escolas = prof.get("escolas", [])
+        if escola_index >= len(escolas):
+            return {"erro": "Escola não encontrada"}
+
+        escolas[escola_index]["turmas"] = turmas
+        if dias:
+            escolas[escola_index]["dias"] = dias
+
+        sb.table("professores").update({"escolas": escolas}).eq("numero_whatsapp", numero).execute()
+        return {"ok": True, "mensagem": f"{len(turmas)} turmas salvas com sucesso"}
+    except Exception as e:
+        return {"erro": str(e)}
+
+
 @app.get("/admin/conversas")
 async def admin_conversas():
     sb = _get_supabase()
