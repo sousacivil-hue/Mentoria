@@ -3146,10 +3146,24 @@ async def chat(data: ChatMsg):
     if not professor:
         professor_sb = _buscar_professor_supabase(data.numero)
         if professor_sb:
-            # Converte formato Supabase para formato interno
             escolas = professor_sb.get("escolas", [])
             if escolas:
-                escola = escolas[0]
+                # Detecta escola pelo dia da semana
+                import datetime
+                dias_semana = ["segunda", "terca", "quarta", "quinta", "sexta", "sabado", "domingo"]
+                dia_hoje = dias_semana[datetime.date.today().weekday()]
+
+                escola = None
+                for e in escolas:
+                    dias_escola = [d.lower().replace("ç","c").replace("á","a").replace("ã","a").replace("é","e").replace("ê","e") for d in e.get("dias", [])]
+                    if dia_hoje in dias_escola:
+                        escola = e
+                        break
+
+                # Se não achou pelo dia, usa a primeira
+                if not escola:
+                    escola = escolas[0]
+
                 professor = {
                     "nome": professor_sb["nome"],
                     "sistema": escola.get("sistema", "siae"),
@@ -3159,6 +3173,7 @@ async def chat(data: ChatMsg):
                     "escola": escola.get("nome", ""),
                     "professor": escola.get("login", ""),
                     "escolas": escolas,
+                    "escola_hoje": escola.get("nome", ""),
                 }
 
     # Professor não cadastrado — inicia fluxo de vendas + cadastro
@@ -3222,10 +3237,19 @@ async def chat(data: ChatMsg):
 
     try:
         client = _anthropic.Anthropic(api_key=api_key)
+        import datetime
+        dias_semana_pt = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+        dia_hoje_pt = dias_semana_pt[datetime.date.today().weekday()]
+        escola_hoje = professor.get("escola_hoje", professor.get("escola", ""))
+        sistema_hoje = professor.get("sistema", "SIAE")
+
+        system = SYSTEM_PROMPT.replace("Professor", professor["nome"])
+        system += f"\n\nCONTEXTO DE HOJE ({dia_hoje_pt}): O professor está na escola '{escola_hoje}' usando o sistema {sistema_hoje}. Quando confirmar o registro, mencione a escola se relevante."
+
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=500,
-            system=SYSTEM_PROMPT.replace("Professor", professor["nome"]),
+            system=system,
             messages=historico,
         )
         resposta = response.content[0].text
