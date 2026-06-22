@@ -205,6 +205,19 @@ Próxima avaliação: **01/07/2026** — relatório claude-mem (ajudou? reduziu 
 - `Historia_Otavio_1ano.py` — 1º ano História, turma 627185, 40 aulas, duplas
 - `preencher_diario.py` — mesmo conteúdo (cópia de trabalho)
 
+## Decisões Técnicas (22/06/2026)
+- Detecção automática de escola por dia da semana implementada
+- Detecção automática de escola por turma: 8A/8B→Vita, 2A/2B→Salesiano, demais→SIAE
+- Criptografia AES (Fernet) para login/senha no Supabase — `ENCRYPTION_KEY` no Render
+- Painel `/admin.html` com classificação automática de conversas por IA
+- Robô de vendas com 3 fases: apresentação → qualificação → cadastro
+- Limite de 10 trocas no fluxo de vendas para controlar custo de API
+- Sistemas não suportados: coleta nome + sistema, encerra com mensagem de interesse
+- Turmas do Prof. Luth salvas no Supabase:
+  - Estado (SIAE): seg/sex — 6ºA, 7ºA, 3ªA, 3ªB, 2ªA, 2ªB, 1ªA, 1ª Etapa
+  - Vita (ActiveSoft): ter/qua/qui — 8A, 8B
+  - Salesiano (Totvs RM): ter/qui — 2A, 2B
+
 ## Registro de Horas e Valor Desenvolvido
 
 | Data | Descrição | Horas |
@@ -214,7 +227,9 @@ Próxima avaliação: **01/07/2026** — relatório claude-mem (ajudou? reduziu 
 | 2026-06-14/15 | Cache professor Infodat; code review fixes; debug SIAE login; instalação claude-mem | ~4h |
 | 2026-06-18 | Robô conversacional; integração SIAE+Infodat pelo chat; retry login; screenshot; notificações; Cláudia CEO + 3 gerentes IA | ~8h |
 | 2026-06-19 | Supabase configurado; UptimeRobot; redesign site; logo; 13 anúncios; calendário marketing; plano de negócios; metas de receita | ~6h |
-| **TOTAL** | | **~63h** |
+| 2026-06-21 | Robô de vendas; painel admin CRM; classificação automática de conversas; criptografia AES; mensagem de segurança na senha | ~4h |
+| 2026-06-22 | Detecção de escola por dia/turma; perfil completo do Prof. Luth no Supabase; script aprovado para grupos WhatsApp; mensagem beta professores | ~5h |
+| **TOTAL** | | **~72h** |
 
 ### Valor de mercado estimado
 | Perfil | Valor/hora | Total |
