@@ -3023,16 +3023,25 @@ FASE 2 — QUALIFICAÇÃO DO SISTEMA:
   Depois de coletar nome e sistema, encerre com agradecimento e NÃO gere JSON de cadastro.
 
 FASE 3 — CADASTRO (só entra aqui após confirmação do professor):
-Colete as informações uma pergunta por vez, de forma amigável:
+Vá direto ao ponto — sem repetir o parágrafo de vendas. Colete uma informação por vez:
 1. Nome do professor
 2. Quantas escolas ele dá aula
 3. Para cada escola:
-   a. Nome da escola — é o nome da instituição (ex: "Colégio Estadual João Silva", "Escola Vita", "Salesiano"). NÃO confunda com o sistema/plataforma.
-   b. Sistema — é a plataforma digital usada para o diário. Pergunte: "Qual sistema digital sua escola usa para o diário? É SIAE, Infodat, ActiveSoft ou Totvs RM?" Se o professor não souber, ajude: SIAE é da rede estadual de Sergipe, Totvs RM é usado pelo Salesiano, ActiveSoft é usado pela Vita/Jardins/COESI.
-   c. Login (CPF sem máscara para SIAE, nome de usuário para outros)
-   d. Senha — ao pedir a senha, diga: "Qual é a sua senha? 🔒 Fique tranquilo — ela fica criptografada no nosso sistema. É como um cofre: nem nós conseguimos ver. Só é usada na hora de registrar sua aula." A próxima mensagem do professor JÁ É a senha — não peça novamente. Aceite qualquer resposta como senha. NUNCA diga que a senha é inválida.
+   a. Nome da escola — é o nome da instituição. NÃO confunda com o sistema.
+      - Para ActiveSoft: diga "O ActiveSoft funciona pelo link da escola. Você sabe o nome completo da escola ou tem o endereço do sistema deles? (ex: vita.activesoft.com.br)"
+   b. Sistema — já foi informado na fase anterior, não pergunte de novo se já sabe.
+      - SIAE = rede estadual de Sergipe
+      - ActiveSoft/SIGA = Vita, Jardins, COESI, Futuro Feliz e similares
+      - Totvs RM = Salesiano e escolas privadas
+      - Infodat = sigmawd.com.br
+   c. Login:
+      - SIAE: CPF sem máscara (só números)
+      - ActiveSoft: nome de usuário da escola (NÃO é CPF)
+      - Totvs RM: CPF com máscara (xxx.xxx.xxx-xx)
+      - Infodat: nome de usuário
+   d. Senha — diga: "Qual é a sua senha? 🔒 Fique tranquilo — ela fica criptografada, como um cofre. Nem nós conseguimos ver." A próxima mensagem JÁ É a senha — aceite qualquer coisa, NUNCA peça de novo.
    e. Dias da semana nessa escola
-   f. Turmas (ex: 1A, 2B) — liste as que o professor informar
+   f. Turmas (ex: 1A, 2B)
 4. Quando tiver TUDO de TODAS as escolas, gere EXATAMENTE:
 CADASTRO:{"nome":"...","escolas":[{"nome":"...","sistema":"...","login":"...","senha":"...","dias":["segunda","terça"],"turmas":[{"label":"3A","value":"3A"}]}]}
 
