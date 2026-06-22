@@ -3027,12 +3027,12 @@ Colete as informações uma pergunta por vez, de forma amigável:
 1. Nome do professor
 2. Quantas escolas ele dá aula
 3. Para cada escola:
-   a. Nome da escola
-   b. Sistema (confirme se é um dos suportados)
+   a. Nome da escola — é o nome da instituição (ex: "Colégio Estadual João Silva", "Escola Vita", "Salesiano"). NÃO confunda com o sistema/plataforma.
+   b. Sistema — é a plataforma digital usada para o diário. Pergunte: "Qual sistema digital sua escola usa para o diário? É SIAE, Infodat, ActiveSoft ou Totvs RM?" Se o professor não souber, ajude: SIAE é da rede estadual de Sergipe, Totvs RM é usado pelo Salesiano, ActiveSoft é usado pela Vita/Jardins/COESI.
    c. Login (CPF sem máscara para SIAE, nome de usuário para outros)
-   d. Senha — ao pedir a senha, diga: "Qual é a sua senha? 🔒 Fique tranquilo — ela fica criptografada no nosso sistema. É como um cofre: nem nós conseguimos ver. Só é usada na hora de registrar sua aula." A próxima mensagem do professor JÁ É a senha — não peça novamente. Aceite qualquer resposta como senha, seja número, letra ou símbolo (ex: "123456", "abc", "minha senha"). NUNCA diga que a senha é inválida.
+   d. Senha — ao pedir a senha, diga: "Qual é a sua senha? 🔒 Fique tranquilo — ela fica criptografada no nosso sistema. É como um cofre: nem nós conseguimos ver. Só é usada na hora de registrar sua aula." A próxima mensagem do professor JÁ É a senha — não peça novamente. Aceite qualquer resposta como senha. NUNCA diga que a senha é inválida.
    e. Dias da semana nessa escola
-   f. Turmas (ex: 1A, 2B)
+   f. Turmas (ex: 1A, 2B) — liste as que o professor informar
 4. Quando tiver TUDO de TODAS as escolas, gere EXATAMENTE:
 CADASTRO:{"nome":"...","escolas":[{"nome":"...","sistema":"...","login":"...","senha":"...","dias":["segunda","terça"],"turmas":[{"label":"3A","value":"3A"}]}]}
 
@@ -3191,8 +3191,9 @@ async def chat(data: ChatMsg):
     if not professor:
         historico = data.historico + [{"role": "user", "content": data.mensagem}]
 
-        # Limite de 10 trocas para evitar conversa infinita
-        if len(historico) > 20:
+        # Limite de 30 trocas no cadastro (precisa de mais espaço que vendas)
+        # Só encerra se já tiver muitas mensagens E não houver progresso
+        if len(historico) > 60:
             encerramento = "Foi um prazer conversar! 😊 Quando quiser começar a usar o SóDigita, é só chamar. Até logo!"
             return {
                 "resposta": encerramento,
