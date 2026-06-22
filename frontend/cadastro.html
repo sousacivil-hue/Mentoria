@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SóDigita — Cadastro</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; color: #1a1a1a; }
+
+  header { background: #7C5CFF; color: white; padding: 20px 24px; text-align: center; }
+  header h1 { font-size: 22px; font-weight: 700; }
+  header p { font-size: 13px; opacity: 0.85; margin-top: 4px; }
+
+  .container { max-width: 600px; margin: 0 auto; padding: 24px 16px 60px; }
+
+  .step { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .step h2 { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #7C5CFF; }
+
+  label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; margin-top: 14px; }
+  input, select { width: 100%; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; color: #1a1a1a; background: #fafafa; outline: none; transition: border .2s; }
+  input:focus, select:focus { border-color: #7C5CFF; background: white; }
+
+  .seguranca { background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 10px; padding: 16px; margin: 20px 0 4px; }
+  .seguranca .icone { font-size: 22px; margin-bottom: 8px; }
+  .seguranca h3 { font-size: 14px; font-weight: 700; color: #15803d; margin-bottom: 6px; }
+  .seguranca p { font-size: 13px; color: #166534; line-height: 1.5; }
+
+  .escola-bloco { background: #fafafa; border: 1.5px solid #e8e8e8; border-radius: 10px; padding: 20px; margin-bottom: 16px; }
+  .escola-bloco h3 { font-size: 14px; font-weight: 700; color: #555; margin-bottom: 4px; }
+
+  .dias-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-top: 8px; }
+  .dia-btn { padding: 8px 4px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 12px; font-weight: 600; text-align: center; cursor: pointer; background: white; color: #555; transition: all .2s; }
+  .dia-btn.ativo { background: #7C5CFF; color: white; border-color: #7C5CFF; }
+
+  .turmas-lista { margin-top: 8px; }
+  .turma-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .turma-row input { flex: 1; }
+  .btn-remover { background: none; border: none; color: #e53935; font-size: 18px; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
+  .btn-add-turma { background: none; border: 1.5px dashed #7C5CFF; color: #7C5CFF; border-radius: 8px; padding: 8px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 4px; }
+
+  .btn-add-escola { background: none; border: 1.5px dashed #aaa; color: #777; border-radius: 10px; padding: 14px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 4px; }
+
+  .btn-salvar { background: #7C5CFF; color: white; border: none; border-radius: 10px; padding: 16px; font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 8px; }
+  .btn-salvar:hover { background: #6a4de0; }
+  .btn-salvar:disabled { background: #ccc; cursor: not-allowed; }
+
+  .sucesso { display: none; background: #f0fdf4; border: 2px solid #00c853; border-radius: 12px; padding: 32px; text-align: center; margin-top: 20px; }
+  .sucesso h2 { color: #15803d; font-size: 22px; margin-bottom: 12px; }
+  .sucesso p { color: #166534; font-size: 15px; line-height: 1.6; }
+
+  .erro-msg { color: #e53935; font-size: 13px; margin-top: 4px; display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📋 Cadastro — SóDigita</h1>
+  <p>Preencha seus dados e comece a usar em minutos</p>
+</header>
+
+<div class="container">
+
+  <!-- Dados pessoais -->
+  <div class="step">
+    <h2>1. Seus dados</h2>
+    <label>Seu nome completo</label>
+    <input type="text" id="nome" placeholder="Ex: Maria Silva" />
+    <label>Seu WhatsApp</label>
+    <input type="tel" id="whatsapp" placeholder="Ex: 79 99999-0000" />
+  </div>
+
+  <!-- Escolas -->
+  <div class="step">
+    <h2>2. Suas escolas e sistemas</h2>
+    <div id="escolas-container"></div>
+    <button class="btn-add-escola" onclick="addEscola()">+ Adicionar outra escola</button>
+  </div>
+
+  <!-- Segurança -->
+  <div class="step">
+    <div class="seguranca">
+      <div class="icone">🔒</div>
+      <h3>Seus dados estão protegidos</h3>
+      <p>Sua senha é criptografada antes de ser salva — assim como o WhatsApp protege suas mensagens. <strong>Nem nossa equipe consegue ler.</strong> Ela é usada apenas no momento de registrar sua aula, de forma automática e segura. Nunca compartilhada com terceiros.</p>
+    </div>
+
+    <div id="credenciais-container"></div>
+  </div>
+
+  <button class="btn-salvar" onclick="salvar()" id="btn-salvar">Concluir cadastro →</button>
+  <p class="erro-msg" id="erro-geral">Preencha todos os campos antes de continuar.</p>
+
+  <div class="sucesso" id="sucesso">
+    <h2>🎉 Cadastro concluído!</h2>
+    <p>Tudo certo! Agora é só acessar o chat e mandar a turma e o conteúdo da aula.<br><br>
+    A gente registra tudo automaticamente no sistema da sua escola. 😊</p>
+    <br>
+    <a href="chat.html" style="display:inline-block;background:#7C5CFF;color:white;padding:14px 32px;border-radius:10px;font-weight:700;text-decoration:none;margin-top:8px;">Ir para o chat →</a>
+  </div>
+
+</div>
+
+<script>
+const API = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+
+const SISTEMAS = ['SIAE', 'ActiveSoft/SIGA', 'Totvs RM', 'Infodat'];
+const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex'];
+const DIAS_VALOR = ['segunda', 'terca', 'quarta', 'quinta', 'sexta'];
+
+let escolaCount = 0;
+
+function addEscola() {
+  const idx = escolaCount++;
+  const container = document.getElementById('escolas-container');
+
+  const bloco = document.createElement('div');
+  bloco.className = 'escola-bloco';
+  bloco.id = `escola-${idx}`;
+  bloco.innerHTML = `
+    <h3>Escola ${idx + 1}</h3>
+    <label>Nome da escola</label>
+    <input type="text" id="escola-nome-${idx}" placeholder="Ex: Colégio Vita, Salesiano..." />
+
+    <label>Sistema usado para o diário</label>
+    <select id="escola-sistema-${idx}" onchange="atualizarCredencial(${idx})">
+      <option value="">Selecione...</option>
+      ${SISTEMAS.map(s => `<option value="${s}">${s}</option>`).join('')}
+    </select>
+
+    <label>Dias que você dá aula aqui</label>
+    <div class="dias-grid">
+      ${DIAS.map((d, i) => `<div class="dia-btn" onclick="toggleDia(this, ${idx}, '${DIAS_VALOR[i]}')" data-dia="${DIAS_VALOR[i]}">${d}</div>`).join('')}
+    </div>
+
+    <label>Turmas</label>
+    <div class="turmas-lista" id="turmas-${idx}">
+      <div class="turma-row">
+        <input type="text" placeholder="Ex: 6A, 7B, 2º ano..." />
+        <button class="btn-remover" onclick="removeTurma(this)">×</button>
+      </div>
+    </div>
+    <button class="btn-add-turma" onclick="addTurma(${idx})">+ Adicionar turma</button>
+  `;
+  container.appendChild(bloco);
+  atualizarCredenciais();
+}
+
+function toggleDia(el, idx, dia) {
+  el.classList.toggle('ativo');
+}
+
+function addTurma(idx) {
+  const lista = document.getElementById(`turmas-${idx}`);
+  const row = document.createElement('div');
+  row.className = 'turma-row';
+  row.innerHTML = `<input type="text" placeholder="Ex: 6A, 7B, 2º ano..." /><button class="btn-remover" onclick="removeTurma(this)">×</button>`;
+  lista.appendChild(row);
+}
+
+function removeTurma(btn) {
+  btn.parentElement.remove();
+}
+
+function atualizarCredencial(idx) {
+  atualizarCredenciais();
+}
+
+function atualizarCredenciais() {
+  const container = document.getElementById('credenciais-container');
+  container.innerHTML = '<h2 style="font-size:16px;font-weight:700;color:#7C5CFF;margin-bottom:16px;">3. Login e senha por escola</h2>';
+
+  for (let i = 0; i < escolaCount; i++) {
+    const nomeEl = document.getElementById(`escola-nome-${i}`);
+    const sistemaEl = document.getElementById(`escola-sistema-${i}`);
+    if (!nomeEl || !sistemaEl) continue;
+
+    const nome = nomeEl.value || `Escola ${i + 1}`;
+    const sistema = sistemaEl.value;
+
+    let dica = '';
+    if (sistema === 'SIAE') dica = 'CPF sem pontos e traços (só números)';
+    else if (sistema === 'Totvs RM') dica = 'CPF com pontos e traços (xxx.xxx.xxx-xx)';
+    else if (sistema === 'ActiveSoft/SIGA') dica = 'Nome de usuário da escola';
+    else if (sistema === 'Infodat') dica = 'Nome de usuário';
+
+    container.innerHTML += `
+      <div style="margin-bottom:20px;">
+        <div style="font-size:14px;font-weight:700;color:#333;margin-bottom:8px;">${nome} ${sistema ? `(${sistema})` : ''}</div>
+        <label>Login ${dica ? `<span style="font-weight:400;color:#888">— ${dica}</span>` : ''}</label>
+        <input type="text" id="login-${i}" placeholder="Seu login" autocomplete="off" />
+        <label>Senha</label>
+        <input type="password" id="senha-${i}" placeholder="Sua senha" autocomplete="new-password" />
+      </div>
+    `;
+  }
+}
+
+function getDiasSelecionados(idx) {
+  const bloco = document.getElementById(`escola-${idx}`);
+  return [...bloco.querySelectorAll('.dia-btn.ativo')].map(el => el.dataset.dia);
+}
+
+function getTurmas(idx) {
+  const lista = document.getElementById(`turmas-${idx}`);
+  return [...lista.querySelectorAll('input')].map(i => i.value.trim()).filter(Boolean).map(t => ({ label: t, value: t }));
+}
+
+async function salvar() {
+  const nome = document.getElementById('nome').value.trim();
+  const whatsapp = document.getElementById('whatsapp').value.trim().replace(/\D/g, '');
+
+  if (!nome || !whatsapp) {
+    mostrarErro('Preencha seu nome e WhatsApp.');
+    return;
+  }
+
+  const escolas = [];
+  for (let i = 0; i < escolaCount; i++) {
+    const nomeEscola = document.getElementById(`escola-nome-${i}`)?.value.trim();
+    const sistema = document.getElementById(`escola-sistema-${i}`)?.value;
+    const login = document.getElementById(`login-${i}`)?.value.trim();
+    const senha = document.getElementById(`senha-${i}`)?.value;
+    const dias = getDiasSelecionados(i);
+    const turmas = getTurmas(i);
+
+    if (!nomeEscola || !sistema || !login || !senha) {
+      mostrarErro('Preencha todos os campos de todas as escolas.');
+      return;
+    }
+
+    escolas.push({ nome: nomeEscola, sistema, login, senha, dias, turmas });
+  }
+
+  if (!escolas.length) {
+    mostrarErro('Adicione pelo menos uma escola.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-salvar');
+  btn.disabled = true;
+  btn.textContent = 'Salvando...';
+
+  try {
+    const numero = '55' + whatsapp;
+    const res = await fetch(`${API}/cadastro`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ numero, nome, escolas })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('sucesso').style.display = 'block';
+      btn.style.display = 'none';
+      document.getElementById('sucesso').scrollIntoView({ behavior: 'smooth' });
+    } else {
+      mostrarErro(data.erro || 'Erro ao salvar. Tente novamente.');
+      btn.disabled = false;
+      btn.textContent = 'Concluir cadastro →';
+    }
+  } catch(e) {
+    mostrarErro('Erro de conexão. Tente novamente.');
+    btn.disabled = false;
+    btn.textContent = 'Concluir cadastro →';
+  }
+}
+
+function mostrarErro(msg) {
+  const el = document.getElementById('erro-geral');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+// Inicia com uma escola
+addEscola();
+
+// Atualiza credenciais quando professor digita nome da escola
+document.addEventListener('input', e => {
+  if (e.target.id && e.target.id.startsWith('escola-nome-')) atualizarCredenciais();
+});
+</script>
+</body>
+</html>

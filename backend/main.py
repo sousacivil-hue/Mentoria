@@ -3364,6 +3364,22 @@ async def chat(data: ChatMsg):
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
+@app.post("/cadastro")
+async def cadastro_web(data: dict):
+    """Endpoint para cadastro via formulário web."""
+    numero = data.get("numero", "")
+    nome = data.get("nome", "")
+    escolas = data.get("escolas", [])
+
+    if not numero or not nome or not escolas:
+        return {"ok": False, "erro": "Dados incompletos"}
+
+    sucesso = _salvar_professor_supabase(numero, {"nome": nome, "escolas": escolas})
+    if sucesso:
+        return {"ok": True}
+    return {"ok": False, "erro": "Erro ao salvar no banco de dados"}
+
+
 @app.post("/admin/professor/turmas")
 async def atualizar_turmas(data: dict):
     """Atualiza turmas de uma escola do professor."""
