@@ -166,7 +166,13 @@ function monitorarJob(jobId) {
   };
   es.onerror = () => {
     es.close();
-    logDiv.innerHTML += '\n⚠️ Conexão encerrada.';
+    const ultimoTexto = logDiv.innerHTML;
+    if (ultimoTexto.includes('✅')) {
+      logDiv.innerHTML += `<div class="hora">${hora()}</div>`;
+    } else {
+      logDiv.innerHTML += '\n⚠️ Instabilidade na conexão. Tente novamente em 1 minuto.';
+      logDiv.innerHTML += `<div class="hora">${hora()}</div>`;
+    }
   };
 }
 
