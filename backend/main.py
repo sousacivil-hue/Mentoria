@@ -3153,16 +3153,25 @@ async def chat(data: ChatMsg):
                 dias_semana = ["segunda", "terca", "quarta", "quinta", "sexta", "sabado", "domingo"]
                 dia_hoje = dias_semana[datetime.date.today().weekday()]
 
-                escola = None
+                # Filtra escolas do dia de hoje
+                escolas_hoje = []
                 for e in escolas:
                     dias_escola = [d.lower().replace("ç","c").replace("á","a").replace("ã","a").replace("é","e").replace("ê","e") for d in e.get("dias", [])]
                     if dia_hoje in dias_escola:
-                        escola = e
-                        break
+                        escolas_hoje.append(e)
 
-                # Se não achou pelo dia, usa a primeira
-                if not escola:
-                    escola = escolas[0]
+                if not escolas_hoje:
+                    escolas_hoje = [escolas[0]]
+
+                # Monta mapa turma → escola para detecção automática
+                turma_para_escola = {}
+                for e in escolas_hoje:
+                    for t in e.get("turmas", []):
+                        turma_para_escola[t["value"].upper()] = e
+                        turma_para_escola[t["label"].upper()] = e
+
+                # Usa primeira escola do dia como padrão
+                escola = escolas_hoje[0]
 
                 professor = {
                     "nome": professor_sb["nome"],
@@ -3173,6 +3182,8 @@ async def chat(data: ChatMsg):
                     "escola": escola.get("nome", ""),
                     "professor": escola.get("login", ""),
                     "escolas": escolas,
+                    "escolas_hoje": escolas_hoje,
+                    "turma_para_escola": turma_para_escola,
                     "escola_hoje": escola.get("nome", ""),
                 }
 
@@ -3270,33 +3281,56 @@ async def chat(data: ChatMsg):
                 conteudo = conteudo[0].upper() + conteudo[1:]
                 if not conteudo.endswith("."):
                     conteudo += "."
-            sistema = professor.get("sistema", "siae")
+
+            # Detecta escola pela turma (ex: 8A → Vita, 2A → Salesiano)
+            turma_para_escola = professor.get("turma_para_escola", {})
+            escola_detectada = turma_para_escola.get(turma.upper())
+            if escola_detectada:
+                sistema = escola_detectada.get("sistema", professor.get("sistema", "siae")).lower().replace("/", "").replace(" ", "")
+                login_uso = escola_detectada.get("login", professor.get("login", ""))
+                senha_uso = escola_detectada.get("senha", professor.get("senha", ""))
+                escola_uso = escola_detectada.get("nome", professor.get("escola", ""))
+                turmas_uso = escola_detectada.get("turmas", professor.get("turmas", []))
+            else:
+                sistema = professor.get("sistema", "siae").lower().replace("/", "").replace(" ", "")
+                login_uso = professor.get("login", "")
+                senha_uso = professor.get("senha", "")
+                escola_uso = professor.get("escola", "")
+                turmas_uso = professor.get("turmas", [])
+
+            # Normaliza nome do sistema
+            if "activesoft" in sistema or "siga" in sistema:
+                sistema = "active"
+            elif "totvs" in sistema or "salesiano" in sistema:
+                sistema = "salesiano"
+            elif "infodat" in sistema:
+                sistema = "infodat"
+            else:
+                sistema = "siae"
 
             if sistema == "infodat":
-                todas_turmas = professor["turmas"]
-                turmas_match = [t for t in todas_turmas if turma.upper() in t["label"].upper()]
+                turmas_match = [t for t in turmas_uso if turma.upper() in t["label"].upper()]
                 if not turmas_match:
-                    turmas_match = todas_turmas
+                    turmas_match = turmas_uso
                 hoje = __import__("datetime").date.today().strftime("%d/%m/%Y")
                 entradas = [{"data": hoje, "turma_value": t["value"], "num_aulas": "2", "conteudo": conteudo} for t in turmas_match]
                 form_inf = InfodatFormData(
-                    escola=professor["escola"],
-                    professor=professor["professor"],
-                    senha=professor["senha"],
+                    escola=escola_uso,
+                    professor=login_uso,
+                    senha=senha_uso,
                     entradas=entradas,
                     numero=data.numero,
                 )
                 job_id = str(uuid.uuid4())
                 jobs[job_id] = []
                 asyncio.create_task(run_infodat(job_id, form_inf))
-            else:
-                # SIAE
-                turmas_match = [t for t in professor["turmas"] if turma.lower() in t.lower()]
+            elif sistema == "siae":
+                turmas_match = [t for t in turmas_uso if turma.lower() in t.lower()]
                 if not turmas_match:
-                    turmas_match = professor["turmas"]
+                    turmas_match = turmas_uso
                 form = FormData(
-                    login=professor["login"],
-                    senha=professor["senha"],
+                    login=login_uso,
+                    senha=senha_uso,
                     opcoes={"aulas": True, "solicitadas": False, "notas": False},
                     modo_conteudo="proprio",
                     assuntos_por_turma={t: conteudo for t in turmas_match},
@@ -3304,6 +3338,8 @@ async def chat(data: ChatMsg):
                 job_id = str(uuid.uuid4())
                 jobs[job_id] = []
                 asyncio.create_task(run_automacao(job_id, form))
+            else:
+                resposta += f"\n⚠️ Sistema '{sistema}' detectado para turma {turma} — automação via site disponível em sodigita.com.br"
         except Exception as ex:
             resposta += f"\n⚠️ Erro ao iniciar registro: {str(ex)[:80]}"
 
