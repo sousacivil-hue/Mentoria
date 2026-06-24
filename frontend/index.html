@@ -3,42 +3,98 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SóDigita — Você planeja. Você ensina. A gente só digita.</title>
+<title>SóDigita — Burocracia escolar no automático</title>
 <style>
   * { box-sizing:border-box; margin:0; padding:0; }
   body { font-family:'Segoe UI', Arial, sans-serif; background:#fff; color:#1a1a1a; line-height:1.6; }
 
-  nav { display:flex; align-items:center; justify-content:space-between; padding:24px 48px; border-bottom:1px solid #f0f0f0; }
-  .logo img { height:40px; display:block; }
-  .nav-btn { background:#7C5CFF; color:#fff; padding:10px 24px; border-radius:8px; font-size:14px; font-weight:600; text-decoration:none; }
-  @media(max-width:600px){ nav { padding:16px 20px; } .nav-btn { padding:10px 18px; font-size:13px; } }
+  /* NAV */
+  nav { display:flex; align-items:center; justify-content:space-between; padding:20px 48px; position:absolute; top:0; left:0; right:0; z-index:10; }
+  .logo img { height:36px; display:block; }
+  .nav-btn { background:#fff; color:#7C5CFF; padding:10px 24px; border-radius:8px; font-size:14px; font-weight:700; text-decoration:none; }
+  @media(max-width:600px){ nav { padding:16px 20px; } }
 
-  .hero { max-width:760px; margin:0 auto; padding:100px 24px 80px; text-align:center; }
-  .hero h1 { font-size:clamp(36px,6vw,60px); font-weight:800; line-height:1.1; color:#1a1a1a; letter-spacing:-1px; }
-  .hero h1 span { color:#7C5CFF; }
-  .hero p { font-size:18px; color:#666; margin-top:20px; max-width:520px; margin-left:auto; margin-right:auto; }
-  .hero-btn { display:inline-block; margin-top:40px; background:#7C5CFF; color:#fff; padding:16px 40px; border-radius:10px; font-size:16px; font-weight:700; text-decoration:none; }
+  /* HERO */
+  .hero { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); min-height:620px; display:flex; align-items:center; position:relative; overflow:hidden; }
+  .hero::after { content:''; position:absolute; inset:0; background:rgba(0,0,0,0.45); }
+  .hero-bg { position:absolute; inset:0; background-image:url('https://images.unsplash.com/photo-1509062522246-3755977927d7?w=1400&q=80'); background-size:cover; background-position:center; }
+  .hero-content { position:relative; z-index:2; max-width:700px; margin:0 auto; padding:140px 24px 80px; text-align:center; }
+  .hero-tag { display:inline-block; background:rgba(124,92,255,0.3); border:1px solid rgba(124,92,255,0.6); color:#c4b5fd; font-size:13px; font-weight:600; padding:6px 16px; border-radius:20px; margin-bottom:24px; }
+  .hero h1 { font-size:clamp(36px,6vw,58px); font-weight:800; line-height:1.1; color:#fff; letter-spacing:-1px; margin-bottom:20px; }
+  .hero h1 span { color:#00D4AA; }
+  .hero p { font-size:18px; color:rgba(255,255,255,0.8); max-width:520px; margin:0 auto 40px; }
+  .hero-btn { display:inline-block; background:#7C5CFF; color:#fff; padding:16px 40px; border-radius:10px; font-size:16px; font-weight:700; text-decoration:none; margin-right:12px; }
   .hero-btn:hover { background:#6a4de0; }
+  .hero-btn-outline { display:inline-block; border:2px solid rgba(255,255,255,0.4); color:#fff; padding:14px 32px; border-radius:10px; font-size:15px; font-weight:600; text-decoration:none; }
+  .hero-btn-outline:hover { border-color:#fff; }
 
-  .como { max-width:900px; margin:0 auto; padding:80px 24px; }
-  .como h2 { text-align:center; font-size:32px; font-weight:800; margin-bottom:56px; }
-  .passos { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:40px; }
-  .passo { text-align:center; }
-  .passo .num { width:40px; height:40px; border-radius:50%; background:#7C5CFF; color:#fff; font-weight:800; font-size:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
-  .passo h3 { font-size:16px; font-weight:700; margin-bottom:8px; }
-  .passo p { font-size:14px; color:#666; }
+  /* STATS */
+  .stats { background:#7C5CFF; padding:40px 24px; }
+  .stats-inner { max-width:900px; margin:0 auto; display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:24px; text-align:center; }
+  .stat-num { font-size:36px; font-weight:800; color:#fff; }
+  .stat-label { font-size:13px; color:rgba(255,255,255,0.75); margin-top:4px; }
 
-  .sistemas { background:#f8f8f8; }
-  .sistemas-inner { max-width:900px; margin:0 auto; padding:80px 24px; }
-  .sistemas-inner h2 { text-align:center; font-size:32px; font-weight:800; margin-bottom:16px; }
-  .sistemas-inner p.sub { text-align:center; color:#666; margin-bottom:48px; }
-  .grid-sistemas { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px; }
-  .sistema { background:#fff; border:1px solid #e8e8e8; border-radius:12px; padding:24px; }
-  .sistema h3 { font-size:15px; font-weight:700; margin-bottom:6px; }
-  .sistema p { font-size:13px; color:#888; margin-bottom:16px; }
-  .sistema a { font-size:13px; font-weight:600; color:#7C5CFF; text-decoration:none; }
-  .sistema a:hover { text-decoration:underline; }
+  /* CANAIS */
+  .canais { max-width:960px; margin:0 auto; padding:80px 24px; }
+  .canais h2 { text-align:center; font-size:32px; font-weight:800; margin-bottom:12px; }
+  .canais .sub { text-align:center; color:#666; margin-bottom:56px; font-size:16px; }
+  .canais-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:24px; }
+  .canal { background:#fafafa; border:1px solid #e8e8e8; border-radius:16px; padding:32px 24px; text-align:center; transition:box-shadow .2s; }
+  .canal:hover { box-shadow:0 8px 32px rgba(124,92,255,0.12); border-color:#7C5CFF; }
+  .canal .icone { font-size:40px; margin-bottom:16px; }
+  .canal h3 { font-size:17px; font-weight:700; margin-bottom:8px; }
+  .canal p { font-size:14px; color:#666; line-height:1.6; }
 
+  /* O QUE FAZEMOS */
+  .fazemos { background:#f8f8f8; padding:80px 24px; }
+  .fazemos-inner { max-width:960px; margin:0 auto; }
+  .fazemos h2 { text-align:center; font-size:32px; font-weight:800; margin-bottom:12px; }
+  .fazemos .sub { text-align:center; color:#666; margin-bottom:56px; font-size:16px; }
+  .fazemos-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:24px; }
+  .faz-card { background:#fff; border-radius:16px; padding:32px 24px; border-left:4px solid #e0e0e0; }
+  .faz-card.ativo { border-left-color:#7C5CFF; }
+  .faz-card.breve { border-left-color:#00D4AA; }
+  .faz-tag { display:inline-block; font-size:11px; font-weight:700; padding:3px 10px; border-radius:12px; margin-bottom:12px; }
+  .faz-tag.disponivel { background:#ede9ff; color:#7C5CFF; }
+  .faz-tag.em-breve { background:#e0faf4; color:#00936b; }
+  .faz-card h3 { font-size:18px; font-weight:700; margin-bottom:8px; }
+  .faz-card p { font-size:14px; color:#666; line-height:1.6; }
+
+  /* MANIFESTO */
+  .manifesto { background:#1a1a1a; padding:80px 24px; text-align:center; }
+  .manifesto-inner { max-width:700px; margin:0 auto; }
+  .manifesto .anos { font-size:14px; color:#888; letter-spacing:4px; margin-bottom:24px; }
+  .manifesto h2 { font-size:clamp(28px,5vw,48px); font-weight:800; color:#fff; line-height:1.2; margin-bottom:20px; }
+  .manifesto h2 span { color:#7C5CFF; }
+  .manifesto p { font-size:16px; color:#aaa; margin-bottom:32px; }
+  .manifesto .virada { font-size:22px; font-weight:700; color:#00D4AA; }
+
+  /* SISTEMAS */
+  .sistemas { max-width:960px; margin:0 auto; padding:80px 24px; text-align:center; }
+  .sistemas h2 { font-size:32px; font-weight:800; margin-bottom:12px; }
+  .sistemas .sub { color:#666; margin-bottom:40px; font-size:16px; }
+  .sistemas-badges { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin-bottom:20px; }
+  .badge-sistema { background:#f0ecff; color:#7C5CFF; font-size:14px; font-weight:700; padding:10px 20px; border-radius:10px; }
+  .sistemas-note { font-size:14px; color:#888; margin-top:16px; }
+
+  /* LEAD FORM */
+  .lead { background:linear-gradient(135deg, #7C5CFF, #5a3fd4); padding:80px 24px; }
+  .lead-inner { max-width:600px; margin:0 auto; }
+  .lead h2 { font-size:32px; font-weight:800; color:#fff; text-align:center; margin-bottom:12px; }
+  .lead .sub { color:rgba(255,255,255,0.8); text-align:center; margin-bottom:40px; font-size:16px; }
+  .form-grid { display:grid; gap:16px; }
+  .form-grid input { width:100%; padding:14px 18px; border:none; border-radius:10px; font-size:15px; color:#1a1a1a; background:#fff; outline:none; }
+  .form-grid input::placeholder { color:#aaa; }
+  .form-grid input:focus { box-shadow:0 0 0 3px rgba(255,255,255,0.3); }
+  .btn-lead { background:#00D4AA; color:#1a1a1a; border:none; border-radius:10px; padding:16px; font-size:16px; font-weight:800; cursor:pointer; width:100%; margin-top:8px; transition:background .2s; }
+  .btn-lead:hover { background:#00b894; }
+  .btn-lead:disabled { background:#aaa; cursor:not-allowed; }
+  .form-nota { font-size:12px; color:rgba(255,255,255,0.6); text-align:center; margin-top:12px; }
+  .form-sucesso { display:none; background:rgba(255,255,255,0.15); border-radius:12px; padding:32px; text-align:center; color:#fff; }
+  .form-sucesso h3 { font-size:22px; font-weight:700; margin-bottom:8px; }
+  .form-sucesso p { font-size:15px; opacity:0.85; }
+
+  /* PRECO */
   .preco { max-width:480px; margin:0 auto; padding:80px 24px; text-align:center; }
   .preco h2 { font-size:32px; font-weight:800; margin-bottom:12px; }
   .preco .sub { color:#666; margin-bottom:40px; }
@@ -47,84 +103,160 @@
   .card-preco .valor { font-size:52px; font-weight:800; color:#1a1a1a; }
   .card-preco .valor small { font-size:18px; color:#888; font-weight:400; }
   .card-preco .desc { color:#666; font-size:14px; margin:12px 0 28px; }
+  .urgencia { color:#e53935; font-size:13px; font-weight:700; margin-bottom:20px; }
   .card-preco ul { list-style:none; text-align:left; margin-bottom:32px; }
   .card-preco li { padding:8px 0; font-size:14px; border-bottom:1px solid #f0f0f0; }
   .card-preco li::before { content:'✓ '; color:#7C5CFF; font-weight:700; }
   .card-preco a { display:block; background:#7C5CFF; color:#fff; padding:14px; border-radius:10px; font-weight:700; text-decoration:none; font-size:15px; }
+  .card-preco a:hover { background:#6a4de0; }
 
+  /* FOOTER */
   footer { text-align:center; padding:40px 24px; color:#999; font-size:13px; border-top:1px solid #f0f0f0; }
   footer a { color:#7C5CFF; text-decoration:none; }
+
+  @media(max-width:600px){
+    .hero-btn, .hero-btn-outline { display:block; margin:8px auto; max-width:280px; text-align:center; }
+    .hero-btn { margin-right:0; }
+  }
 </style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav>
   <a class="logo" href="#"><img src="logo.png" alt="SóDigita"></a>
-  <a class="nav-btn" href="https://wa.me/5579991075326" target="_blank">Falar no WhatsApp</a>
+  <a class="nav-btn" href="#lead">Testar grátis</a>
 </nav>
 
+<!-- HERO -->
 <div class="hero">
-  <p style="font-size:15px;color:#7C5CFF;font-weight:700;margin-bottom:20px;">Acabou o domingo preenchendo diário?</p>
-  <h1>Diário, notas e frequência.<br><span>Tudo automático.</span></h1>
-  <p>O professor planeja e ensina. O SóDigita registra tudo no sistema — pelo WhatsApp ou pelo site. <strong style="color:#1a1a1a;">2 horas por semana de volta pra você.</strong></p>
-  <a class="hero-btn" href="https://wa.me/5579991075326?text=Quero%20testar%20o%20S%C3%B3Digita!" target="_blank">Testar grátis agora</a>
+  <div class="hero-bg"></div>
+  <div class="hero-content">
+    <div class="hero-tag">✨ Feito por professores, para professores</div>
+    <h1>A burocracia escolar<br><span>no automático.</span></h1>
+    <p>Diário, frequência e notas — pelo WhatsApp ou pelo site. Em 30 segundos. Funciona com qualquer sistema escolar.</p>
+    <a class="hero-btn" href="#lead">Quero testar grátis</a>
+    <a class="hero-btn-outline" href="chat.html">Ver demonstração</a>
+  </div>
 </div>
 
-<div class="como">
-  <h2>Como funciona</h2>
-  <div class="passos">
-    <div class="passo">
-      <div class="num">1</div>
-      <h3>Você informa a aula</h3>
-      <p>Manda turma, data e conteúdo pelo WhatsApp — do jeito que você já faz no seu planejamento.</p>
+<!-- STATS -->
+<div class="stats">
+  <div class="stats-inner">
+    <div>
+      <div class="stat-num">30s</div>
+      <div class="stat-label">para registrar uma aula</div>
     </div>
-    <div class="passo">
-      <div class="num">2</div>
-      <h3>O robô entra no sistema</h3>
-      <p>Acessa o sistema e preenche o diário campo por campo.</p>
+    <div>
+      <div class="stat-num">2h</div>
+      <div class="stat-label">devolvidas por semana</div>
     </div>
-    <div class="passo">
-      <div class="num">3</div>
-      <h3>Você recebe a confirmação</h3>
-      <p>Em 30 segundos o diário está preenchido e você recebe a confirmação.</p>
+    <div>
+      <div class="stat-num">R$9,90</div>
+      <div class="stat-label">por mês — preço fundador</div>
+    </div>
+    <div>
+      <div class="stat-num">100%</div>
+      <div class="stat-label">automático, sem cliques</div>
     </div>
   </div>
 </div>
 
+<!-- CANAIS -->
+<div class="canais">
+  <h2>Do jeito que você preferir</h2>
+  <p class="sub">Três formas de registrar suas aulas — você escolhe.</p>
+  <div class="canais-grid">
+    <div class="canal">
+      <div class="icone">📱</div>
+      <h3>Pelo WhatsApp</h3>
+      <p>Manda a turma e o conteúdo no WhatsApp. O robô registra no sistema da sua escola em instantes.</p>
+    </div>
+    <div class="canal">
+      <div class="icone">💻</div>
+      <h3>Pelo site</h3>
+      <p>Acesse o painel e registre as aulas da semana de uma vez — sem abrir o sistema da escola.</p>
+    </div>
+    <div class="canal">
+      <div class="icone">📅</div>
+      <h3>Planejamento do bimestre</h3>
+      <p>Informe o início e o fim do bimestre e a IA distribui os conteúdos automaticamente para cada aula.</p>
+    </div>
+  </div>
+</div>
+
+<!-- O QUE FAZEMOS -->
+<div class="fazemos">
+  <div class="fazemos-inner">
+    <h2>O que automatizamos</h2>
+    <p class="sub">Tudo o que toma o seu tempo fora da sala de aula.</p>
+    <div class="fazemos-grid">
+      <div class="faz-card ativo">
+        <span class="faz-tag disponivel">✅ Disponível agora</span>
+        <h3>📖 Diário de classe</h3>
+        <p>Manda a turma e o conteúdo da aula. A gente preenche o diário campo por campo no sistema da sua escola.</p>
+      </div>
+      <div class="faz-card breve">
+        <span class="faz-tag em-breve">🔜 Em breve</span>
+        <h3>👥 Frequência</h3>
+        <p>Você manda o nome dos alunos que faltaram. A gente marca a ausência no sistema para você.</p>
+      </div>
+      <div class="faz-card breve">
+        <span class="faz-tag em-breve">🔜 Em breve</span>
+        <h3>📊 Notas</h3>
+        <p>Manda uma foto da sua lista de notas. A gente lança no sistema respeitando o formato da sua escola.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MANIFESTO -->
+<div class="manifesto">
+  <div class="manifesto-inner">
+    <div class="anos">2005 &nbsp;·&nbsp; 2010 &nbsp;·&nbsp; 2015 &nbsp;·&nbsp; 2020 &nbsp;·&nbsp; 2025</div>
+    <h2>Tudo está sendo automatizado.<br><span>Menos a vida do professor.</span></h2>
+    <p>Enquanto o mundo evolui, o professor ainda passa horas preenchendo diário — igual fazia 20 anos atrás. Isso tem que mudar.</p>
+    <div class="virada">Até agora. 🚀</div>
+  </div>
+</div>
+
+<!-- SISTEMAS -->
 <div class="sistemas">
-  <div class="sistemas-inner">
-    <h2>Sistemas suportados</h2>
-    <p class="sub">Escolha o sistema da sua escola.</p>
-    <div class="grid-sistemas">
-      <div class="sistema">
-        <h3>SIAE — Rede Estadual</h3>
-        <p>Professores da rede estadual de Sergipe (SEDUC).</p>
-        <a href="chat.html">Começar →</a>
+  <h2>Funciona com qualquer sistema escolar</h2>
+  <p class="sub">Já integrado com os principais. O seu não está na lista? A gente resolve.</p>
+  <div class="sistemas-badges">
+    <span class="badge-sistema">SIAE</span>
+    <span class="badge-sistema">Infodat</span>
+    <span class="badge-sistema">ActiveSoft / SIGA</span>
+    <span class="badge-sistema">Totvs RM</span>
+    <span class="badge-sistema">SESI</span>
+    <span class="badge-sistema">+ outros</span>
+  </div>
+  <p class="sistemas-note">Usa um sistema diferente? Nos conta — a gente integra. 👇</p>
+</div>
+
+<!-- LEAD FORM -->
+<div class="lead" id="lead">
+  <div class="lead-inner">
+    <h2>Quero testar grátis</h2>
+    <p class="sub">Preencha abaixo e entraremos em contato para configurar tudo para você.</p>
+    <div id="form-lead">
+      <div class="form-grid">
+        <input type="text" id="lead-nome" placeholder="Seu nome completo" />
+        <input type="tel" id="lead-whatsapp" placeholder="Seu WhatsApp (ex: 79 99999-0000)" />
+        <input type="text" id="lead-sistema" placeholder="Sistema da sua escola (ex: SIAE, Infodat...)" />
+        <button class="btn-lead" onclick="enviarLead()" id="btn-lead">Quero testar grátis →</button>
       </div>
-      <div class="sistema">
-        <h3>ActiveSoft / SIGA</h3>
-        <p>Vita, Jardins, COESI, Futuro Feliz e outras escolas.</p>
-        <a href="active.html">Começar →</a>
-      </div>
-      <div class="sistema">
-        <h3>Infodat</h3>
-        <p>Colégios que usam o sistema Infodat (sigmawd.com.br).</p>
-        <a href="chat.html">Começar →</a>
-      </div>
-      <div class="sistema">
-        <h3>Totvs RM — Salesiano</h3>
-        <p>Colégios que usam o portal Totvs RM.</p>
-        <a href="salesiano.html">Começar →</a>
-      </div>
-      <div class="sistema">
-        <h3>SESI — Portal Educacional</h3>
-        <p>Professores da rede SESI.</p>
-        <a href="sesi.html">Começar →</a>
-      </div>
+      <p class="form-nota">🔒 Seus dados são usados apenas para entrar em contato. Sem spam.</p>
+    </div>
+    <div class="form-sucesso" id="form-sucesso">
+      <h3>🎉 Recebemos seu contato!</h3>
+      <p>Em breve entraremos em contato pelo WhatsApp para configurar tudo para você. Fique de olho!</p>
     </div>
   </div>
 </div>
 
+<!-- PREÇO -->
 <div class="preco">
   <h2>Simples assim</h2>
   <p class="sub">Um preço. Tudo incluído.</p>
@@ -132,23 +264,54 @@
     <div class="badge">Oferta de fundador</div>
     <div class="valor">R$ 9,90<small>/mês</small></div>
     <p class="desc">Para os primeiros 50 professores. Depois sobe para R$19,90.</p>
-    <p style="color:#e53935;font-size:13px;font-weight:700;margin-bottom:20px;">⚡ 50 vagas disponíveis — garanta a sua</p>
+    <p class="urgencia">⚡ 50 vagas disponíveis — garanta a sua</p>
     <ul>
       <li>Diário de classe automático</li>
       <li>Lançamento de notas</li>
       <li>Registro de frequência</li>
       <li>Via WhatsApp ou site</li>
+      <li>Planejamento do bimestre</li>
       <li>Turmas ilimitadas</li>
       <li>Suporte via WhatsApp</li>
     </ul>
-    <a href="https://wa.me/5579991075326?text=Quero%20assinar%20o%20S%C3%B3Digita!" target="_blank">Garantir minha vaga</a>
+    <a href="#lead">Garantir minha vaga</a>
   </div>
 </div>
 
 <footer>
-  SóDigita — Você planeja. Você ensina. A gente só digita.<br><br>
+  SóDigita — Genuinamente sergipano. Feito por professores, para professores.<br><br>
   <a href="https://wa.me/5579991075326">💬 (79) 99107-5326</a>
 </footer>
+
+<script>
+const API = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+
+async function enviarLead() {
+  const nome = document.getElementById('lead-nome').value.trim();
+  const whatsapp = document.getElementById('lead-whatsapp').value.trim().replace(/\D/g, '');
+  const sistema = document.getElementById('lead-sistema').value.trim();
+
+  if (!nome || !whatsapp) {
+    alert('Por favor, preencha seu nome e WhatsApp.');
+    return;
+  }
+
+  const btn = document.getElementById('btn-lead');
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  try {
+    await fetch(`${API}/lead`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nome, whatsapp: '55' + whatsapp, sistema })
+    });
+  } catch(e) {}
+
+  document.getElementById('form-lead').style.display = 'none';
+  document.getElementById('form-sucesso').style.display = 'block';
+}
+</script>
 
 </body>
 </html>

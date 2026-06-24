@@ -3380,6 +3380,26 @@ async def cadastro_web(data: dict):
     return {"ok": False, "erro": "Erro ao salvar no banco de dados"}
 
 
+@app.post("/lead")
+async def salvar_lead(data: dict):
+    """Salva lead do formulário da landing page."""
+    nome = data.get("nome", "")
+    whatsapp = data.get("whatsapp", "")
+    sistema = data.get("sistema", "")
+    sb = _get_supabase()
+    if sb:
+        try:
+            sb.table("leads").upsert({
+                "numero_whatsapp": whatsapp,
+                "nome": nome,
+                "sistema": sistema,
+                "criado_em": datetime.datetime.now().isoformat()
+            }).execute()
+        except Exception:
+            pass
+    return {"ok": True}
+
+
 @app.post("/admin/professor/turmas")
 async def atualizar_turmas(data: dict):
     """Atualiza turmas de uma escola do professor."""
