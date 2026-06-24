@@ -79,10 +79,16 @@
 
   /* LEAD FORM */
   .lead { background:linear-gradient(135deg, #7C5CFF, #5a3fd4); padding:80px 24px; }
-  .lead-inner { max-width:600px; margin:0 auto; }
-  .lead h2 { font-size:32px; font-weight:800; color:#fff; text-align:center; margin-bottom:12px; }
-  .lead .sub { color:rgba(255,255,255,0.8); text-align:center; margin-bottom:40px; font-size:16px; }
-  .form-grid { display:grid; gap:16px; }
+  .lead-inner { max-width:960px; margin:0 auto; display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:start; }
+  .lead-texto h2 { font-size:30px; font-weight:800; color:#fff; margin-bottom:24px; line-height:1.2; }
+  .lead-bullets { list-style:none; }
+  .lead-bullets li { display:flex; gap:14px; align-items:flex-start; margin-bottom:24px; }
+  .lead-bullets .bullet-icone { font-size:22px; flex-shrink:0; margin-top:2px; }
+  .lead-bullets h4 { font-size:14px; font-weight:700; color:#fff; margin-bottom:4px; }
+  .lead-bullets p { font-size:13px; color:rgba(255,255,255,0.75); line-height:1.5; }
+  .lead-form { background:rgba(255,255,255,0.1); border-radius:16px; padding:32px; }
+  .lead-form h3 { font-size:20px; font-weight:800; color:#fff; text-align:center; margin-bottom:24px; line-height:1.3; }
+  .form-grid { display:grid; gap:14px; }
   .form-grid input { width:100%; padding:14px 18px; border:none; border-radius:10px; font-size:15px; color:#1a1a1a; background:#fff; outline:none; }
   .form-grid input::placeholder { color:#aaa; }
   .form-grid input:focus { box-shadow:0 0 0 3px rgba(255,255,255,0.3); }
@@ -93,6 +99,7 @@
   .form-sucesso { display:none; background:rgba(255,255,255,0.15); border-radius:12px; padding:32px; text-align:center; color:#fff; }
   .form-sucesso h3 { font-size:22px; font-weight:700; margin-bottom:8px; }
   .form-sucesso p { font-size:15px; opacity:0.85; }
+  @media(max-width:700px){ .lead-inner { grid-template-columns:1fr; gap:32px; } }
 
   /* PRECO */
   .preco { max-width:480px; margin:0 auto; padding:80px 24px; text-align:center; }
@@ -238,20 +245,54 @@
 <!-- LEAD FORM -->
 <div class="lead" id="lead">
   <div class="lead-inner">
-    <h2>Quero testar grátis</h2>
-    <p class="sub">Preencha abaixo e entraremos em contato para configurar tudo para você.</p>
-    <div id="form-lead">
-      <div class="form-grid">
-        <input type="text" id="lead-nome" placeholder="Seu nome completo" />
-        <input type="tel" id="lead-whatsapp" placeholder="Seu WhatsApp (ex: 79 99999-0000)" />
-        <input type="text" id="lead-sistema" placeholder="Sistema da sua escola (ex: SIAE, Infodat...)" />
-        <button class="btn-lead" onclick="enviarLead()" id="btn-lead">Quero testar grátis →</button>
-      </div>
-      <p class="form-nota">🔒 Seus dados são usados apenas para entrar em contato. Sem spam.</p>
+    <div class="lead-texto">
+      <h2>Automatize agora.<br>Ganhe seu tempo de volta.</h2>
+      <ul class="lead-bullets">
+        <li>
+          <div class="bullet-icone">⏱️</div>
+          <div>
+            <h4>2 horas por semana devolvidas</h4>
+            <p>O professor médio gasta 2h semanais preenchendo diário. Com o SóDigita, isso some do seu fim de semana.</p>
+          </div>
+        </li>
+        <li>
+          <div class="bullet-icone">📱</div>
+          <div>
+            <h4>Pelo WhatsApp que você já usa</h4>
+            <p>Sem aprender sistema novo. Você manda a turma e o conteúdo — igual já faz no seu planejamento.</p>
+          </div>
+        </li>
+        <li>
+          <div class="bullet-icone">🔒</div>
+          <div>
+            <h4>Seus dados protegidos</h4>
+            <p>Login e senha criptografados — como o WhatsApp protege suas mensagens. Nem nossa equipe consegue ver.</p>
+          </div>
+        </li>
+        <li>
+          <div class="bullet-icone">🎓</div>
+          <div>
+            <h4>Funciona com qualquer sistema</h4>
+            <p>SIAE, Infodat, ActiveSoft, Totvs RM e outros. O seu não está na lista? A gente integra.</p>
+          </div>
+        </li>
+      </ul>
     </div>
-    <div class="form-sucesso" id="form-sucesso">
-      <h3>🎉 Recebemos seu contato!</h3>
-      <p>Em breve entraremos em contato pelo WhatsApp para configurar tudo para você. Fique de olho!</p>
+    <div class="lead-form">
+      <h3>Quero testar grátis e ganhar meu tempo de volta!</h3>
+      <div id="form-lead">
+        <div class="form-grid">
+          <input type="text" id="lead-nome" placeholder="Seu nome completo" />
+          <input type="tel" id="lead-whatsapp" placeholder="Seu WhatsApp (ex: 79 99999-0000)" />
+          <input type="text" id="lead-sistema" placeholder="Sistema da sua escola (ex: SIAE, Infodat...)" />
+          <button class="btn-lead" onclick="enviarLead()" id="btn-lead">Quero testar grátis →</button>
+        </div>
+        <p class="form-nota">🔒 Seus dados são usados apenas para entrar em contato. Sem spam.</p>
+      </div>
+      <div class="form-sucesso" id="form-sucesso">
+        <h3>🎉 Recebemos seu contato!</h3>
+        <p>Em breve entraremos em contato pelo WhatsApp para configurar tudo para você. Fique de olho!</p>
+      </div>
     </div>
   </div>
 </div>
