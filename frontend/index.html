@@ -290,8 +290,10 @@
         <p class="form-nota">🔒 Seus dados são usados apenas para entrar em contato. Sem spam.</p>
       </div>
       <div class="form-sucesso" id="form-sucesso">
-        <h3>🎉 Recebemos seu contato!</h3>
-        <p>Em breve entraremos em contato pelo WhatsApp para configurar tudo para você. Fique de olho!</p>
+        <h3>🎉 Cadastro recebido!</h3>
+        <p>Para começar agora mesmo, clique abaixo e nos chame no WhatsApp — a gente configura tudo em minutos.</p>
+        <a id="btn-whatsapp-lead" href="#" target="_blank" style="display:inline-block;margin-top:20px;background:#00D4AA;color:#1a1a1a;padding:14px 28px;border-radius:10px;font-weight:800;font-size:15px;text-decoration:none;">💬 Começar agora no WhatsApp →</a>
+        <p style="font-size:12px;margin-top:12px;opacity:0.7;">Você será atendido em instantes pelo nosso assistente automático.</p>
       </div>
     </div>
   </div>
@@ -349,6 +351,8 @@ async function enviarLead() {
     });
   } catch(e) {}
 
+  const msg = encodeURIComponent(`Olá! Me chamo ${nome} e quero testar o SóDigita. Uso o sistema ${sistema || 'da minha escola'}.`);
+  document.getElementById('btn-whatsapp-lead').href = `https://wa.me/5579991075326?text=${msg}`;
   document.getElementById('form-lead').style.display = 'none';
   document.getElementById('form-sucesso').style.display = 'block';
 }
