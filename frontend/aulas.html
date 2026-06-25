@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SóDigita — Registrar Aulas</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f5f5f5; color: #1a1a1a; }
+
+  /* NAV */
+  .topnav { background: #7C5CFF; padding: 0 24px; display: flex; align-items: center; gap: 4px; overflow-x: auto; }
+  .topnav a { color: rgba(255,255,255,0.75); text-decoration: none; padding: 14px 16px; font-size: 13px; font-weight: 600; white-space: nowrap; border-bottom: 3px solid transparent; }
+  .topnav a:hover { color: white; }
+  .topnav a.ativo { color: white; border-bottom-color: #00D4AA; }
+  .topnav .logo { color: white; font-size: 16px; font-weight: 800; padding: 14px 16px 14px 0; margin-right: 8px; border-right: 1px solid rgba(255,255,255,0.2); }
+
+  .container { max-width: 700px; margin: 0 auto; padding: 32px 16px 60px; }
+
+  .page-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
+  .page-sub { font-size: 14px; color: #666; margin-bottom: 32px; }
+
+  .card { background: white; border-radius: 12px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .card h2 { font-size: 15px; font-weight: 700; color: #7C5CFF; margin-bottom: 20px; }
+
+  label { display: block; font-size: 13px; font-weight: 600; color: #444; margin-bottom: 6px; margin-top: 16px; }
+  label:first-of-type { margin-top: 0; }
+  input, select, textarea { width: 100%; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; color: #1a1a1a; background: #fafafa; outline: none; font-family: inherit; }
+  input:focus, select:focus, textarea:focus { border-color: #7C5CFF; background: white; }
+  textarea { resize: vertical; min-height: 80px; }
+
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  /* Aulas múltiplas */
+  .aulas-lista { display: flex; flex-direction: column; gap: 12px; margin-top: 4px; }
+  .aula-row { background: #fafafa; border: 1.5px solid #e8e8e8; border-radius: 10px; padding: 16px; position: relative; }
+  .aula-row .btn-rem { position: absolute; top: 12px; right: 12px; background: none; border: none; color: #e53935; font-size: 18px; cursor: pointer; }
+  .aula-num { font-size: 12px; font-weight: 700; color: #7C5CFF; margin-bottom: 10px; }
+
+  .btn-add-aula { background: none; border: 1.5px dashed #7C5CFF; color: #7C5CFF; border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 8px; }
+  .btn-add-aula:hover { background: #f5f0ff; }
+
+  /* Modo semana/mês */
+  .modo-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .modo-tab { flex: 1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 13px; font-weight: 600; text-align: center; cursor: pointer; background: white; color: #666; }
+  .modo-tab.ativo { border-color: #7C5CFF; color: #7C5CFF; background: #f5f0ff; }
+
+  .btn-registrar { background: #7C5CFF; color: white; border: none; border-radius: 10px; padding: 16px; font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 8px; }
+  .btn-registrar:hover { background: #6a4de0; }
+  .btn-registrar:disabled { background: #ccc; cursor: not-allowed; }
+
+  .sucesso { display: none; background: #f0fdf4; border: 2px solid #00c853; border-radius: 12px; padding: 24px; text-align: center; margin-top: 16px; }
+  .sucesso h3 { color: #15803d; font-size: 18px; margin-bottom: 8px; }
+  .sucesso p { color: #166534; font-size: 14px; }
+
+  .erro-msg { color: #e53935; font-size: 13px; margin-top: 8px; display: none; }
+
+  @media(max-width:500px){ .row2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="topnav">
+  <a class="logo" href="index.html">SóDigita</a>
+  <a href="aulas.html" class="ativo">📖 Registrar Aulas</a>
+  <a href="chat.html">💬 Chat</a>
+  <a href="cadastro.html">📋 Cadastro</a>
+  <a href="admin.html">📊 Admin</a>
+</nav>
+
+<div class="container">
+  <div class="page-title">📖 Registrar Aulas</div>
+  <p class="page-sub">Preencha as informações abaixo. A gente registra no sistema da sua escola automaticamente.</p>
+
+  <!-- Identificação -->
+  <div class="card">
+    <h2>Seus dados</h2>
+    <label>Seu WhatsApp (para identificar sua conta)</label>
+    <input type="tel" id="whatsapp" placeholder="Ex: 79 99999-0000" />
+  </div>
+
+  <!-- Modo -->
+  <div class="card">
+    <h2>Modo de registro</h2>
+    <div class="modo-tabs">
+      <div class="modo-tab ativo" onclick="setModo('aula', this)">📝 Aula avulsa</div>
+      <div class="modo-tab" onclick="setModo('semana', this)">📅 Semana inteira</div>
+      <div class="modo-tab" onclick="setModo('bimestre', this)">🗓️ Bimestre</div>
+    </div>
+
+    <!-- AULA AVULSA -->
+    <div id="modo-aula">
+      <div class="aulas-lista" id="aulas-lista">
+        <div class="aula-row" id="aula-0">
+          <div class="aula-num">Aula 1</div>
+          <div class="row2">
+            <div>
+              <label>Turma</label>
+              <input type="text" placeholder="Ex: 7B, 2º Ano A..." class="aula-turma" />
+            </div>
+            <div>
+              <label>Data</label>
+              <input type="date" class="aula-data" />
+            </div>
+          </div>
+          <label>Conteúdo da aula</label>
+          <textarea class="aula-conteudo" placeholder="Ex: Introdução às frações — conceito e exemplos práticos"></textarea>
+        </div>
+      </div>
+      <button class="btn-add-aula" onclick="addAula()">+ Adicionar outra aula</button>
+    </div>
+
+    <!-- SEMANA -->
+    <div id="modo-semana" style="display:none">
+      <div class="row2">
+        <div>
+          <label>Semana de</label>
+          <input type="date" id="semana-inicio" />
+        </div>
+        <div>
+          <label>até</label>
+          <input type="date" id="semana-fim" />
+        </div>
+      </div>
+      <label>Turmas (separadas por vírgula)</label>
+      <input type="text" id="semana-turmas" placeholder="Ex: 7A, 7B, 8A" />
+      <label>Conteúdo da semana</label>
+      <textarea id="semana-conteudo" placeholder="Descreva os conteúdos da semana. A IA vai distribuir por aula automaticamente."></textarea>
+    </div>
+
+    <!-- BIMESTRE -->
+    <div id="modo-bimestre" style="display:none">
+      <div class="row2">
+        <div>
+          <label>Início do bimestre</label>
+          <input type="date" id="bimestre-inicio" />
+        </div>
+        <div>
+          <label>Fim do bimestre</label>
+          <input type="date" id="bimestre-fim" />
+        </div>
+      </div>
+      <label>Turmas (separadas por vírgula)</label>
+      <input type="text" id="bimestre-turmas" placeholder="Ex: 7A, 7B, 8A" />
+      <label>Dias de aula por semana</label>
+      <input type="text" id="bimestre-dias" placeholder="Ex: Segunda e Quarta" />
+      <label>Conteúdos do bimestre (um por linha)</label>
+      <textarea id="bimestre-conteudo" style="min-height:120px" placeholder="Unidade 1: Frações&#10;Unidade 2: Porcentagem&#10;Unidade 3: Equações..."></textarea>
+    </div>
+  </div>
+
+  <button class="btn-registrar" id="btn-registrar" onclick="registrar()">Registrar no sistema →</button>
+  <p class="erro-msg" id="erro-msg">Preencha todos os campos antes de continuar.</p>
+
+  <div class="sucesso" id="sucesso">
+    <h3>✅ Enviado!</h3>
+    <p>Suas aulas foram enviadas para registro. Você receberá a confirmação em instantes no chat.</p>
+    <br>
+    <a href="chat.html" style="color:#7C5CFF;font-weight:700;text-decoration:none;">Ver andamento no chat →</a>
+  </div>
+</div>
+
+<script>
+const API = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
+let aulaCount = 1;
+let modoAtual = 'aula';
+
+// Data de hoje como padrão
+document.querySelector('.aula-data').value = new Date().toISOString().split('T')[0];
+
+function setModo(modo, el) {
+  modoAtual = modo;
+  document.querySelectorAll('.modo-tab').forEach(t => t.classList.remove('ativo'));
+  el.classList.add('ativo');
+  document.getElementById('modo-aula').style.display = modo === 'aula' ? 'block' : 'none';
+  document.getElementById('modo-semana').style.display = modo === 'semana' ? 'block' : 'none';
+  document.getElementById('modo-bimestre').style.display = modo === 'bimestre' ? 'block' : 'none';
+}
+
+function addAula() {
+  const idx = aulaCount++;
+  const lista = document.getElementById('aulas-lista');
+  const hoje = new Date().toISOString().split('T')[0];
+  const div = document.createElement('div');
+  div.className = 'aula-row';
+  div.id = `aula-${idx}`;
+  div.innerHTML = `
+    <div class="aula-num">Aula ${idx + 1}</div>
+    <button class="btn-rem" onclick="this.parentElement.remove()">×</button>
+    <div class="row2">
+      <div>
+        <label>Turma</label>
+        <input type="text" placeholder="Ex: 7B, 2º Ano A..." class="aula-turma" />
+      </div>
+      <div>
+        <label>Data</label>
+        <input type="date" class="aula-data" value="${hoje}" />
+      </div>
+    </div>
+    <label>Conteúdo da aula</label>
+    <textarea class="aula-conteudo" placeholder="Ex: Introdução às frações — conceito e exemplos práticos"></textarea>
+  `;
+  lista.appendChild(div);
+}
+
+async function registrar() {
+  const whatsapp = document.getElementById('whatsapp').value.trim().replace(/\D/g, '');
+  if (!whatsapp) { mostrarErro('Informe seu WhatsApp.'); return; }
+
+  const btn = document.getElementById('btn-registrar');
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  let mensagem = '';
+
+  if (modoAtual === 'aula') {
+    const aulas = [...document.querySelectorAll('.aula-row')].map(row => ({
+      turma: row.querySelector('.aula-turma').value.trim(),
+      data: row.querySelector('.aula-data').value,
+      conteudo: row.querySelector('.aula-conteudo').value.trim()
+    })).filter(a => a.turma && a.conteudo);
+    if (!aulas.length) { mostrarErro('Preencha ao menos uma aula.'); btn.disabled = false; btn.textContent = 'Registrar no sistema →'; return; }
+    mensagem = aulas.map(a => `Turma ${a.turma} — ${a.data ? new Date(a.data+'T12:00:00').toLocaleDateString('pt-BR') : 'hoje'}: ${a.conteudo}`).join('\n');
+  } else if (modoAtual === 'semana') {
+    const turmas = document.getElementById('semana-turmas').value.trim();
+    const conteudo = document.getElementById('semana-conteudo').value.trim();
+    const inicio = document.getElementById('semana-inicio').value;
+    const fim = document.getElementById('semana-fim').value;
+    if (!turmas || !conteudo) { mostrarErro('Preencha turmas e conteúdo.'); btn.disabled = false; btn.textContent = 'Registrar no sistema →'; return; }
+    mensagem = `Registrar semana de ${inicio} a ${fim} para turmas ${turmas}:\n${conteudo}`;
+  } else {
+    const turmas = document.getElementById('bimestre-turmas').value.trim();
+    const conteudo = document.getElementById('bimestre-conteudo').value.trim();
+    const inicio = document.getElementById('bimestre-inicio').value;
+    const fim = document.getElementById('bimestre-fim').value;
+    const dias = document.getElementById('bimestre-dias').value.trim();
+    if (!turmas || !conteudo) { mostrarErro('Preencha turmas e conteúdo.'); btn.disabled = false; btn.textContent = 'Registrar no sistema →'; return; }
+    mensagem = `Registrar bimestre de ${inicio} a ${fim}, ${dias}, turmas ${turmas}:\n${conteudo}`;
+  }
+
+  try {
+    const numero = '55' + whatsapp;
+    await fetch(`${API}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ numero, mensagem, historico: [] })
+    });
+    document.getElementById('sucesso').style.display = 'block';
+    btn.style.display = 'none';
+  } catch(e) {
+    mostrarErro('Erro de conexão. Tente novamente.');
+    btn.disabled = false;
+    btn.textContent = 'Registrar no sistema →';
+  }
+}
+
+function mostrarErro(msg) {
+  const el = document.getElementById('erro-msg');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+</script>
+</body>
+</html>
