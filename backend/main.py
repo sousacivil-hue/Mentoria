@@ -3439,6 +3439,39 @@ async def atualizar_turmas(data: dict):
         return {"erro": str(e)}
 
 
+@app.post("/admin/briefing")
+async def gerar_briefing():
+    """Gera briefing diário com IA baseado nas conversas do Supabase."""
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    sb = _get_supabase()
+    conversas = []
+    if sb:
+        try:
+            res = sb.table("conversas").select("*").order("atualizado_em", desc=True).limit(50).execute()
+            conversas = res.data or []
+        except Exception:
+            pass
+    if not conversas:
+        return {"briefing": "Nenhuma conversa encontrada ainda."}
+    resumo = "\n".join([f"- {c.get('nome','?')} ({c.get('status','?')}): {c.get('resumo','sem resumo')}" for c in conversas])
+    hoje = datetime.date.today().strftime("%d/%m/%Y")
+    prompt = f"""Você é assistente de vendas do SóDigita. Gere um briefing executivo para hoje ({hoje}) baseado nas conversas abaixo.
+
+Conversas:
+{resumo}
+
+O briefing deve ter:
+1. Resumo do pipeline (quantos em cada status)
+2. Top 3 leads para priorizar hoje e por quê
+3. Alertas (leads esfriando, sistemas não suportados com interesse)
+4. Sugestão de ação do dia
+
+Seja direto e prático. Máximo 300 palavras."""
+    client = anthropic.Anthropic(api_key=api_key)
+    resp = client.messages.create(model="claude-haiku-4-5", max_tokens=600, messages=[{"role": "user", "content": prompt}])
+    return {"briefing": resp.content[0].text}
+
+
 @app.get("/admin/conversas")
 async def admin_conversas():
     sb = _get_supabase()

@@ -3,24 +3,65 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SóDigita — Painel de Conversas</title>
+<title>SóDigita — Painel Admin</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; color: #1a1a1a; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a1a; }
 
-  header { background: #7C5CFF; color: white; padding: 20px 32px; display: flex; align-items: center; justify-content: space-between; }
+  header { background: #7C5CFF; color: white; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
   header h1 { font-size: 20px; font-weight: 700; }
-  header span { font-size: 13px; opacity: 0.8; }
+  .header-actions { display: flex; gap: 10px; align-items: center; }
+  .btn-header { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .btn-header:hover { background: rgba(255,255,255,0.3); }
+  #ultima-atualizacao { font-size: 12px; opacity: 0.8; }
 
+  /* TABS */
+  .tabs { background: white; border-bottom: 2px solid #e8e8e8; padding: 0 32px; display: flex; gap: 0; }
+  .tab { padding: 14px 24px; font-size: 14px; font-weight: 600; color: #888; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+  .tab.ativo { color: #7C5CFF; border-bottom-color: #7C5CFF; }
+
+  /* BRIEFING */
+  .briefing { margin: 24px 32px; background: white; border-radius: 12px; padding: 24px; box-shadow: 0 1px 4px rgba(0,0,0,.06); display: none; }
+  .briefing.ativo { display: block; }
+  .briefing h2 { font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .briefing-content { font-size: 14px; color: #444; line-height: 1.8; white-space: pre-wrap; }
+  .briefing-loading { color: #888; font-size: 14px; }
+  .btn-gerar { background: #7C5CFF; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 16px; }
+  .btn-gerar:hover { background: #6a4de0; }
+  .btn-gerar:disabled { background: #ccc; cursor: not-allowed; }
+
+  /* KANBAN */
+  .kanban { display: none; padding: 24px 32px; overflow-x: auto; }
+  .kanban.ativo { display: flex; gap: 16px; }
+  .kanban-col { background: #f8f8f8; border-radius: 12px; min-width: 260px; flex: 1; }
+  .kanban-col-header { padding: 16px; font-size: 13px; font-weight: 700; border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center; }
+  .kanban-col-header .count { background: rgba(0,0,0,0.1); border-radius: 12px; padding: 2px 8px; font-size: 12px; }
+  .col-lead { background: #fff8e1; }
+  .col-lead .kanban-col-header { background: #ff6d00; color: white; }
+  .col-sistema { background: #ede7f6; }
+  .col-sistema .kanban-col-header { background: #7C5CFF; color: white; }
+  .col-cadastrado { background: #e8f5e9; }
+  .col-cadastrado .kanban-col-header { background: #00c853; color: white; }
+  .col-abandonou { background: #f5f5f5; }
+  .col-abandonou .kanban-col-header { background: #9e9e9e; color: white; }
+  .kanban-cards { padding: 12px; display: flex; flex-direction: column; gap: 10px; min-height: 100px; }
+  .kanban-card { background: white; border-radius: 10px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.08); cursor: pointer; }
+  .kanban-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,.12); }
+  .kanban-card .k-nome { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+  .kanban-card .k-sistema { font-size: 12px; color: #888; margin-bottom: 6px; }
+  .kanban-card .k-resumo { font-size: 12px; color: #555; line-height: 1.4; }
+  .kanban-card .k-badge { display: inline-block; background: #ff3d00; color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 6px; margin-left: 6px; }
+  .kanban-card .k-numero { font-size: 11px; color: #bbb; margin-top: 8px; }
+  .kanban-vazio { text-align: center; padding: 20px; color: #bbb; font-size: 13px; }
+
+  /* LISTA (view original) */
+  .lista-view { display: none; }
+  .lista-view.ativo { display: block; }
   .filtros { display: flex; gap: 8px; padding: 20px 32px 0; flex-wrap: wrap; }
   .filtro-btn { padding: 8px 16px; border-radius: 20px; border: 2px solid #e0e0e0; background: white; font-size: 13px; font-weight: 600; cursor: pointer; transition: all .2s; }
   .filtro-btn.ativo { border-color: #7C5CFF; color: #7C5CFF; }
-  .filtro-btn:hover { border-color: #7C5CFF; }
-
   .contador { padding: 16px 32px 8px; font-size: 13px; color: #888; }
-
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; padding: 8px 32px 32px; }
-
   .card { background: white; border-radius: 12px; padding: 20px; border-left: 4px solid #ccc; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
   .card.cadastrado { border-left-color: #00c853; }
   .card.lead_quente { border-left-color: #ff6d00; }
@@ -28,7 +69,6 @@
   .card.abandonou { border-left-color: #bbb; }
   .card.fora_escopo { border-left-color: #eee; }
   .card.visto { opacity: 0.5; }
-
   .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
   .card-nome { font-size: 15px; font-weight: 700; }
   .card-status { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; }
@@ -37,41 +77,75 @@
   .status-sistema_novo { background: #ede7f6; color: #4527a0; }
   .status-abandonou { background: #f5f5f5; color: #757575; }
   .status-fora_escopo { background: #fafafa; color: #bbb; }
-
   .card-sistema { font-size: 12px; color: #888; margin-bottom: 8px; }
   .card-resumo { font-size: 13px; color: #444; line-height: 1.5; margin-bottom: 14px; }
   .card-numero { font-size: 11px; color: #bbb; margin-bottom: 12px; }
-
   .card-actions { display: flex; gap: 8px; }
   .btn-visto { background: #f0f0f0; border: none; border-radius: 8px; padding: 7px 14px; font-size: 12px; cursor: pointer; font-weight: 600; color: #555; }
   .btn-visto:hover { background: #e0e0e0; }
-
   .vazio { text-align: center; padding: 60px; color: #bbb; font-size: 15px; }
-
   .badge-novo { display: inline-block; background: #ff3d00; color: white; font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 8px; margin-left: 6px; vertical-align: middle; }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>📊 Painel de Conversas</h1>
-  <div style="display:flex;gap:10px;align-items:center;">
-    <button onclick="configurarTurmasLuth()" style="background:#00a884;border:none;color:white;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">⚙️ Atualizar turmas Prof. Luth</button>
+  <h1>📊 Painel Admin — SóDigita</h1>
+  <div class="header-actions">
+    <button class="btn-header" onclick="configurarTurmasLuth()">⚙️ Turmas Prof. Luth</button>
     <span id="ultima-atualizacao">Carregando...</span>
   </div>
 </header>
 
-<div class="filtros">
-  <button class="filtro-btn ativo" onclick="filtrar('todos')">Todos</button>
-  <button class="filtro-btn" onclick="filtrar('lead_quente')">🔥 Lead quente</button>
-  <button class="filtro-btn" onclick="filtrar('sistema_novo')">🆕 Sistema novo</button>
-  <button class="filtro-btn" onclick="filtrar('cadastrado')">✅ Cadastrado</button>
-  <button class="filtro-btn" onclick="filtrar('abandonou')">❓ Abandonou</button>
-  <button class="filtro-btn" onclick="filtrar('fora_escopo')">🚫 Fora do escopo</button>
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab ativo" onclick="mudarTab('briefing')">🧠 Briefing do dia</div>
+  <div class="tab" onclick="mudarTab('kanban')">📋 Kanban</div>
+  <div class="tab" onclick="mudarTab('lista')">📄 Lista</div>
 </div>
 
-<div class="contador" id="contador"></div>
-<div class="grid" id="grid"></div>
+<!-- BRIEFING -->
+<div class="briefing ativo" id="tab-briefing">
+  <h2>🧠 Briefing do dia — <span id="data-hoje"></span></h2>
+  <div class="briefing-content" id="briefing-content">
+    <span class="briefing-loading">Clique em "Gerar briefing" para ver o resumo de hoje.</span>
+  </div>
+  <button class="btn-gerar" id="btn-briefing" onclick="gerarBriefing()">✨ Gerar briefing com IA</button>
+</div>
+
+<!-- KANBAN -->
+<div class="kanban" id="tab-kanban">
+  <div class="kanban-col col-lead">
+    <div class="kanban-col-header">🔥 Lead quente <span class="count" id="count-lead">0</span></div>
+    <div class="kanban-cards" id="kanban-lead"></div>
+  </div>
+  <div class="kanban-col col-sistema">
+    <div class="kanban-col-header">🆕 Sistema novo <span class="count" id="count-sistema">0</span></div>
+    <div class="kanban-cards" id="kanban-sistema"></div>
+  </div>
+  <div class="kanban-col col-cadastrado">
+    <div class="kanban-col-header">✅ Cadastrado <span class="count" id="count-cadastrado">0</span></div>
+    <div class="kanban-cards" id="kanban-cadastrado"></div>
+  </div>
+  <div class="kanban-col col-abandonou">
+    <div class="kanban-col-header">❓ Abandonou <span class="count" id="count-abandonou">0</span></div>
+    <div class="kanban-cards" id="kanban-abandonou"></div>
+  </div>
+</div>
+
+<!-- LISTA -->
+<div class="lista-view" id="tab-lista">
+  <div class="filtros">
+    <button class="filtro-btn ativo" onclick="filtrar('todos', event)">Todos</button>
+    <button class="filtro-btn" onclick="filtrar('lead_quente', event)">🔥 Lead quente</button>
+    <button class="filtro-btn" onclick="filtrar('sistema_novo', event)">🆕 Sistema novo</button>
+    <button class="filtro-btn" onclick="filtrar('cadastrado', event)">✅ Cadastrado</button>
+    <button class="filtro-btn" onclick="filtrar('abandonou', event)">❓ Abandonou</button>
+    <button class="filtro-btn" onclick="filtrar('fora_escopo', event)">🚫 Fora do escopo</button>
+  </div>
+  <div class="contador" id="contador"></div>
+  <div class="grid" id="grid"></div>
+</div>
 
 <script>
 const API = window.location.hostname === 'localhost' ? 'http://localhost:8000' : '';
@@ -86,12 +160,26 @@ const STATUS_LABEL = {
   fora_escopo: '🚫 Fora do escopo',
 };
 
+document.getElementById('data-hoje').textContent =
+  new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+
+function mudarTab(tab) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    const tabs = ['briefing', 'kanban', 'lista'];
+    t.classList.toggle('ativo', tabs[i] === tab);
+  });
+  document.getElementById('tab-briefing').classList.toggle('ativo', tab === 'briefing');
+  document.getElementById('tab-kanban').classList.toggle('ativo', tab === 'kanban');
+  document.getElementById('tab-lista').classList.toggle('ativo', tab === 'lista');
+}
+
 async function carregar() {
   try {
     const res = await fetch(`${API}/admin/conversas`);
     const data = await res.json();
     todas = data.conversas || [];
-    renderizar();
+    renderizarKanban();
+    renderizarLista();
     document.getElementById('ultima-atualizacao').textContent =
       'Atualizado: ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   } catch(e) {
@@ -99,32 +187,57 @@ async function carregar() {
   }
 }
 
-function filtrar(status) {
-  filtroAtual = status;
-  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('ativo'));
-  event.target.classList.add('ativo');
-  renderizar();
+function renderizarKanban() {
+  const colunas = { lead_quente: [], sistema_novo: [], cadastrado: [], abandonou: [] };
+  todas.forEach(c => {
+    if (colunas[c.status]) colunas[c.status].push(c);
+    else if (c.status === 'fora_escopo') {}
+    else colunas['abandonou'].push(c);
+  });
+
+  const renderCol = (items, id) => {
+    const el = document.getElementById(id);
+    if (!items.length) { el.innerHTML = '<div class="kanban-vazio">Nenhum aqui</div>'; return; }
+    el.innerHTML = items.map(c => `
+      <div class="kanban-card" onclick="">
+        <div class="k-nome">${c.nome || 'Desconhecido'}${!c.visto ? '<span class="k-badge">NOVO</span>' : ''}</div>
+        <div class="k-sistema">${c.sistema || 'Sistema não identificado'}</div>
+        <div class="k-resumo">${c.resumo || '—'}</div>
+        <div class="k-numero">${formatarNumero(c.numero_whatsapp)}</div>
+      </div>
+    `).join('');
+  };
+
+  renderCol(colunas.lead_quente, 'kanban-lead');
+  renderCol(colunas.sistema_novo, 'kanban-sistema');
+  renderCol(colunas.cadastrado, 'kanban-cadastrado');
+  renderCol(colunas.abandonou, 'kanban-abandonou');
+
+  document.getElementById('count-lead').textContent = colunas.lead_quente.length;
+  document.getElementById('count-sistema').textContent = colunas.sistema_novo.length;
+  document.getElementById('count-cadastrado').textContent = colunas.cadastrado.length;
+  document.getElementById('count-abandonou').textContent = colunas.abandonou.length;
 }
 
-function renderizar() {
+function filtrar(status, e) {
+  filtroAtual = status;
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('ativo'));
+  if (e) e.target.classList.add('ativo');
+  renderizarLista();
+}
+
+function renderizarLista() {
   const lista = filtroAtual === 'todos' ? todas : todas.filter(c => c.status === filtroAtual);
   const pendentes = lista.filter(c => !c.visto);
-
-  document.getElementById('contador').textContent =
-    `${lista.length} conversa(s) — ${pendentes.length} não vista(s)`;
-
+  document.getElementById('contador').textContent = `${lista.length} conversa(s) — ${pendentes.length} não vista(s)`;
   if (!lista.length) {
     document.getElementById('grid').innerHTML = '<div class="vazio">Nenhuma conversa aqui ainda.</div>';
     return;
   }
-
   document.getElementById('grid').innerHTML = lista.map(c => `
     <div class="card ${c.status} ${c.visto ? 'visto' : ''}" id="card-${c.numero_whatsapp}">
       <div class="card-header">
-        <div class="card-nome">
-          ${c.nome || 'Desconhecido'}
-          ${!c.visto ? '<span class="badge-novo">NOVO</span>' : ''}
-        </div>
+        <div class="card-nome">${c.nome || 'Desconhecido'}${!c.visto ? '<span class="badge-novo">NOVO</span>' : ''}</div>
         <span class="card-status status-${c.status}">${STATUS_LABEL[c.status] || c.status}</span>
       </div>
       <div class="card-sistema">${c.sistema || 'Sistema não identificado'}</div>
@@ -146,7 +259,25 @@ async function marcarVisto(numero) {
   await fetch(`${API}/admin/conversas/${numero}/visto`, { method: 'POST' });
   const c = todas.find(x => x.numero_whatsapp === numero);
   if (c) c.visto = true;
-  renderizar();
+  renderizarLista();
+}
+
+async function gerarBriefing() {
+  const btn = document.getElementById('btn-briefing');
+  const content = document.getElementById('briefing-content');
+  btn.disabled = true;
+  btn.textContent = '⏳ Gerando...';
+  content.textContent = 'Analisando conversas e gerando briefing...';
+
+  try {
+    const res = await fetch(`${API}/admin/briefing`, { method: 'POST' });
+    const data = await res.json();
+    content.textContent = data.briefing || 'Sem dados suficientes para gerar briefing.';
+  } catch(e) {
+    content.textContent = '❌ Erro ao gerar briefing. Tente novamente.';
+  }
+  btn.disabled = false;
+  btn.textContent = '✨ Gerar novo briefing';
 }
 
 async function configurarTurmasLuth() {
