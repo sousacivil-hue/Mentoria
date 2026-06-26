@@ -3272,8 +3272,16 @@ async def chat(data: ChatMsg):
         escola_hoje = professor.get("escola_hoje", professor.get("escola", ""))
         sistema_hoje = professor.get("sistema", "SIAE")
 
+        # Monta lista de turmas do dia de hoje
+        turmas_hoje = professor.get("turmas_hoje", [])
+        turmas_str = ""
+        if turmas_hoje:
+            labels = [t.get("label", t.get("value", "")) for t in turmas_hoje]
+            turmas_str = f"\n\nTURMAS DO PROFESSOR HOJE ({dia_hoje_pt}): {', '.join(labels)}. Quando o professor disser 'todas as turmas' ou 'todas da {dia_hoje_pt.split('-')[0]}', use EXATAMENTE essas turmas — NÃO peça para ele listar. Gere um REGISTRAR para cada turma."
+
         system = SYSTEM_PROMPT.replace("Professor", professor["nome"])
         system += f"\n\nCONTEXTO DE HOJE ({dia_hoje_pt}): O professor está na escola '{escola_hoje}' usando o sistema {sistema_hoje}. Quando confirmar o registro, mencione a escola se relevante."
+        system += turmas_str
 
         response = client.messages.create(
             model="claude-haiku-4-5-20251001",
