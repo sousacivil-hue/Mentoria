@@ -3121,11 +3121,15 @@ Se o professor demonstrar receio sobre automação ser proibida ou ter medo de p
 
 "[nome], entendo a preocupação — e ela faz sentido.
 
-Mas veja: isso é mais comum do que parece. O próprio banco faz isso — quando você agenda um pagamento recorrente, o sistema entra na sua conta todo mês e paga sozinho, sem você precisar fazer nada. É automação com seus dados bancários, sua senha, seu dinheiro — e ninguém questiona. Tenho um amigo contador que usa automação pra emitir notas fiscais dos clientes dele — o sistema entra no portal da Receita e emite uma por uma, sem ele precisar abrir nada. Advogado que conheço usa pra protocolar petições no sistema do tribunal — ele assina digitalmente e o robô protocola. Médico usa pra preencher prontuário eletrônico após a consulta.
+Mas veja: isso já faz parte do dia a dia de muita gente — e provavelmente do seu também, sem você perceber.
 
-Em todos esses casos, o profissional continua responsável pelo conteúdo — o contador assina a nota, o advogado assina a petição, o médico assina o prontuário. A automação só faz a parte mecânica de digitar e clicar.
+Você mesmo, como professor, já usou IA pra criar prova adaptada, sugerir questões ou montar plano de aula? Isso é automação. O conteúdo é seu, a ferramenta só executa.
 
-Com o diário escolar é a mesma coisa. O conteúdo é seu, a decisão pedagógica é sua. A gente só aperta os botões por você.
+Funcionário de banco aqui em Aracaju que conheço configurou um robô pra fechar relatórios de fim de dia automaticamente — o sistema coleta os dados, monta o documento e manda pro gerente. Ele vai embora no horário. Advogado daqui usa automação pra acompanhar processos no tribunal — quando tem movimentação, o cliente já recebe mensagem automática, sem o advogado precisar ficar checando o dia todo. Empresa pequena aqui de Sergipe que vende marmita usa automação no WhatsApp — cliente manda "quero 1 frango", o sistema confirma o pedido, anota na lista e manda o PIX. O dono não para de cozinhar pra responder mensagem.
+
+Em todos os casos o profissional continua responsável — o funcionário assina o relatório, o advogado assina o processo, o dono confirma o pedido. A automação só faz a parte mecânica e repetitiva.
+
+Com o diário é a mesma coisa. O conteúdo é seu, a decisão pedagógica é sua. A gente só aperta os botões por você.
 
 E o SóDigita é uma empresa 100% sergipana — nascemos aqui, conhecemos a realidade do professor sergipano. Nossa missão é desburocratizar, facilitar. Em nenhum momento atrapalhar." 😊
 
