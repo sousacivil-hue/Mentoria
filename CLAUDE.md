@@ -159,8 +159,18 @@ Referência: US$ 0,45 gasto nos primeiros dias de testes intensivos (junho/2026)
 - [ ] Active: "Execution context destroyed" após Gravar (ainda ocorre ocasionalmente)
 - [ ] SIAE: mostrar só as turmas do dia (segunda vs sexta são diferentes)
 - [ ] Screenshot: substituir por texto formatado em produção (imagem é cara com muitos usuários)
-- [ ] Migrar Render para plano pago quando chegar em 20 clientes (~$7/mês)
+- [ ] Migrar Render para plano Standard ($25/mês) — Starter tem mesma RAM do free, não resolve
+- [ ] Contratar Z-API Start (R$69/mês) para WhatsApp real — fazer antes do lançamento escolas particulares
 - [ ] Artigo científico sobre automação na burocracia docente — coletar dados desde já no Supabase
+
+## Limpeza de Código Agendada — APÓS lançamento (após 16/07/2026)
+⚠️ NÃO executar antes do lançamento — última limpeza quebrou sistemas em produção.
+Itens identificados em 01/07/2026 (varredura completa do projeto):
+- Remover funções Supabase nunca chamadas: `_buscar_professor_supabase`, `_classificar_conversa`, `_salvar_conversa_supabase`, `_salvar_professor_supabase` (linhas 3080–3168, ~90 linhas)
+- Remover `import uuid` não utilizado (linha 44)
+- Consolidar funções duplicadas: `_sem_acento()` e `norm(s)` definidas 4-5x; `async def achar()` definida 4x
+- Deletar páginas órfãs: `gerar_prompt.html`, `gerar_conteudos.html`, `design.html`
+- Impacto total estimado: ~150-200 linhas removidas, zero funcionalidade perdida
 
 ## Ritual Mensal — Exploração de Ferramentas
 Todo mês reservar 30 min para explorar `github.com/hesreallyhim/awesome-claude-code` e avaliar o que vale instalar para o SóDigita. Categorias prioritárias: MCP (integrações), Hooks (segurança), Skills (produtividade).
