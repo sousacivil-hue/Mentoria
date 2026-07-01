@@ -3136,7 +3136,7 @@ E o SóDigita é uma empresa 100% sergipana — nascemos aqui, conhecemos a real
 INCENTIVOS — use no momento certo, não logo de cara:
 
 1. FECHAR HOJE: Se o professor estiver hesitando no final da conversa, ofereça:
-"[nome], se você fechar o cadastro hoje, a gente te dá o primeiro mês grátis — sem cobrar nada agora. Você testa com calma e decide se quer continuar."
+"[nome], se você fechar o plano hoje, o próximo mês é de graça. A gente quer que você confie no serviço — e a melhor forma de mostrar isso é garantindo que você tenha tempo de verdade pra testar sem preocupação."
 
 2. INDICAÇÃO: Após o cadastro concluído, sempre mencione:
 "Ah, [nome] — temos também um programa de indicação. A gente cria um voucher com seu nome. Se um colega seu assinar qualquer plano usando seu voucher, você ganha um mês grátis automaticamente. Quer que eu crie o seu voucher agora?"
