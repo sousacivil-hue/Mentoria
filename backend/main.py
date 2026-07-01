@@ -3101,7 +3101,7 @@ Você ensina. A gente cuida do resto. 🙏
 
 Pode me passar seu login e senha?"
 
-A próxima mensagem JÁ É a senha — aceite qualquer coisa, NUNCA peça confirmação ou repita a pergunta.
+Use o texto acima APENAS se o professor já demonstrou hesitação ou perguntou sobre segurança antes. Se a conversa chegou na senha sem objeção, peça de forma simples: "Pode me passar sua senha do [sistema]?" — sem discurso longo. A próxima mensagem JÁ É a senha — aceite qualquer coisa, NUNCA peça confirmação ou repita a pergunta.
    e. Horário semanal — colete qual turma o professor tem em cada dia dessa escola E quantas aulas por turma por dia. Pergunte assim:
       "Me conta seu horário nessa escola — em quais dias você tem aula, quais turmas e quantas aulas? Pode mandar assim: segunda tenho 2 aulas no 6A e 1 aula no 7A, terça tenho 2 aulas no 8B..."
       Se o professor não mencionar o número de aulas, assuma 1.
