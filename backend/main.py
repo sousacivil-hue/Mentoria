@@ -3306,79 +3306,109 @@ async def chat(data: ChatMsg):
     except Exception as e:
         return {"resposta": f"❌ Erro: {str(e)[:100]}", "historico": data.historico}
 
-    # Verifica se tem aula para registrar
-    registrar_match = re.search(r"REGISTRAR:(\{.*?\})", resposta)
+    # Verifica se tem aulas para registrar (suporta múltiplos REGISTRAR na mesma resposta)
+    registrar_matches = re.findall(r"REGISTRAR:(\{.*?\})", resposta)
+    resposta = re.sub(r"REGISTRAR:\{.*?\}", "", resposta).strip()
     job_id = None
-    if registrar_match:
-        try:
-            dados_aula = json.loads(registrar_match.group(1))
-            resposta = resposta.replace(registrar_match.group(0), "").strip()
 
-            turma = dados_aula.get("turma", "")
-            conteudo = dados_aula.get("conteudo", "").strip()
-            if conteudo:
+    if registrar_matches:
+        try:
+            turma_para_escola = professor.get("turma_para_escola", {})
+
+            def _resolver_credenciais(turma):
+                escola_det = turma_para_escola.get(turma.upper())
+                if escola_det:
+                    sis = escola_det.get("sistema", professor.get("sistema", "siae")).lower().replace("/", "").replace(" ", "")
+                    return sis, escola_det.get("login", professor.get("login", "")), escola_det.get("senha", professor.get("senha", "")), escola_det.get("nome", professor.get("escola", "")), escola_det.get("turmas", professor.get("turmas", []))
+                sis = professor.get("sistema", "siae").lower().replace("/", "").replace(" ", "")
+                return sis, professor.get("login", ""), professor.get("senha", ""), professor.get("escola", ""), professor.get("turmas", [])
+
+            def _normalizar_sistema(sis):
+                if "activesoft" in sis or "siga" in sis:
+                    return "active"
+                if "totvs" in sis or "salesiano" in sis:
+                    return "salesiano"
+                if "infodat" in sis:
+                    return "infodat"
+                return "siae"
+
+            # Agrupa entradas por sistema
+            siae_assuntos = {}  # turma_label → conteudo
+            siae_solicitadas = False
+            siae_creds = None
+            infodat_entradas = []
+            infodat_creds = None
+
+            for raw in registrar_matches:
+                try:
+                    dados_aula = json.loads(raw)
+                except Exception:
+                    continue
+                turma = dados_aula.get("turma", "")
+                conteudo = dados_aula.get("conteudo", "").strip()
+                if not conteudo:
+                    continue
                 conteudo = conteudo[0].upper() + conteudo[1:]
                 if not conteudo.endswith("."):
                     conteudo += "."
+                solicitadas = dados_aula.get("solicitadas", False)
 
-            # Detecta escola pela turma (ex: 8A → Vita, 2A → Salesiano)
-            turma_para_escola = professor.get("turma_para_escola", {})
-            escola_detectada = turma_para_escola.get(turma.upper())
-            if escola_detectada:
-                sistema = escola_detectada.get("sistema", professor.get("sistema", "siae")).lower().replace("/", "").replace(" ", "")
-                login_uso = escola_detectada.get("login", professor.get("login", ""))
-                senha_uso = escola_detectada.get("senha", professor.get("senha", ""))
-                escola_uso = escola_detectada.get("nome", professor.get("escola", ""))
-                turmas_uso = escola_detectada.get("turmas", professor.get("turmas", []))
-            else:
-                sistema = professor.get("sistema", "siae").lower().replace("/", "").replace(" ", "")
-                login_uso = professor.get("login", "")
-                senha_uso = professor.get("senha", "")
-                escola_uso = professor.get("escola", "")
-                turmas_uso = professor.get("turmas", [])
+                sis_raw, login_uso, senha_uso, escola_uso, turmas_uso = _resolver_credenciais(turma)
+                sis = _normalizar_sistema(sis_raw)
 
-            # Normaliza nome do sistema
-            if "activesoft" in sistema or "siga" in sistema:
-                sistema = "active"
-            elif "totvs" in sistema or "salesiano" in sistema:
-                sistema = "salesiano"
-            elif "infodat" in sistema:
-                sistema = "infodat"
-            else:
-                sistema = "siae"
+                if sis == "siae":
+                    if siae_creds is None:
+                        siae_creds = (login_uso, senha_uso, solicitadas)
+                    if solicitadas:
+                        siae_solicitadas = True
+                    # Mapeia turma → conteudo usando label das turmas do professor
+                    turmas_match = [t for t in turmas_uso if turma.lower() in t.lower()]
+                    if not turmas_match:
+                        turmas_match = turmas_uso
+                    for t in turmas_match:
+                        siae_assuntos[t] = conteudo
 
-            if sistema == "infodat":
-                turmas_match = [t for t in turmas_uso if turma.upper() in t["label"].upper()]
-                if not turmas_match:
-                    turmas_match = turmas_uso
-                hoje = __import__("datetime").date.today().strftime("%d/%m/%Y")
-                entradas = [{"data": hoje, "turma_value": t["value"], "num_aulas": "2", "conteudo": conteudo} for t in turmas_match]
+                elif sis == "infodat":
+                    if infodat_creds is None:
+                        infodat_creds = (login_uso, senha_uso, escola_uso)
+                    turmas_match = [t for t in turmas_uso if turma.upper() in t["label"].upper()]
+                    if not turmas_match:
+                        turmas_match = turmas_uso
+                    hoje = __import__("datetime").date.today().strftime("%d/%m/%Y")
+                    for t in turmas_match:
+                        infodat_entradas.append({"data": hoje, "turma_value": t["value"], "num_aulas": "2", "conteudo": conteudo})
+
+                else:
+                    resposta += f"\n⚠️ Sistema '{sis}' para turma {turma} — use sodigita.com.br"
+
+            # Dispara job SIAE com todas as turmas de uma vez
+            if siae_assuntos and siae_creds:
+                login_uso, senha_uso, _ = siae_creds
+                form = FormData(
+                    login=login_uso,
+                    senha=senha_uso,
+                    opcoes={"aulas": not siae_solicitadas, "solicitadas": siae_solicitadas, "notas": False},
+                    modo_conteudo="proprio",
+                    assuntos_por_turma=siae_assuntos,
+                )
+                job_id = str(uuid.uuid4())
+                jobs[job_id] = []
+                asyncio.create_task(run_automacao(job_id, form))
+
+            # Dispara job Infodat
+            if infodat_entradas and infodat_creds:
+                login_uso, senha_uso, escola_uso = infodat_creds
                 form_inf = InfodatFormData(
                     escola=escola_uso,
                     professor=login_uso,
                     senha=senha_uso,
-                    entradas=entradas,
+                    entradas=infodat_entradas,
                     numero=data.numero,
                 )
                 job_id = str(uuid.uuid4())
                 jobs[job_id] = []
                 asyncio.create_task(run_infodat(job_id, form_inf))
-            elif sistema == "siae":
-                turmas_match = [t for t in turmas_uso if turma.lower() in t.lower()]
-                if not turmas_match:
-                    turmas_match = turmas_uso
-                form = FormData(
-                    login=login_uso,
-                    senha=senha_uso,
-                    opcoes={"aulas": not dados_aula.get("solicitadas", False), "solicitadas": dados_aula.get("solicitadas", False), "notas": False},
-                    modo_conteudo="proprio",
-                    assuntos_por_turma={t: conteudo for t in turmas_match},
-                )
-                job_id = str(uuid.uuid4())
-                jobs[job_id] = []
-                asyncio.create_task(run_automacao(job_id, form))
-            else:
-                resposta += f"\n⚠️ Sistema '{sistema}' detectado para turma {turma} — automação via site disponível em sodigita.com.br"
+
         except Exception as ex:
             resposta += f"\n⚠️ Erro ao iniciar registro: {str(ex)[:80]}"
 
