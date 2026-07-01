@@ -51,18 +51,25 @@
 - `frontend/marketing.html` — Gerente de Marketing IA
 - `frontend/negocios.html` — Gerente de Negócios IA
 
-## Decisões de Negócio (19/06/2026)
+## Decisões de Negócio
 - Foco atual: SIAE + Infodat via chat/WhatsApp
 - Mercado estimado: ~43.500 professores em sistemas compatíveis
-- Preço fundador: R$9,90/mês para os 50 primeiros (depois R$19,90)
 - Canal de aquisição: grupos WhatsApp de professores + Instagram + indicação
 - Meta curto prazo: 50 clientes pagantes antes de contratar funcionário
 - B2C direto (professor individual) como foco principal por ora
 - **Lançamento oficial: agosto 2026** — professores voltam das férias
 - Sazonalidade: produto ativo fev–out, pausa nov–jan (diários fecham)
-- Sem plano anual — evita ter que devolver dinheiro se cancelar
+- Sempre mês a mês — sem plano anual (projeto depende de sistemas de terceiros)
 - Sem automação de seguidores no Instagram — risco de ban
 - Concorrência: **nenhuma direta** — ninguém faz automação via WhatsApp nos sistemas existentes para professor individual
+- Preços sobem com o tempo: R$9,90→R$19,90 (fev/27) →R$29,90 (2028). Quem entrou no preço antigo recebe aviso com 30 dias — sem trava permanente (exceto os 50 fundadores originais se houver)
+
+### Decisão — Preenchimento de Bimestre Completo (01/07/2026)
+**Problema:** alguns sistemas permitem preencher o bimestre inteiro de uma vez. Professor pagaria R$9,90, preencheria 3 meses, cancelaria.
+
+**Decisão:** NÃO oferecer preenchimento de bimestre pelo chat. Apenas aula a aula.
+- Tela `/aulas.html` (modo bimestre) disponível **somente para plano Completo ativo** — professor que cancelar perde acesso imediatamente
+- Motivação extra: a maioria dos sistemas escolares exige que o conteúdo bata com a data real da aula — bimestre antecipado pode gerar inconsistência no diário
 
 ## Identidade Visual
 - **Logo:** S com gradiente roxo (#7C5CFF) → verde-água (#00D4AA), texto "SóDigita" em cinza escuro
