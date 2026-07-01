@@ -164,10 +164,10 @@ Referência: US$ 0,45 gasto nos primeiros dias de testes intensivos (junho/2026)
 
 ## Ritual Mensal — Exploração de Ferramentas
 Todo mês reservar 30 min para explorar `github.com/hesreallyhim/awesome-claude-code` e avaliar o que vale instalar para o SóDigita. Categorias prioritárias: MCP (integrações), Hooks (segurança), Skills (produtividade).
-Próxima avaliação: **01/07/2026** — relatório claude-mem (ajudou? reduziu erros?)
+Próxima avaliação: **01/08/2026** — explorar novas ferramentas + avaliar claude-mem mês 2
 
 ## Ferramentas Instaladas
-- **claude-mem** — instalado em 16/06/2026, testar por 15 dias. Relatório em 01/07/2026
+- **claude-mem** ✅ — instalado 16/06/2026. Avaliado 01/07/2026: APROVADO. 92% economia de tokens, continuidade entre sessões funcionando. Não evita bugs de código mas mantém contexto do projeto. Usar `/mem-search` ativamente antes de debugar. Próxima avaliação: 01/08/2026.
 - **Supabase** ✅ — instalado 18/06/2026. Tabelas: sessoes_claudia, metricas_automacoes
 - **UptimeRobot** ✅ — instalado 19/06/2026
 - **Gemini API** ✅ — chave configurada no Render (endpoint /design em desenvolvimento)
