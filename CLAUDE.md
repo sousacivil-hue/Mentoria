@@ -200,6 +200,12 @@ Referência: US$ 0,45 gasto nos primeiros dias de testes intensivos (junho/2026)
 | Fev 2027 | 80 | 25 | R$ 1.289 | R$ 204 |
 | Abr 2027 | 100 | 30 | R$ 1.587 | R$ 204 |
 
+## Prova Social — Estratégia
+- **Fase 1 (agora):** Coletar depoimentos espontâneos dos primeiros professores que usarem e gostarem — vídeo curto, mensagem de WhatsApp, print de elogio
+- **Fase 2 (futuro):** Vídeo do sistema funcionando na prática (30s) para enviar no momento da senha durante a venda
+- **Fase 3 (futuro):** Professores conhecidos da rede sergipana indicando publicamente
+- A Rebeca deve pedir depoimento naturalmente após o professor elogiar o serviço: "Fico feliz! Você toparia gravar um vídeo curto ou mandar uma mensagem falando da sua experiência? Ajuda muito outros professores a confiarem."
+
 ## Automação de Marketing — Roadmap
 - [ ] Gemini gera imagem/vídeo a partir de descrição do post (endpoint /design — em desenvolvimento)
 - [ ] Meta Business Suite API: postagem automática no Instagram (requer conta business aprovada)
