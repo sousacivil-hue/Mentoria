@@ -67,14 +67,26 @@ Professor manda as informações por WhatsApp (turma, conteúdo, notas, faltas) 
 - Luth (ou futuramente um assistente) opera o sistema e registra
 - Professor recebe confirmação com screenshot
 
-**Robô Mariana — identificação de perfil:**
-Durante a conversa de vendas, a Mariana deve identificar:
+**Robô Ronilda — identificação de perfil:**
+Durante a conversa de vendas, a Ronilda deve identificar:
 - Professor tech-friendly → direcionar para self-service
 - Professor avesso à tecnologia / mais velho → oferecer plano gerenciado
 - Objeção "não sei usar WhatsApp" → argumento para gerenciado
 - Objeção de preço → mostrar economia de tempo (2h/semana × R$/hora do professor)
 
-**Escalabilidade:** começa com Luth operando, depois contrata assistente quando MRR > R$1.500
+**Escalabilidade:** começa com a equipe operando, depois contrata assistente quando MRR > R$1.500
+
+## Equipe SóDigita (consultores fictícios da marca)
+A empresa não tem rosto individual — os consultores são personagens da marca.
+
+| Consultor | Papel | Canal |
+|-----------|-------|-------|
+| **Ronilda** | Robô de vendas — aborda professores, identifica perfil, fecha contrato | WhatsApp / chat |
+| **Ricardo** | Gerente comercial — abordagem em grupos, escolas particulares | WhatsApp grupos |
+| **Cledson** | Suporte técnico — resolve problemas, bugs, dúvidas técnicas | WhatsApp direto |
+| **Lucas** | Onboarding — cadastro, primeiros passos, orienta self-service | Chat / site |
+| **Miguel** | Financeiro — cobranças, renovações, cancelamentos | WhatsApp |
+| **Maitê** | Marketing — Instagram, conteúdo, Reels, calendário | Instagram |
 
 ## Decisões de Negócio
 - Foco atual: SIAE + Infodat via chat/WhatsApp
