@@ -200,7 +200,27 @@ setInterval(async () => {
   try {
     const res = await fetch(`${API}/notificacoes/${numero}`);
     const data = await res.json();
-    (data.mensagens || []).forEach(msg => addMsg(msg, 'robo'));
+    (data.mensagens || []).forEach(msg => {
+      if (msg.startsWith('📸 SCREENSHOT:')) {
+        const nome = msg.replace('📸 SCREENSHOT:', '').trim();
+        const foto = document.createElement('div');
+        foto.className = 'balao robo';
+        foto.style.padding = '4px';
+        const img = document.createElement('img');
+        img.style.cssText = 'max-width:100%;border-radius:6px;display:block;';
+        img.onload = () => { document.getElementById('mensagens').scrollTop = 9999; };
+        img.src = `${API}/screenshot/${nome}?t=${Date.now()}`;
+        const h = document.createElement('div');
+        h.className = 'hora';
+        h.textContent = hora();
+        foto.appendChild(img);
+        foto.appendChild(h);
+        document.getElementById('mensagens').appendChild(foto);
+        document.getElementById('mensagens').scrollTop = 9999;
+      } else {
+        addMsg(msg, 'robo');
+      }
+    });
   } catch (e) {}
 }, 15000);
 </script>

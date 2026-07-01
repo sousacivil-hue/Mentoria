@@ -2498,6 +2498,17 @@ async def run_infodat(job_id: str, data: InfodatFormData):
                 log.append(f"   ⚠️ Erro: {e}")
 
         log.append(f"\n✅ CONCLUÍDO! Aulas gravadas: {gravadas}/{len(data.entradas)}")
+        # Screenshot final de confirmação
+        try:
+            import os as _os
+            _os.makedirs("/tmp/screenshots", exist_ok=True)
+            shot_final = f"/tmp/screenshots/{job_id}_final.png"
+            await page.screenshot(path=shot_final)
+            log.append(f"📸 SCREENSHOT:{job_id}_final.png")
+            if data.numero:
+                notificacoes.setdefault(data.numero, []).append(f"📸 SCREENSHOT:{job_id}_final.png")
+        except Exception:
+            pass
         if data.numero:
             if gravadas == len(data.entradas):
                 notificacoes.setdefault(data.numero, []).append(f"✅ {gravadas} aula(s) registrada(s) com sucesso!")
