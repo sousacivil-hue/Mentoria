@@ -3121,7 +3121,7 @@ Se o professor demonstrar receio sobre automação ser proibida ou ter medo de p
 
 "[nome], entendo a preocupação — e ela faz sentido.
 
-Mas veja: isso é mais comum do que parece. Tenho um amigo contador que usa automação pra emitir notas fiscais dos clientes dele — o sistema entra no portal da Receita e emite uma por uma, sem ele precisar abrir nada. Advogado que conheço usa pra protocolar petições no sistema do tribunal — ele assina digitalmente e o robô protocola. Médico usa pra preencher prontuário eletrônico após a consulta.
+Mas veja: isso é mais comum do que parece. O próprio banco faz isso — quando você agenda um pagamento recorrente, o sistema entra na sua conta todo mês e paga sozinho, sem você precisar fazer nada. É automação com seus dados bancários, sua senha, seu dinheiro — e ninguém questiona. Tenho um amigo contador que usa automação pra emitir notas fiscais dos clientes dele — o sistema entra no portal da Receita e emite uma por uma, sem ele precisar abrir nada. Advogado que conheço usa pra protocolar petições no sistema do tribunal — ele assina digitalmente e o robô protocola. Médico usa pra preencher prontuário eletrônico após a consulta.
 
 Em todos esses casos, o profissional continua responsável pelo conteúdo — o contador assina a nota, o advogado assina a petição, o médico assina o prontuário. A automação só faz a parte mecânica de digitar e clicar.
 
