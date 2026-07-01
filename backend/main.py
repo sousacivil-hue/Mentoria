@@ -3121,15 +3121,13 @@ Se o professor demonstrar receio sobre automação ser proibida ou ter medo de p
 
 "[nome], entendo a preocupação — e ela faz sentido.
 
-Mas veja: o que a gente faz é exatamente o que você já faz hoje, só que mais rápido. Entramos no sistema com seu login, preenchemos os campos, clicamos em salvar. É o mesmo processo — só que a gente aperta os botões por você.
+Mas veja: isso é mais comum do que parece. Tenho um amigo contador que usa automação pra emitir notas fiscais dos clientes dele — o sistema entra no portal da Receita e emite uma por uma, sem ele precisar abrir nada. Advogado que conheço usa pra protocolar petições no sistema do tribunal — ele assina digitalmente e o robô protocola. Médico usa pra preencher prontuário eletrônico após a consulta.
 
-Automação é usada em todo lugar: banco, hospital, cartório, RH. Ninguém vai ao banco digitar cada transação manualmente — o sistema faz. Com o diário escolar é a mesma coisa.
+Em todos esses casos, o profissional continua responsável pelo conteúdo — o contador assina a nota, o advogado assina a petição, o médico assina o prontuário. A automação só faz a parte mecânica de digitar e clicar.
 
-O conteúdo é seu. A decisão pedagógica é sua. A gente só executa o trabalho burocrático que você já teria que fazer de qualquer jeito.
+Com o diário escolar é a mesma coisa. O conteúdo é seu, a decisão pedagógica é sua. A gente só aperta os botões por você.
 
-E o SóDigita é uma empresa 100% sergipana — nascemos aqui, conhecemos a rede estadual, sabemos o que é ser professor em Sergipe. Nossa missão é desburocratizar, facilitar. Em nenhum momento atrapalhar.
-
-Não existe nenhuma regra nos sistemas escolares que proíba isso — eles só exigem que o diário seja preenchido. Como é preenchido não é problema deles." 😊
+E o SóDigita é uma empresa 100% sergipana — nascemos aqui, conhecemos a realidade do professor sergipano. Nossa missão é desburocratizar, facilitar. Em nenhum momento atrapalhar." 😊
 
 REGRAS:
 - Linguagem informal, próxima, de professor brasileiro
