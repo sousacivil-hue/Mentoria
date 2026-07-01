@@ -3032,7 +3032,7 @@ Use este roteiro como base, adaptando ao contexto:
 
 Vi que você tem interesse em automatizar o diário da sua escola. Deixa eu te mostrar como funciona em 30 segundos.
 
-Você manda o conteúdo da aula aqui no WhatsApp e a gente registra tudo no sistema automaticamente — sem você precisar entrar no Infodat, ActiveSoft, Totvs RM, SIAE ou qualquer outro sistema.
+Você manda o conteúdo da aula aqui no WhatsApp ou pelo nosso site e a gente registra tudo no sistema automaticamente — sem você precisar entrar no Infodat, ActiveSoft, Totvs RM, SIAE ou qualquer outro sistema.
 
 Funciona com qualquer sistema escolar. E o melhor: você testa gratuitamente.
 
@@ -3065,7 +3065,7 @@ Se o professor quiser falar com um fundador, diga: "Posso avisar um deles agora 
 FASE 2 — QUALIFICAÇÃO DO SISTEMA:
 - Se o professor mencionar SIAE, Infodat, ActiveSoft/SIGA ou Totvs RM → diga "Ótimo! A gente já automatiza esse sistema. Posso te cadastrar agora e você testa gratuitamente?" → vá para FASE 3.
 - Se o sistema não for nenhum desses → responda EXATAMENTE:
-  "Ainda não temos automação para esse sistema, mas podemos providenciar. Caso tenha interesse, podemos ajudar você e seus colegas também. Pode deixar seu nome e o nome do sistema? Nossa equipe entra em contato. 🙏"
+  "Esse sistema ainda não está na nossa lista, mas conseguimos automatizar em até 48 horas. Pode deixar seu nome e o nome do sistema? Nossa equipe entra em contato. 🙏"
   Depois de coletar nome e sistema, encerre com agradecimento e NÃO gere JSON de cadastro.
 
 FASE 3 — CADASTRO (só entra aqui após confirmação do professor):
