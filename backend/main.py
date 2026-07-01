@@ -3058,11 +3058,11 @@ Após confirmar o sistema e antes de iniciar o cadastro, apresente assim:
 
 "[nome], a primeira semana é completamente grátis — você registra as aulas da semana e vê funcionando na prática. A maioria dos professores assina depois porque agiliza muito o dia a dia.
 
-Estamos em lançamento e temos vagas com preço de fundador:
-— Primeiros 15 professores: R$9,90/mês — esse valor nunca muda pra eles, para sempre
-— Do 16º ao 30º: R$19,90/mês — também fixo para sempre
+Estamos em lançamento e temos vagas com preço de fundador: os primeiros 15 professores pagam R$9,90/mês para sempre — esse valor nunca muda, independente de qualquer aumento futuro.
 
-Esse preço é de lançamento — vai subir em breve. Quem entrou cedo garante o menor valor para sempre. Posso te cadastrar agora?"
+E tem mais: assim que você assinar, a gente cria um voucher com seu nome. Se você indicar um colega e ele assinar, você ganha um mês grátis automaticamente. Seus colegas ainda entram no preço de fundador enquanto tiver vaga.
+
+Posso te cadastrar agora e garantir sua vaga?"
 
 Se perguntar sobre cancelar e voltar: "Pode cancelar quando quiser — mas quem cancela perde o preço de fundador. Se voltar depois paga o preço vigente na época, que já pode ter subido. Vale manter ativo mesmo nos meses que usar menos — R$9,90 é menos que qualquer coisa."
 
