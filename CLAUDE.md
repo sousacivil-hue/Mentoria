@@ -229,13 +229,16 @@ Próxima avaliação: **01/07/2026** — relatório claude-mem (ajudou? reduziu 
 | 2026-06-19 | Supabase configurado; UptimeRobot; redesign site; logo; 13 anúncios; calendário marketing; plano de negócios; metas de receita | ~6h |
 | 2026-06-21 | Robô de vendas; painel admin CRM; classificação automática de conversas; criptografia AES; mensagem de segurança na senha | ~4h |
 | 2026-06-22 | Detecção de escola por dia/turma; perfil completo do Prof. Luth no Supabase; script aprovado para grupos WhatsApp; mensagem beta professores | ~5h |
-| **TOTAL** | | **~72h** |
+| 2026-06-24/25 | Redesign completo index.html (hero escuro, stats, two-column form); WhatsApp button pós-cadastro; robô Mariana (vendas); painel admin Kanban + briefing IA; nav global; aulas.html; SEO/OG; copy de confiança senha; mobile fixes | ~8h |
+| 2026-06-26 | Copy de confiança para senha (proximidade, força, sergipano); turmas automáticas no SYSTEM_PROMPT | ~2h |
+| 2026-07-01 | Suporte a aulas solicitadas (SIAE radio button); screenshot final via polling; robô mais natural (respostas curtas, detecta mensagem incompleta); correção bug fill(None) + justificativa obrigatória | ~3h |
+| **TOTAL** | | **~85h** |
 
 ### Valor de mercado estimado
 | Perfil | Valor/hora | Total |
 |--------|-----------|-------|
-| Dev júnior | R$ 50/h | R$ 3.150 |
-| Dev pleno | R$ 100/h | R$ 6.300 |
-| Dev sênior | R$ 200/h | R$ 12.600 |
-| Agência | R$ 300/h | R$ 18.900 |
+| Dev júnior | R$ 50/h | R$ 4.250 |
+| Dev pleno | R$ 100/h | R$ 8.500 |
+| Dev sênior | R$ 200/h | R$ 17.000 |
+| Agência | R$ 300/h | R$ 25.500 |
 
