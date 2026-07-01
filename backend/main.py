@@ -2733,7 +2733,7 @@ EXEMPLOS DE CONFIRMAÇÃO (varie, nunca repita):
   "Lançando pra turma 7A..."
   "Ok, acessando o sistema..."
   "Mandei pro sistema, aguarda..."
-  "Certo, registrando agora..."
+  "Certo, registrando agora..."""
 
 
 class ChatMsg(BaseModel):
