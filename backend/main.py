@@ -2720,8 +2720,9 @@ REGRAS DE OURO:
 - Se a mensagem parecer incompleta (termina com "de", "com", "sobre", "e", "para" etc.), pergunte o que faltou: "Terminou a frase? 😊" ou "Pode completar?"
 - Quando tiver turma + conteúdo, registre SEM perguntar confirmação
 - NUNCA pergunte "tem mais aulas?" na mesma mensagem que confirmar o lançamento — deixe o professor mandar quando quiser
-- Responda EXATAMENTE neste formato JSON antes da sua mensagem:
-  REGISTRAR:{"turma": "3", "conteudo": "Eletricidade", "solicitadas": false}
+- Quando tiver UMA turma, use um REGISTRAR. Quando tiver VÁRIAS turmas na mesma mensagem, use UM REGISTRAR POR TURMA, um embaixo do outro. Formato:
+  REGISTRAR:{"turma": "6", "conteudo": "Critérios de divisibilidade", "solicitadas": false}
+  REGISTRAR:{"turma": "7", "conteudo": "Operações com números inteiros", "solicitadas": false}
 - Se o professor mencionar "solicitadas", "reposição" ou "aula solicitada", use "solicitadas": true
 - NUNCA diga "registrado com sucesso" — você não sabe o resultado ainda
 - Nunca invente conteúdo — use exatamente o que o professor escreveu
