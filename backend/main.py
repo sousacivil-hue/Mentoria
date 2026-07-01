@@ -678,7 +678,7 @@ async def run_active(job_id: str, data: ActiveFormData):
     URL_ACTIVE = data.url_colegio or "https://siga.activesoft.com.br/login/"
 
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+        browser = await pw.chromium.launch(headless=True, args=["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--single-process","--no-zygote","--disable-extensions","--disable-images"])
         page = await browser.new_page(viewport={"width": 1400, "height": 900})
 
         log.append("🔐 Fazendo login no ActiveSoft...")
@@ -1075,7 +1075,7 @@ async def run_active_notas(job_id: str, data: ActiveNotasFormData):
     excecoes_norm = [sem_acento(e) for e in data.excecoes]
 
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+        browser = await pw.chromium.launch(headless=True, args=["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--single-process","--no-zygote","--disable-extensions","--disable-images"])
         page = await browser.new_page(viewport={"width": 1400, "height": 900})
 
         # ── LOGIN ──────────────────────────────────────────────────────────────
@@ -1504,7 +1504,7 @@ async def run_sesi(job_id: str, data: SesiFormData):
     log.append(f"📊 Tópicos a lançar: {len(topicos)}")
 
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+        browser = await pw.chromium.launch(headless=True, args=["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--single-process","--no-zygote","--disable-extensions","--disable-images"])
         page = await browser.new_page(viewport={"width": 1400, "height": 900})
 
         async def achar(seletor, tentativas=10):
@@ -1911,7 +1911,7 @@ async def run_salesiano(job_id: str, data: SalesianoFormData):  # noqa: C901
         return topicos[idx] if idx < len(topicos) else None
 
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+        browser = await pw.chromium.launch(headless=True, args=["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--single-process","--no-zygote","--disable-extensions","--disable-images"])
         page = await browser.new_page(viewport={"width": 1400, "height": 900})
 
         # ── LOGIN ──────────────────────────────────────────────────────────────
@@ -2136,7 +2136,7 @@ async def run_active_faltas(job_id: str, data: ActiveFaltasFormData):
     log = jobs[job_id]
 
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+        browser = await pw.chromium.launch(headless=True, args=["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--single-process","--no-zygote","--disable-extensions","--disable-images"])
         page = await browser.new_page(viewport={"width": 1400, "height": 900})
 
         # ── LOGIN ──────────────────────────────────────────────────────────────
@@ -2346,7 +2346,7 @@ async def run_infodat(job_id: str, data: InfodatFormData):
     log = jobs[job_id]
 
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+        browser = await pw.chromium.launch(headless=True, args=["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--single-process","--no-zygote","--disable-extensions","--disable-images"])
         context = await browser.new_context(
             viewport={"width": 1280, "height": 900},
             user_agent=(
@@ -2541,7 +2541,7 @@ class InfodatLoginData(BaseModel):
 async def _descobrir_turmas_infodat(escola: str, professor: str, senha: str, valor_prof: str | None = None) -> dict:
     from playwright.async_api import async_playwright
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+        browser = await pw.chromium.launch(headless=True, args=["--no-sandbox","--disable-dev-shm-usage","--disable-gpu","--single-process","--no-zygote","--disable-extensions","--disable-images"])
         context = await browser.new_context(
             viewport={"width": 1280, "height": 900},
             user_agent=(
