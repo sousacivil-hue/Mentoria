@@ -10,9 +10,18 @@
 ## Planos e Preços
 | Plano | Inclui | Preço |
 |-------|--------|-------|
-| Diário | Preenchimento do diário de classe | R$ 19,90/mês |
-| Completo | Diário + Notas + Faltas | R$ 39,90/mês |
-| Fundador (50 primeiros) | Tudo incluído | R$ 9,90/mês para sempre |
+| Diário | Preenchimento do diário de classe | R$ 9,90/mês |
+| Completo | Diário + Frequência + Notas | R$ 19,90/mês |
+
+**Decisões de precificação (01/07/2026):**
+- Sempre mês a mês — sem anual. Projeto depende de sistemas de terceiros que podem mudar.
+- Professor começa pelo Diário e faz upgrade quando vê valor
+- Sazonalidade: uso pausa nov–jan (diários fecham). Professor cancela naturalmente, retorna em fev.
+- Meta: 100 prof. Diário (R$990) + 30 upgrade Completo (R$298) = ~R$1.290/mês
+- Sem plano fundador permanente — era incentivo de entrada, não modelo sustentável
+
+**Comunicação honesta com o professor:**
+> "Cobramos mês a mês porque somos honestos: trabalhamos com sistemas de terceiros que não controlamos. Se algo mudar, você não perde nada."
 
 ## Status por Sistema
 - **ActiveSoft/SIGA** ✅ — funciona pelo site (Render), diário completo validado
@@ -134,13 +143,14 @@
 Referência: US$ 0,45 gasto nos primeiros dias de testes intensivos (junho/2026).
 
 ## Metas de Receita
-| Mês | Clientes | MRR |
-|---|---|---|
-| Ago 2026 | 25 | R$ 247 |
-| Set 2026 | 50 | R$ 495 |
-| Out 2026 | 80 | R$ 1.590 |
-| Fev 2027 | 100+ | R$ 1.990+ |
-| Q3/Q4 2027 | 500 | R$ 12.500 |
+| Mês | Diário (R$9,90) | Completo (R$19,90) | MRR | Custo infra |
+|-----|-----------------|---------------------|-----|-------------|
+| Ago 2026 | 15 | 0 | R$ 149 | R$ 0 (free) |
+| Set 2026 | 30 | 5 | R$ 396 | R$ 204 (Render+ZAPI) |
+| Out 2026 | 60 | 15 | R$ 893 | R$ 204 |
+| Nov 2026 | — pausa sazonalidade — | | | |
+| Fev 2027 | 80 | 25 | R$ 1.289 | R$ 204 |
+| Abr 2027 | 100 | 30 | R$ 1.587 | R$ 204 |
 
 ## Automação de Marketing — Roadmap
 - [ ] Gemini gera imagem/vídeo a partir de descrição do post (endpoint /design — em desenvolvimento)
