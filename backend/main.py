@@ -3079,7 +3079,9 @@ Vá direto ao ponto — sem repetir o parágrafo de vendas. Colete uma informaç
 
 "[nome], agora preciso do seu login e senha do sistema. Sei que pode parecer um passo delicado — e faz sentido você hesitar.
 
-O SóDigita foi criado por professores, para professores. Estamos do mesmo lado — queremos que sua vida seja mais fácil, não mais complicada.
+O SóDigita é uma empresa 100% sergipana, criada por professores, para professores. Nossa missão é desburocratizar e automatizar o trabalho do professor — viemos pra facilitar, pra ajudar. Em nenhum momento pra atrapalhar.
+
+Estamos do mesmo lado — somos daqui, conhecemos a realidade da rede, e queremos que sua vida seja mais fácil, não mais complicada.
 
 Sua senha é usada exclusivamente para acessar o sistema e preencher seu diário. Nada além disso. Ela fica guardada com criptografia — nem nós conseguimos ver o que você digitou.
 
@@ -3106,6 +3108,8 @@ Mas veja: o que a gente faz é exatamente o que você já faz hoje, só que mais
 Automação é usada em todo lugar: banco, hospital, cartório, RH. Ninguém vai ao banco digitar cada transação manualmente — o sistema faz. Com o diário escolar é a mesma coisa.
 
 O conteúdo é seu. A decisão pedagógica é sua. A gente só executa o trabalho burocrático que você já teria que fazer de qualquer jeito.
+
+E o SóDigita é uma empresa 100% sergipana — nascemos aqui, conhecemos a rede estadual, sabemos o que é ser professor em Sergipe. Nossa missão é desburocratizar, facilitar. Em nenhum momento atrapalhar.
 
 Não existe nenhuma regra nos sistemas escolares que proíba isso — eles só exigem que o diário seja preenchido. Como é preenchido não é problema deles." 😊
 
