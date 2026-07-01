@@ -458,7 +458,7 @@ async def run_automacao(job_id: str, data: FormData):
                     break
                 aula_id = match.group(1)
                 serie = alvo["serie"]
-                conteudo = get_conteudo(serie, data.assuntos, data.assuntos_por_turma)
+                conteudo = get_conteudo(serie, data.assuntos, data.assuntos_por_turma) or (data.assuntos[0] if data.assuntos else "Conteúdo ministrado")
 
                 log.append(f"⏳ Solicitada {aula_num + 1}: {serie[:40]}")
                 await page.goto(f"https://siae.seduc.se.gov.br/siae.diario/Aula/Registrar/{aula_id}")
@@ -469,8 +469,8 @@ async def run_automacao(job_id: str, data: FormData):
                     await page.locator("#Ministrada_Conteudo").fill(conteudo)
                     await page.locator("#Ministrada_Metodologia").fill(METODOLOGIA)
                     just = page.locator("input[name='Ministrada.Justificativa'], textarea[name='Ministrada.Justificativa']")
-                    if await just.count() > 0 and await just.is_visible():
-                        await just.fill("Instabilidade no sistema")
+                    if await just.count() > 0:
+                        await just.first.fill("Instabilidade no sistema")
                     try:
                         freq_btn = page.locator("button:has-text('FREQUÊNCIA')")
                         if await freq_btn.count() > 0:
