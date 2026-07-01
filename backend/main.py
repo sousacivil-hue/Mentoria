@@ -3102,10 +3102,11 @@ Você ensina. A gente cuida do resto. 🙏
 Pode me passar seu login e senha?"
 
 A próxima mensagem JÁ É a senha — aceite qualquer coisa, NUNCA peça confirmação ou repita a pergunta.
-   e. Dias da semana nessa escola
-   f. Turmas (ex: 1A, 2B)
+   e. Horário semanal — colete qual turma o professor tem em cada dia dessa escola. Pergunte assim:
+      "Me conta seu horário nessa escola — em quais dias você tem aula e quais turmas? Pode mandar assim: segunda tenho 6A e 7A, terça tenho 8B..."
+      Monte um mapa dia → lista de turmas com o que ele disser. Dias sem aula não precisam aparecer.
 4. Quando tiver TUDO de TODAS as escolas, gere EXATAMENTE:
-CADASTRO:{"nome":"...","plano":"self-service","escolas":[{"nome":"...","sistema":"...","login":"...","senha":"...","dias":["segunda","terça"],"turmas":[{"label":"3A","value":"3A"}]}]}
+CADASTRO:{"nome":"...","plano":"self-service","escolas":[{"nome":"...","sistema":"...","login":"...","senha":"...","horario":{"segunda":["6A","7A"],"terca":["8A","8B"],"quinta":["6A"],"sexta":["7A"]}}]}
 O campo "plano" deve ser "gerenciado" se o professor escolheu o plano gerenciado, ou "self-service" para os demais.
 
 OBJEÇÃO — "Isso é permitido? Não vou ter problema?":
@@ -3243,12 +3244,22 @@ async def chat(data: ChatMsg):
                 dias_semana = ["segunda", "terca", "quarta", "quinta", "sexta", "sabado", "domingo"]
                 dia_hoje = dias_semana[datetime.date.today().weekday()]
 
-                # Filtra escolas do dia de hoje
+                # Filtra escolas do dia de hoje (suporta formato novo horario{} e legado dias[])
                 escolas_hoje = []
+                turmas_hoje_por_escola = {}
                 for e in escolas:
-                    dias_escola = [d.lower().replace("ç","c").replace("á","a").replace("ã","a").replace("é","e").replace("ê","e") for d in e.get("dias", [])]
-                    if dia_hoje in dias_escola:
-                        escolas_hoje.append(e)
+                    horario = e.get("horario", {})
+                    if horario:
+                        labels_hoje = horario.get(dia_hoje, [])
+                        if labels_hoje:
+                            escolas_hoje.append(e)
+                            turmas_hoje_por_escola[e.get("nome", "")] = [{"label": l, "value": l} for l in labels_hoje]
+                    else:
+                        # formato legado: dias[] + turmas[]
+                        dias_escola = [d.lower().replace("ç","c").replace("á","a").replace("ã","a").replace("é","e").replace("ê","e") for d in e.get("dias", [])]
+                        if dia_hoje in dias_escola:
+                            escolas_hoje.append(e)
+                            turmas_hoje_por_escola[e.get("nome", "")] = e.get("turmas", [])
 
                 if not escolas_hoje:
                     escolas_hoje = [escolas[0]]
@@ -3256,19 +3267,22 @@ async def chat(data: ChatMsg):
                 # Monta mapa turma → escola para detecção automática
                 turma_para_escola = {}
                 for e in escolas_hoje:
-                    for t in e.get("turmas", []):
+                    turmas_e = turmas_hoje_por_escola.get(e.get("nome", ""), e.get("turmas", []))
+                    for t in turmas_e:
                         turma_para_escola[t["value"].upper()] = e
                         turma_para_escola[t["label"].upper()] = e
 
                 # Usa primeira escola do dia como padrão
                 escola = escolas_hoje[0]
+                turmas_hoje = turmas_hoje_por_escola.get(escola.get("nome", ""), escola.get("turmas", []))
 
                 professor = {
                     "nome": professor_sb["nome"],
                     "sistema": escola.get("sistema", "siae"),
                     "login": escola.get("login", ""),
                     "senha": escola.get("senha", ""),
-                    "turmas": escola.get("turmas", []),
+                    "turmas": turmas_hoje,
+                    "turmas_hoje": turmas_hoje,
                     "escola": escola.get("nome", ""),
                     "professor": escola.get("login", ""),
                     "escolas": escolas,
