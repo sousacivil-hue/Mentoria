@@ -3364,10 +3364,16 @@ async def chat(data: ChatMsg):
                     if solicitadas:
                         siae_solicitadas = True
                     # Mapeia turma → conteudo usando label das turmas do professor
-                    # Matching tolerante: "6 ano" casa com "6ºA", "1 etapa" com "1ª Etapa"
+                    # Matching tolerante: "sexto ano"→"6", "6 ano"/"6°A" casa com "6ºA"
+                    _EXTENSO = {"primeiro":1,"segunda":2,"segundo":2,"terceiro":3,"terceira":3,"quarto":4,"quarta":4,"quinto":5,"quinta":5,"sexto":6,"setimo":7,"sétimo":7,"oitavo":8,"nono":9,"decimo":10}
+                    def _normalizar_turma(s):
+                        s = s.lower()
+                        for palavra, num in _EXTENSO.items():
+                            s = s.replace(palavra, str(num))
+                        return re.sub(r'[°ºª\.\s\-]', '', s)
                     def _turma_match(turma_json, label):
-                        t = re.sub(r'[°ºª\.\s]', '', turma_json.lower())
-                        l = re.sub(r'[°ºª\.\s]', '', label.lower())
+                        t = _normalizar_turma(turma_json)
+                        l = _normalizar_turma(label)
                         return t in l or l.startswith(t)
                     turmas_match = [t for t in turmas_uso if _turma_match(turma, t)]
                     if not turmas_match:
