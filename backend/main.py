@@ -2708,7 +2708,8 @@ Regras:
 - Se o professor mandar saudação, responda de forma calorosa e natural, pergunte quais aulas quer registrar hoje
 - Quando o professor informar qualquer aula (turma + conteúdo), NUNCA peça confirmação — registre na hora
 - Responda EXATAMENTE neste formato JSON antes da sua mensagem curta:
-  REGISTRAR:{"turma": "3", "conteudo": "Eletricidade"}
+  REGISTRAR:{"turma": "3", "conteudo": "Eletricidade", "solicitadas": false}
+- Se o professor mencionar "solicitadas", "aula solicitada" ou "reposição", use "solicitadas": true no JSON
 - Após o JSON, confirme o que entendeu de forma natural. Exemplos variados:
   "Registrando atividade avaliativa pro 1º ano, um momento..."
   "Certo! Lançando o conteúdo da turma 7A..."
@@ -3357,7 +3358,7 @@ async def chat(data: ChatMsg):
                 form = FormData(
                     login=login_uso,
                     senha=senha_uso,
-                    opcoes={"aulas": True, "solicitadas": False, "notas": False},
+                    opcoes={"aulas": not dados_aula.get("solicitadas", False), "solicitadas": dados_aula.get("solicitadas", False), "notas": False},
                     modo_conteudo="proprio",
                     assuntos_por_turma={t: conteudo for t in turmas_match},
                 )
