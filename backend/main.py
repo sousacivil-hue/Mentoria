@@ -3102,11 +3102,12 @@ Você ensina. A gente cuida do resto. 🙏
 Pode me passar seu login e senha?"
 
 A próxima mensagem JÁ É a senha — aceite qualquer coisa, NUNCA peça confirmação ou repita a pergunta.
-   e. Horário semanal — colete qual turma o professor tem em cada dia dessa escola. Pergunte assim:
-      "Me conta seu horário nessa escola — em quais dias você tem aula e quais turmas? Pode mandar assim: segunda tenho 6A e 7A, terça tenho 8B..."
-      Monte um mapa dia → lista de turmas com o que ele disser. Dias sem aula não precisam aparecer.
+   e. Horário semanal — colete qual turma o professor tem em cada dia dessa escola E quantas aulas por turma por dia. Pergunte assim:
+      "Me conta seu horário nessa escola — em quais dias você tem aula, quais turmas e quantas aulas? Pode mandar assim: segunda tenho 2 aulas no 6A e 1 aula no 7A, terça tenho 2 aulas no 8B..."
+      Se o professor não mencionar o número de aulas, assuma 1.
+      Monte um mapa dia → lista de {turma, aulas} com o que ele disser. Dias sem aula não precisam aparecer.
 4. Quando tiver TUDO de TODAS as escolas, gere EXATAMENTE:
-CADASTRO:{"nome":"...","plano":"self-service","escolas":[{"nome":"...","sistema":"...","login":"...","senha":"...","horario":{"segunda":["6A","7A"],"terca":["8A","8B"],"quinta":["6A"],"sexta":["7A"]}}]}
+CADASTRO:{"nome":"...","plano":"self-service","escolas":[{"nome":"...","sistema":"...","login":"...","senha":"...","horario":{"segunda":[{"turma":"6A","aulas":2},{"turma":"7A","aulas":1}],"terca":[{"turma":"8B","aulas":2}]}}]}
 O campo "plano" deve ser "gerenciado" se o professor escolheu o plano gerenciado, ou "self-service" para os demais.
 
 OBJEÇÃO — "Isso é permitido? Não vou ter problema?":
@@ -3251,10 +3252,18 @@ async def chat(data: ChatMsg):
                 for e in escolas:
                     horario = e.get("horario", {})
                     if horario:
-                        labels_hoje = horario.get(dia_hoje, [])
-                        if labels_hoje:
+                        entradas_hoje = horario.get(dia_hoje, [])
+                        if entradas_hoje:
                             escolas_hoje.append(e)
-                            turmas_hoje_por_escola[e.get("nome", "")] = [{"label": l, "value": l} for l in labels_hoje]
+                            # suporta formato novo {turma, aulas} e legado string
+                            turmas_list = []
+                            for entrada in entradas_hoje:
+                                if isinstance(entrada, dict):
+                                    lbl = entrada.get("turma", "")
+                                    turmas_list.append({"label": lbl, "value": lbl, "aulas": entrada.get("aulas", 1)})
+                                else:
+                                    turmas_list.append({"label": entrada, "value": entrada, "aulas": 1})
+                            turmas_hoje_por_escola[e.get("nome", "")] = turmas_list
                     else:
                         # formato legado: dias[] + turmas[]
                         dias_escola = [d.lower().replace("ç","c").replace("á","a").replace("ã","a").replace("é","e").replace("ê","e") for d in e.get("dias", [])]
