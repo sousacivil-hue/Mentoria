@@ -51,6 +51,31 @@
 - `frontend/marketing.html` — Gerente de Marketing IA
 - `frontend/negocios.html` — Gerente de Negócios IA
 
+## Plano Gerenciado — Terceirização Total (01/07/2026)
+Professor manda as informações por WhatsApp (turma, conteúdo, notas, faltas) e o Luth opera o sistema por ele. Professor não precisa saber que existe robô.
+
+| Modalidade | Quem opera | Preço |
+|-----------|------------|-------|
+| Self-service Diário | Professor pelo chat | R$ 9,90/mês |
+| Self-service Completo | Professor pelo chat | R$ 19,90/mês |
+| Gerenciado | Luth faz por ele | R$ 49,90/mês |
+
+**Público-alvo do plano gerenciado:** professores mais velhos, avessos à tecnologia, que preferem delegar tudo.
+
+**Como funciona:**
+- Professor manda foto da lista de notas, lista de faltas ou texto com conteúdo
+- Luth (ou futuramente um assistente) opera o sistema e registra
+- Professor recebe confirmação com screenshot
+
+**Robô Mariana — identificação de perfil:**
+Durante a conversa de vendas, a Mariana deve identificar:
+- Professor tech-friendly → direcionar para self-service
+- Professor avesso à tecnologia / mais velho → oferecer plano gerenciado
+- Objeção "não sei usar WhatsApp" → argumento para gerenciado
+- Objeção de preço → mostrar economia de tempo (2h/semana × R$/hora do professor)
+
+**Escalabilidade:** começa com Luth operando, depois contrata assistente quando MRR > R$1.500
+
 ## Decisões de Negócio
 - Foco atual: SIAE + Infodat via chat/WhatsApp
 - Mercado estimado: ~43.500 professores em sistemas compatíveis
