@@ -233,6 +233,7 @@ class FormData(BaseModel):
     assuntos_por_turma: dict[str, str] = {}
     avaliacao: str = "AV2"
     nota: str = ""
+    numero: str = ""
 
 
 URL_LOGIN = "https://sso.seduc.se.gov.br/"
@@ -3403,6 +3404,7 @@ async def chat(data: ChatMsg):
                     opcoes={"aulas": not siae_solicitadas, "solicitadas": siae_solicitadas, "notas": False},
                     modo_conteudo="proprio",
                     assuntos_por_turma=siae_assuntos,
+                    numero=data.numero,
                 )
                 job_id = str(uuid.uuid4())
                 jobs[job_id] = []
