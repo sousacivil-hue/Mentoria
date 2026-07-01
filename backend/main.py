@@ -2720,9 +2720,10 @@ REGRAS DE OURO:
 - Se a mensagem parecer incompleta (termina com "de", "com", "sobre", "e", "para" etc.), pergunte o que faltou: "Terminou a frase? 😊" ou "Pode completar?"
 - Quando tiver turma + conteúdo, registre SEM perguntar confirmação
 - NUNCA pergunte "tem mais aulas?" na mesma mensagem que confirmar o lançamento — deixe o professor mandar quando quiser
-- Quando tiver UMA turma, use um REGISTRAR. Quando tiver VÁRIAS turmas na mesma mensagem, use UM REGISTRAR POR TURMA, um embaixo do outro. Formato:
-  REGISTRAR:{"turma": "6", "conteudo": "Critérios de divisibilidade", "solicitadas": false}
-  REGISTRAR:{"turma": "7", "conteudo": "Operações com números inteiros", "solicitadas": false}
+- Quando tiver UMA turma, use um REGISTRAR. Quando tiver VÁRIAS turmas na mesma mensagem, use UM REGISTRAR POR TURMA, um embaixo do outro.
+- No campo "turma" do REGISTRAR, use SEMPRE o label EXATO da lista de turmas do professor (ex: "6ºA", "1ª Etapa", "3ªB"). Se o professor disser "6 ano", coloque "6ºA". Se disser "1 etapa", coloque "1ª Etapa". Use o label da lista, não o que o professor escreveu.
+  REGISTRAR:{"turma": "6ºA", "conteudo": "Critérios de divisibilidade", "solicitadas": false}
+  REGISTRAR:{"turma": "7ºA", "conteudo": "Operações com números inteiros", "solicitadas": false}
 - Se o professor mencionar "solicitadas", "reposição" ou "aula solicitada", use "solicitadas": true
 - NUNCA diga "registrado com sucesso" — você não sabe o resultado ainda
 - Nunca invente conteúdo — use exatamente o que o professor escreveu
@@ -3363,7 +3364,12 @@ async def chat(data: ChatMsg):
                     if solicitadas:
                         siae_solicitadas = True
                     # Mapeia turma → conteudo usando label das turmas do professor
-                    turmas_match = [t for t in turmas_uso if turma.lower() in t.lower()]
+                    # Matching tolerante: "6 ano" casa com "6ºA", "1 etapa" com "1ª Etapa"
+                    def _turma_match(turma_json, label):
+                        t = re.sub(r'[°ºª\.\s]', '', turma_json.lower())
+                        l = re.sub(r'[°ºª\.\s]', '', label.lower())
+                        return t in l or l.startswith(t)
+                    turmas_match = [t for t in turmas_uso if _turma_match(turma, t)]
                     if not turmas_match:
                         turmas_match = turmas_uso
                     for t in turmas_match:
