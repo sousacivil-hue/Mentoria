@@ -1,5 +1,9 @@
 # SóDigita — Contexto do Projeto
 
+## ⚠️ Regras de Comunicação — Lição Aprendida em 01/07/2026
+- NUNCA dizer "CPF e senha" — sempre "login e senha". Cada sistema tem seu tipo de login.
+- NUNCA presumir SIAE como sistema principal — o SóDigita atende SIAE, Infodat, ActiveSoft, Totvs RM e outros igualmente.
+
 ## O Produto
 **SóDigita** (`sodigita.com.br`) — automação de tarefas repetitivas para professores brasileiros.
 - Automatiza: preenchimento de diário, lançamento de notas e registro de frequência
